@@ -1,0 +1,41 @@
+name: Bug report
+description: Something isn't working the way it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `docker compose up`
+        2. Seed with `docker compose exec api python -m app.seed`
+        3. Open the Addition lab and ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is it?
+      options:
+        - Frontend (web/)
+        - API (api/)
+        - Setup / Docker
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Console errors, API responses, or `docker compose logs`.
+      render: shell

@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mathblasters}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mathblasters}
+      POSTGRES_DB: ${POSTGRES_DB:-mathblasters}
+    ports:
+      # Published on 5433 by default: plenty of people already run Postgres on
+      # 5432. Inside the compose network the API still talks to db:5432.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Creates the throwaway database the API test suite uses.
+      - ./scripts/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mathblasters}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-mathblasters}:${POSTGRES_PASSWORD:-mathblasters}@db:5432/${POSTGRES_DB:-mathblasters}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./api:/code
+    # Apply migrations before serving, so a fresh clone gets a working schema
+    # from `docker compose up` alone -- and so the migrations are exercised
+    # on every start rather than drifting from the models.
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  web:
+    build: ./web
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - ./web:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  db_data:

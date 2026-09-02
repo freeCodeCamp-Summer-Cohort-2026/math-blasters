@@ -1,0 +1,149 @@
+/*
+ * Design tokens for Math Blasters.
+ *
+ * The look is meant to feel like a game rather than a worksheet: saturated
+ * accents, chunky rounded shapes, and springy motion. Change values here and
+ * the whole app follows -- please don't hard-code colours in components.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Brand accents. Violet leads, with a warm secondary for playfulness. */
+  --violet-100: #ede9fe;
+  --violet-300: #c4b5fd;
+  --violet-500: #7c3aed;
+  --violet-600: #6d28d9;
+  --violet-700: #5b21b6;
+
+  --mango-300: #fcd34d;
+  --mango-500: #f59e0b;
+
+  --mint-300: #6ee7b7;
+  --mint-500: #10b981;
+  --mint-700: #047857;
+
+  --coral-300: #fca5a5;
+  --coral-500: #ef4444;
+  --coral-700: #b91c1c;
+
+  --sky-400: #38bdf8;
+
+  /* Surfaces + text (light). Redefined wholesale for dark below. */
+  --bg: #f6f4ff;
+  --bg-pattern: rgba(124, 58, 237, 0.06);
+  --surface: #ffffff;
+  --surface-sunken: #f3f0ff;
+  --border: #e2ddf5;
+  --border-strong: #c9c0ec;
+
+  --text: #1f1a3d;
+  --text-muted: #625b85;
+  --text-inverse: #ffffff;
+
+  --accent: var(--violet-500);
+  --accent-strong: var(--violet-700);
+  --accent-soft: var(--violet-100);
+  /* --accent is used for text, borders and small marks, so in dark mode it
+     flips to a LIGHT violet. Solid fills that carry white text need to stay
+     saturated in both themes, hence a separate pair. */
+  --accent-fill: var(--violet-500);
+  --on-accent: #ffffff;
+
+  --success: var(--mint-700);
+  --success-soft: #d1fae5;
+  --danger: var(--coral-700);
+  --danger-soft: #fee2e2;
+  --warning-soft: #fef3c7;
+
+  /* Shape + depth. The chunky radii do most of the "toy" feel. */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(31, 26, 61, 0.08);
+  --shadow-md: 0 6px 16px -4px rgba(31, 26, 61, 0.14);
+  --shadow-lg: 0 18px 40px -12px rgba(31, 26, 61, 0.24);
+  /* Solid offset shadow: the thing that makes buttons feel pressable. */
+  --shadow-chunky: 0 4px 0 0 var(--accent-strong);
+  --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --font-sans:
+    "Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+
+  /* Overshoot easing -- reads as "bouncy" without a physics library. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14122b;
+    --bg-pattern: rgba(196, 181, 253, 0.07);
+    --surface: #1e1b3a;
+    --surface-sunken: #181534;
+    --border: #302c56;
+    --border-strong: #433d73;
+
+    --text: #f1eefe;
+    --text-muted: #a9a2ce;
+
+    --accent: var(--violet-300);
+    --accent-strong: var(--violet-600);
+    --accent-soft: #2a2352;
+    --accent-fill: var(--violet-500);
+    --on-accent: #ffffff;
+
+    --success: var(--mint-300);
+    --success-soft: #0d3d2f;
+    --danger: var(--coral-300);
+    --danger-soft: #48181d;
+    --warning-soft: #46341058;
+
+    --shadow-chunky: 0 4px 0 0 var(--violet-700);
+    --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);
+    --shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+[data-theme="dark"] {
+  --bg: #14122b;
+  --bg-pattern: rgba(196, 181, 253, 0.07);
+  --surface: #1e1b3a;
+  --surface-sunken: #181534;
+  --border: #302c56;
+  --border-strong: #433d73;
+
+  --text: #f1eefe;
+  --text-muted: #a9a2ce;
+
+  --accent: var(--violet-300);
+  --accent-strong: var(--violet-600);
+  --accent-soft: #2a2352;
+  --accent-fill: var(--violet-500);
+  --on-accent: #ffffff;
+
+  --success: var(--mint-300);
+  --success-soft: #0d3d2f;
+  --danger: var(--coral-300);
+  --danger-soft: #48181d;
+  --warning-soft: #46341058;
+
+  --shadow-chunky: 0 4px 0 0 var(--violet-700);
+  --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);
+  --shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+}

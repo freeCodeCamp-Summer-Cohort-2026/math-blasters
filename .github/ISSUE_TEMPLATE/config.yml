@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Cohort discussion
+    url: https://github.com/freeCodeCamp-Summer-Cohort-2026/math-blasters/discussions
+    about: Questions about the project, setup help, and general chat.

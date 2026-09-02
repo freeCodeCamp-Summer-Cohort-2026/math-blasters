@@ -1,0 +1,43 @@
+name: Feature / task
+description: Propose something to build.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What should exist?
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does it help a learner?
+      description: >-
+        This project is meant to feel like a game. Say what this does for the
+        person using it, not just what it does technically.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      placeholder: |
+        - [ ] ...
+        - [ ] Tests cover the new behaviour
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Frontend (web/)
+        - API (api/)
+        - Content model / authoring
+        - Docs
+        - Infrastructure / CI
+    validations:
+      required: true

@@ -1,0 +1,239 @@
+/*
+ * Layout and components. Tokens live in tokens.css.
+ *
+ * This is deliberately small -- it styles the setup-check page and nothing
+ * more. It is here as a *foundation*: the palette, type, spacing scale and
+ * motion rules are set up so contributors have something consistent to build
+ * on, not so that the UI is already built.
+ *
+ * When you add a component, add its styles here and pull every colour,
+ * spacing and radius value from tokens.css rather than hard-coding it.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background-color: var(--bg);
+  /* Faint dot grid -- graph paper, without the schoolwork connotation. */
+  background-image: radial-gradient(var(--bg-pattern) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2 {
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.4em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--sky-400);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- hero --- */
+
+.hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) 0 var(--space-2);
+}
+
+.hero__eyebrow {
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero__title {
+  font-size: clamp(2rem, 6vw, 3.1rem);
+  font-weight: 800;
+}
+
+.hero__title em {
+  font-style: normal;
+  /* A full highlighter block, not a half-height sweep: the swatch is yellow in
+     both themes so the ink has to be dark in both, which means every glyph
+     needs to sit on the yellow. A partial sweep would leave the tops of the
+     letters as dark ink on a dark page. */
+  background: var(--mango-300);
+  color: #1f1a3d;
+  padding: 0.02em 0.16em;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  transform: rotate(-1.5deg);
+}
+
+.hero__subtitle {
+  color: var(--text-muted);
+  max-width: 46ch;
+}
+
+/* ---------------------------------------------------------------- card --- */
+
+.card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+.card__title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------- buttons --- */
+
+.btn {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  border-radius: var(--radius-pill);
+  padding: var(--space-3) var(--space-5);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-spring),
+    box-shadow var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.btn--primary {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-chunky);
+}
+
+/* The press: button drops onto its own shadow. */
+.btn--primary:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 var(--accent-strong);
+}
+
+.btn--primary:disabled {
+  background: var(--border-strong);
+  /* Muted ink rather than white: on the grey fill, white all but disappears. */
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------- answer field --- */
+
+.expression {
+  font-family: var(--font-mono);
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.answer-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.answer-field__label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.answer-field__input {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  width: 5.5em;
+  padding: var(--space-3);
+  color: var(--text);
+  background: var(--surface-sunken);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) ease;
+  /* Hide spinners: they invite clicking to the answer. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.answer-field__input:focus {
+  border-color: var(--accent);
+}
+
+.answer-field__input::-webkit-outer-spin-button,
+.answer-field__input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* -------------------------------------------------------------- motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
