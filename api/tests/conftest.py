@@ -16,7 +16,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 DEFAULT_TEST_DB = "postgresql+psycopg://mathblasters:mathblasters@localhost:5433/mathblasters_test"
-os.environ.setdefault("DATABASE_URL", os.environ.get("TEST_DATABASE_URL", DEFAULT_TEST_DB))
+# Overwritten, not `setdefault`-ed: the fixtures below drop_all/create_all whatever
+# DATABASE_URL points at, and inside the `api` container that variable is already
+# set to the *development* database. TEST_DATABASE_URL is the only knob here.
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", DEFAULT_TEST_DB)
 
 from app.db import get_session  # noqa: E402
 from app.main import create_app  # noqa: E402

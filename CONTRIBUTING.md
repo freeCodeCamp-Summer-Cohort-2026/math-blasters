@@ -66,6 +66,11 @@ npm test
 npm run build
 ```
 
+If you work in Docker, the same checks run as `docker compose exec api ...` and
+`docker compose exec web ...` — see
+[Testing, linting and type checking](./README.md#testing-linting-and-type-checking)
+in the README.
+
 ## What we look for in review
 
 - **Tests.** New behaviour needs a test. Bug fixes need a test that fails

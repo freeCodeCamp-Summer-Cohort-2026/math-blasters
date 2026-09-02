@@ -16,7 +16,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3",
-    "httpx>=0.28",
+    # starlette >=1.6 deprecates httpx 0.x under TestClient; httpx2 is the 2.x line.
+    "httpx2>=2.0",
     "ruff>=0.8",
 ]
 
