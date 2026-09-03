@@ -21,6 +21,14 @@ def test_health_preserves_inbound_request_id(client):
     assert response.headers["X-Request-ID"] == request_id
 
 
+def test_health_replaces_unsafe_inbound_request_id(client):
+    request_id = "bad request-id"
+    response = client.get("/api/health", headers={"X-Request-ID": request_id})
+
+    assert response.headers["X-Request-ID"] != request_id
+    assert response.headers["X-Request-ID"]
+
+
 def test_health_emits_structured_request_log(client, caplog):
     request_id = "debug-session-id-2"
 
