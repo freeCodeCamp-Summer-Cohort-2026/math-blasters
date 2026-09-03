@@ -38,6 +38,7 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def request_logging_middleware(request: Request, call_next):
         start_time = time.perf_counter()
+        
         request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
         status = 500
 
