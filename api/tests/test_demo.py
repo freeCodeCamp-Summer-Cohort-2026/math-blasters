@@ -23,7 +23,8 @@ def test_answer_never_reaches_the_client(client, seeded):
 def test_missing_seed_explains_how_to_fix_it(client):
     response = client.get("/api/demo/problem")
     assert response.status_code == 404
-    assert "app.seed" in response.json()["detail"]
+    assert "app.seed" in response.json()["error"]["message"]
+    assert response.json()["error"]["code"] == "not_found"
 
 
 def test_correct_answer(client, seeded):
@@ -50,3 +51,19 @@ def test_seed_is_idempotent(session):
     seed(session)
 
     assert session.query(DemoProblem).count() == 1
+
+
+def test_error_envelope_structure_for_404_and_422(client):
+    resp_404 = client.get("/api/nonexistent-route")
+    assert resp_404.status_code == 404
+    data_404 = resp_404.json()
+    assert "error" in data_404
+    assert data_404["error"]["code"] == "not_found"
+    assert "message" in data_404["error"]
+
+    resp_422 = client.post("/api/demo/check", json={"answer": "banana"})
+    assert resp_422.status_code == 422
+    data_422 = resp_422.json()
+    assert "error" in data_422
+    assert data_422["error"]["code"] == "validation_error"
+    assert "details" in data_422["error"]

@@ -4,6 +4,8 @@ Placeholder alongside `models.DemoProblem` -- replace when the real content
 model lands (issues #19, #20, #21).
 """
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -23,3 +25,13 @@ class CheckRequest(BaseModel):
 
 class CheckResponse(BaseModel):
     correct: bool
+
+
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+    details: Any | None = None
+
+
+class ErrorEnvelope(BaseModel):
+    error: ErrorDetail
