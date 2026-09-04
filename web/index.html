@@ -14,7 +14,6 @@
         try {
           const t = localStorage.getItem('theme');
           if (t == 'light' || t == 'dark') {
-            console.log(`Applying theme from ipc: ${t}`);
             document.documentElement.setAttribute('data-theme', t);
           }
 

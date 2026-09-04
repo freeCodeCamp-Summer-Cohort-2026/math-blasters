@@ -32,7 +32,6 @@ export const applyTheme = (theme: Theme): void => {
     if (theme === 'system') {
         document.documentElement.removeAttribute('data-theme');
     } else {
-        console.log(`Applying theme: ${theme}`);
         document.documentElement.setAttribute('data-theme', theme);
     }
     
