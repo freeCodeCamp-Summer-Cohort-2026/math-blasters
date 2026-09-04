@@ -37,7 +37,6 @@ export function App() {
  async function check() {
   setChecking(true);
   try {
-    // await new Promise((resolve) => setTimeout(resolve, 10000)); 
     const response = await api.checkDemoAnswer(Number(value));
     setResult(response.correct);
   } catch {

@@ -229,7 +229,11 @@ code {
   margin-right: var(--space-2);
   vertical-align: middle;
 }
-
+@media (prefers-reduced-motion: reduce) {
+  .btn__spinner {
+    animation: none;
+  }
+}
 @keyframes btn-spin {
   to {
     transform: rotate(360deg);

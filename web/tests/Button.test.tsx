@@ -45,4 +45,25 @@ describe('Button', () => {
 
     expect(handleClick).not.toHaveBeenCalled();
   });
+
+  it('is disabled and busy while loading', () => {
+    render(<Button isLoading>Check answer</Button>);
+    const btn = screen.getByRole('button', { name: 'Check answer' });
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('does not fire onClick while loading', async () => {
+    const user = userEvent.setup();
+    const handleClick = vi.fn();
+    render(
+      <Button isLoading onClick={handleClick}>
+        Check answer
+      </Button>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Check answer' }));
+
+    expect(handleClick).not.toHaveBeenCalled();
+  });
 });
