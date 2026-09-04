@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { Button } from './components/Button';
 import { api } from "./api/client";
 import type { DemoProblem } from "./types";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -35,17 +35,18 @@ export function App() {
     };
   }, []);
 
-  async function check() {
-    setChecking(true);
-    try {
-      const response = await api.checkDemoAnswer(Number(value));
-      setResult(response.correct);
-    } catch {
-      setError("Couldn't check that answer.");
-    } finally {
-      setChecking(false);
-    }
+ async function check() {
+  setChecking(true);
+  try {
+    const response = await api.checkDemoAnswer(Number(value));
+    setResult(response.correct);
+  } catch {
+    setError("Couldn't check that answer.");
+  } finally {
+    setChecking(false);
   }
+}
+
 
   return (
     <div className="page">
@@ -94,14 +95,15 @@ export function App() {
               />
             </label>
 
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={check}
+       
+            <Button
+              variant="primary"
+              isLoading={checking}
               disabled={value.trim() === "" || checking}
+              onClick={check}
             >
-              {checking ? "Checking…" : "Check answer"}
-            </button>
+              Check answer
+            </Button>
 
             {/* Plain on purpose -- designing this is issue #12. */}
             {result !== null && <p role="status">{result ? "Correct." : "Not quite."}</p>}
