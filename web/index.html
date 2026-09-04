@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Math Blasters</title>
     <meta name="description" content="Learn basic math through short tutorials and open-ended labs." />
+    <script>
+      (function() {
+        /***
+         * This script is executed before main.tsx script to set theme attribute on html element based on value stored in localStorage. 
+         * This is done to prevent a flash of unstyled content (FOUC) when page loads and theme is applied after React app has mounted.
+         */
+        try {
+          const t = localStorage.getItem('theme');
+          if (t == 'light' || t == 'dark') {
+            document.documentElement.setAttribute('data-theme', t);
+          }
+
+          // if theme is 'system' we are not setting any attribute for theme and let tokens.css handle it
+        } catch (error) {
+          console.log('local storage access blocked', error);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

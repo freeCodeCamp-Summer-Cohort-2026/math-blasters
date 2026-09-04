@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from './components/Button';
 import { api } from "./api/client";
 import type { DemoProblem } from "./types";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 /**
  * The whole app, for now.
@@ -57,6 +58,7 @@ export function App() {
         <p className="hero__subtitle">
           Base template. Nothing here is the real product yet -- pick up an issue and build it.
         </p>
+        <ThemeToggle />
       </header>
 
       <section className="card">
