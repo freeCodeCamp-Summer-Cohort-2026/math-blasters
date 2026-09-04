@@ -27,6 +27,10 @@ def configure_request_logger(level_name: str) -> None:
     if not isinstance(level, int):
         raise ValueError(f"Invalid LOG_LEVEL: {level_name}")
     logger.setLevel(level)
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        logger.addHandler(handler)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
