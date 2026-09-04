@@ -17,7 +17,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={`btn btn--${variant} btn--${size} ${className ?? ''}.trim()`}
+        className={`btn btn--${variant} btn--${size} ${className ?? ''}`.trim()}
         disabled={isDisabled}
         aria-busy={isLoading || undefined}
         {...rest}
