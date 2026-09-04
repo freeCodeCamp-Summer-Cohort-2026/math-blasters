@@ -161,6 +161,30 @@ code {
   box-shadow: var(--shadow-chunky);
 }
 
+.btn--secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-chunky-sm);
+}
+
+.btn--secondary:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 var(--border-strong);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--accent);
+  box-shadow: none;
+}
+
+.btn--ghost:active:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+
+
 /* The press: button drops onto its own shadow. */
 .btn--primary:active:not(:disabled) {
   transform: translateY(4px);
@@ -173,6 +197,43 @@ code {
   color: var(--text-muted);
   box-shadow: none;
   cursor: not-allowed;
+}
+
+.btn--sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.875rem;
+}
+
+.btn--md {
+  padding: var(--space-3) var(--space-5);
+  font-size: 1rem;
+}
+
+.btn--lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: 1.125rem;
+}
+
+.btn__label--dimmed{
+  opacity: 0.35;
+}
+.btn__spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: btn-spin var(--duration-base) linear infinite;
+  margin-right: var(--space-2);
+  vertical-align: middle;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* -------------------------------------------------------- answer field --- */
@@ -235,5 +296,5 @@ code {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
+  } 
 }
