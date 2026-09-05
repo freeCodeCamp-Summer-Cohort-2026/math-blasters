@@ -19,29 +19,36 @@ else
     echo "Using existing .env"
 fi
 
+if ! command -v curl >/dev/null 2>&1; then
+    echo "curl is required to check the host-facing API health endpoint." >&2
+    exit 1
+fi
+
 # Start containers with docker compose
 echo "Starting Docker Compose services..."
-docker compose up --build -d
+docker compose up -d
 
 # Checking API Health
 echo "Waiting for $API_HEALTH_URL ..."
 attempt=0
-while ! docker compose exec -T -e "API_HEALTH_URL=$API_HEALTH_URL" api python -c \
-    'import os, urllib.request; urllib.request.urlopen(os.environ["API_HEALTH_URL"], timeout=2)' \
-    >/dev/null 2>&1
+while ! curl --fail --silent --show-error --connect-timeout 2 --max-time 2 \
+    "$API_HEALTH_URL" >/dev/null 2>&1
 do
-    attempt=$((attempt + 1))
     if [ "$attempt" -ge 60 ]; then
         echo "Timed out waiting for the API health endpoint." >&2
         docker compose ps >&2
         exit 1
     fi
+    attempt=$((attempt + 1))
     sleep 1
 done
 
 # Seeding demo data
 echo "API is healthy. Seeding the demo data..."
-docker compose exec -T api python -m app.seed
+if ! docker compose exec -T api python -m app.seed; then
+    echo "Failed to seed the demo data." >&2
+    exit 1
+fi
 
 echo "Setup complete."
 echo "App: $APP_URL"
