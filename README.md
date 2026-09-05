@@ -64,6 +64,45 @@ question and can answer it, your setup is good. Interactive API docs are at
 > `5433` instead. Inside the compose network the API still connects to
 > `db:5432`. Change `POSTGRES_PORT` in `.env` if 5433 is also busy.
 
+## Troubleshooting
+
+### PostgreSQL port
+
+PostgreSQL is published on host port **5433**, not 5432. The API connects to
+`db:5432` inside the Compose network; use `localhost:5433` only when connecting
+from your host machine. If 5433 is already in use, change `POSTGRES_PORT` in
+`.env` and restart the services.
+
+### `mathblasters_test` does not exist
+
+`scripts/init-test-db.sh` runs only when PostgreSQL initializes an empty data
+volume. If your volume predates that script and tests report that
+`mathblasters_test` does not exist, choose one of these fixes:
+
+- Recreate the volume, then run setup again:
+
+  ```bash
+  docker compose down -v
+  ./scripts/dev-setup.sh
+  ```
+
+- Keep the existing volume and create the test database by hand:
+
+  ```bash
+  docker compose exec db createdb -U mathblasters mathblasters_test
+  ```
+
+### Tables are gone but Alembic is stamped at head
+
+If the app returns an internal server error because its tables were removed
+while Alembic still reports the database at `head`, rebuild the schema and
+reseed it:
+
+```bash
+docker compose exec api sh -c "alembic stamp base && alembic upgrade head"
+docker compose exec api python -m app.seed
+```
+
 ### Running without Docker
 
 You'll need a PostgreSQL server. If you don't already have one,
@@ -194,16 +233,6 @@ The API suite runs against `mathblasters_test`, a throwaway database the `db`
 container creates on first start, and rebuilds its schema from scratch every
 run. Compose points `TEST_DATABASE_URL` at it, so `docker compose exec api
 pytest` never touches the development database serving your browser.
-
-> If you ran the API tests against an older checkout, they may have dropped the
-> tables in your *development* database while leaving Alembic stamped at head —
-> so the app returns `Internal Server Error` and restarting fixes nothing.
-> Rebuild it once:
->
-> ```bash
-> docker compose exec api sh -c "alembic stamp base && alembic upgrade head"
-> docker compose exec api python -m app.seed
-> ```
 
 ### Without Docker
 
