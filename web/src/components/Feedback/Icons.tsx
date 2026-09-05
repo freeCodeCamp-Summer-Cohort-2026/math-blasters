@@ -12,5 +12,7 @@ export const FeedbackIcon = ({ state }: FeedbackIconProps) => {
             return <span>➡️</span>;
         case "error":
             return <span>❌</span>;
+        default:
+            return <span>🕒</span>;
     }
 }

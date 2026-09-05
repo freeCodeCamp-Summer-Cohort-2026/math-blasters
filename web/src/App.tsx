@@ -61,7 +61,7 @@ export function App() {
         <ThemeToggle />
       </header>
 
-      <FeedbackStyleGuide />
+      {import.meta.env.DEV && <FeedbackStyleGuide />}
 
       <section className="card">
         <h2 className="card__title">Setup check</h2>
