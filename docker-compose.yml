@@ -27,6 +27,7 @@ services:
       # tears down its schema in the throwaway database, not the one serving you.
       TEST_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-mathblasters}:${POSTGRES_PASSWORD:-mathblasters}@db:5432/${POSTGRES_DB:-mathblasters}_test
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "8000:8000"
     depends_on:
@@ -37,7 +38,7 @@ services:
     # Apply migrations before serving, so a fresh clone gets a working schema
     # from `docker compose up` alone -- and so the migrations are exercised
     # on every start rather than drifting from the models.
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --no-access-log"
 
   web:
     build: ./web
