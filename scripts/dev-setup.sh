@@ -13,6 +13,10 @@ API_DOCS_URL="${API_URL}/docs"
 
 # Create env from env.example if not present already
 if [ ! -f .env ]; then
+    if [ ! -f .env.example ]; then
+        echo "Error: .env.example was not found in the repository root." >&2
+        exit 1
+    fi
     cp .env.example .env
     echo "Created .env from .env.example"
 else
