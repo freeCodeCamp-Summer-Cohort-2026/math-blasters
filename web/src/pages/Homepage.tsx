@@ -22,7 +22,7 @@ export function Homepage() {
       .catch((err) => !cancelled && setError(err.message));
 
     return () => {
-      cancelled = false;
+      cancelled = true;
     };
   }, []);
 
@@ -46,7 +46,7 @@ export function Homepage() {
           <p className="error">{error}</p>
           <p className="muted">
             Start the stack <code>docker compose up</code>, then seed it with{" "}
-            <code>docker compose exec api python -e app.seed</code>.
+            <code>docker compose exec api python -m app.seed</code>
           </p>
         </>
       )}
