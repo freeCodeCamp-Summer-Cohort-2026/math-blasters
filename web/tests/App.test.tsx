@@ -1,11 +1,19 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "../src/App";
 import { api, ApiError } from "../src/api/client";
 
-const problem = { slug: "addition-demo", prompt: "What is 3 + 4?", expression: "3 + 4 = ?" };
+const problem = {
+  slug: "addition-demo",
+  prompt: "What is 3 + 4?",
+  expression: "3 + 4 = ?",
+};
+
+beforeEach(() => {
+  window.history.pushState({}, "", "/");
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -27,7 +35,9 @@ describe("App (setup check)", () => {
     render(<App />);
     await screen.findByRole("spinbutton");
 
-    expect(screen.getByRole("button", { name: /check answer/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /check answer/i }),
+    ).toBeDisabled();
   });
 
   it("reports a correct answer", async () => {
@@ -57,7 +67,9 @@ describe("App (setup check)", () => {
   it("sends the typed answer to the API as a number", async () => {
     const user = userEvent.setup();
     vi.spyOn(api, "getDemoProblem").mockResolvedValue(problem);
-    const check = vi.spyOn(api, "checkDemoAnswer").mockResolvedValue({ correct: true });
+    const check = vi
+      .spyOn(api, "checkDemoAnswer")
+      .mockResolvedValue({ correct: true });
 
     render(<App />);
     await user.type(await screen.findByRole("spinbutton"), "7");
