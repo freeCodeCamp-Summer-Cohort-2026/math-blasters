@@ -1,0 +1,98 @@
+.feedback {
+  /*
+    Each state is defined here. each state assigns the correct token to the aliases used
+    by the shared layout below.
+  */
+  --feedback-surface: var(--surface-raised);
+  --feedback-border: var(--border-subtle);
+  --feedback-text: var(--text-primary);
+  --feedback-icon: var(--text-secondary);
+
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4rem;
+  padding: 1rem;
+  border: 1px solid var(--feedback-border);
+  border-radius: 1rem;
+  background: var(--feedback-surface);
+  color: var(--feedback-text);
+
+  transition:
+    background-color var(--duration-base) ease,
+    border-color var(--duration-base) ease,
+    transform var(--duration-base) var(--ease-spring);
+}
+
+/*
+  Each state only changes the semantic values. The structural styles remain
+  shared
+*/
+.idle {
+  --feedback-surface: var(--surface-raised);
+  --feedback-border: var(--border-subtle);
+  --feedback-icon: var(--text-secondary);
+}
+
+.checking {
+  --feedback-surface: var(--surface-raised);
+  --feedback-border: var(--accent-500);
+  --feedback-icon: var(--accent-500);
+}
+
+.correct {
+  --feedback-surface: var(--success-soft);
+  --feedback-border: var(--success-500);
+  --feedback-icon: var(--success-500);
+}
+
+.not-yet {
+  /*
+    This is deliberately the learning/warning palette rather than the error
+    palette. An incorrect practice answer should not feel like a system error.
+  */
+  --feedback-surface: var(--warning-soft);
+  --feedback-border: var(--mango-500);
+  --feedback-icon: var(--mango-500);
+}
+
+.error {
+  --feedback-surface: var(--danger-soft);
+  --feedback-border: var(--danger);
+  --feedback-icon: var(--danger);
+}
+
+.icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--feedback-icon);
+  border-radius: 50%;
+}
+
+.content {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.announcement {
+  /*
+    Keep the announcement available to screen readers without adding duplicate
+    visible copy to the layout.
+  */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
