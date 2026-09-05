@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api/client";
 import type { DemoProblem } from "./types";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { FeedbackStyleGuide } from "./components/Feedback/StyleGuide";
 
 /**
  * The whole app, for now.
@@ -59,6 +60,8 @@ export function App() {
         </p>
         <ThemeToggle />
       </header>
+
+      {import.meta.env.DEV && <FeedbackStyleGuide />}
 
       <section className="card">
         <h2 className="card__title">Setup check</h2>
