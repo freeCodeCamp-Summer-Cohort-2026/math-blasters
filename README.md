@@ -149,6 +149,20 @@ never reach the browser. There's a test asserting that.
 
 Three endpoints, all placeholders. The real API doesn't exist yet.
 
+### API Error Envelope Format
+
+All API errors return a standardized JSON envelope structure with appropriate HTTP status codes:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Human-readable error description",
+    "details": "Optional validation details or metadata"
+  }
+}
+```
+
 ### Styling
 
 `web/src/styles/tokens.css` holds the palette, spacing scale, radii, shadows

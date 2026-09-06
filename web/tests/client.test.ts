@@ -11,6 +11,8 @@ describe("api client error handling", () => {
   });
 
   it("extracts error.message from the standardized error envelope", async () => {
+    expect.assertions(3);
+
     const mockErrorEnvelope = {
       error: {
         code: "validation_error",
@@ -26,22 +28,23 @@ describe("api client error handling", () => {
         status: 422,
         statusText: "Unprocessable Entity",
         json: async () => mockErrorEnvelope,
+        text: async () => JSON.stringify(mockErrorEnvelope),
       }),
     );
-
-    await expect(api.checkDemoAnswer("banana" as unknown as number)).rejects.toThrow(ApiError);
 
     try {
       await api.checkDemoAnswer("banana" as unknown as number);
     } catch (err) {
       const apiError = err as ApiError;
+      expect(apiError).toBeInstanceOf(ApiError);
       expect(apiError.status).toBe(422);
-      // Asserts ApiError.message is the extracted message, NOT the raw JSON body
       expect(apiError.message).toBe("Validation error");
     }
   });
 
   it("falls back to statusText if response body does not match the error envelope", async () => {
+    expect.assertions(3);
+
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -49,6 +52,7 @@ describe("api client error handling", () => {
         status: 500,
         statusText: "Internal Server Error",
         json: async () => ({}),
+        text: async () => "{}",
       }),
     );
 
@@ -56,6 +60,7 @@ describe("api client error handling", () => {
       await api.getDemoProblem();
     } catch (err) {
       const apiError = err as ApiError;
+      expect(apiError).toBeInstanceOf(ApiError);
       expect(apiError.status).toBe(500);
       expect(apiError.message).toBe("Internal Server Error");
     }

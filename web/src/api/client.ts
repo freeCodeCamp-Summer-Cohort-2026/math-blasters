@@ -16,10 +16,15 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  const headers = new Headers(init?.headers);
+
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
   try {
     response = await fetch(`${BASE_URL}${path}`, {
-      headers: { "Content-Type": "application/json" },
       ...init,
+      headers,
     });
   } catch {
     // Almost always the API not running -- say so plainly rather than
@@ -29,19 +34,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     let message = response.statusText;
+
     try {
-      const body = (await response.json()) as { error?: { message?: string } };
-      if (body?.error?.message) {
-        message = body.error.message;
+      const rawText = await response.text();
+
+      if (rawText.trim()) {
+        try {
+          const body = JSON.parse(rawText) as { error?: { message?: string } };
+        
+          if (body?.error?.message && typeof body.error.message === "string") {
+            message = body.error.message;
+          }
+        } catch {
+          message = rawText.trim();
+        }
       }
     } catch {
-      // fallback to text if JSON parsing fails
-      const text = await response.text().catch(() => "");
-      if (text) message = text;
+      message = response.statusText;
     }
-    throw new ApiError(message, response.status);
-  }
 
+    throw new ApiError(message || `HTTP ${response.status}`, response.status);
+  }
   return (await response.json()) as T;
 }
 
