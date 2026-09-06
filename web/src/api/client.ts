@@ -41,7 +41,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       if (rawText.trim()) {
         try {
           const body = JSON.parse(rawText) as { error?: { message?: string } };
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 2550ae9 (fix(api): implement fallback error text, update readme, and resolve conflicts)
           if (body?.error?.message && typeof body.error.message === "string") {
             message = body.error.message;
           }
