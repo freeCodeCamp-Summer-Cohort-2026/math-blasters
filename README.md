@@ -38,8 +38,7 @@ whoever picks up the issues that need them.
 ## Quickstart
 
 ```bash
-cp .env.example .env
-docker compose up --build
+./scripts/dev-setup.sh
 ```
 
 That starts three services:
@@ -47,13 +46,6 @@ That starts three services:
 - `db` — PostgreSQL, published on port **5433** (not 5432 — see below)
 - `api` — FastAPI on [http://localhost:8000](http://localhost:8000)
 - `web` — Vite dev server on [http://localhost:5173](http://localhost:5173)
-
-The API applies migrations on startup, so the schema is ready. Load the one
-demo row:
-
-```bash
-docker compose exec api python -m app.seed
-```
 
 Then open [http://localhost:5173](http://localhost:5173). If you see the
 question and can answer it, your setup is good. Interactive API docs are at
