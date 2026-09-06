@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { api } from "../api/client";
+import { Button } from "../components/Button";
 import type { DemoProblem } from "../types";
 
 /**
@@ -72,13 +73,14 @@ export function Homepage() {
             />
           </label>
 
-          <button
-            type="button"
-            className="btn btn--primary"
+          <Button
+            variant="primary"
+            isLoading={checking}
+            disabled={value.trim() === "" || checking}
             onClick={check}
-            disabled={value.trim() === "" || checking}>
-            {checking ? "Checking..." : "Check answer"}
-          </button>
+          >
+            Check answer
+          </Button>
 
           {result !== null && (
             <p role="status">{result ? "Correct." : "Not quite."}</p>

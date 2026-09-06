@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 describe("Router & Layout", () => {
-  it("renders the root layout landmarks: header, main outlet, and footer", () => {
+  it("renders the root layout landmarks: header, main outlet, and footer", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <AppRoutes />
@@ -31,6 +31,10 @@ describe("Router & Layout", () => {
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText(mockProblem.prompt)).toBeInTheDocument();
+    });
   });
 
   it("renders the home page at route '/'", async () => {
