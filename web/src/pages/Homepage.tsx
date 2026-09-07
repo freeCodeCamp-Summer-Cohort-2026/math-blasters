@@ -5,6 +5,7 @@ import { api } from "../api/client";
 
 import { Button } from "../components/Button";
 import { Skeleton } from "../components/Skeleton";
+import { ErrorState } from "../components/ErrorState";
 
 /**
  * Setup check / Homepage
@@ -16,6 +17,15 @@ export function Homepage() {
   const [value, setValue] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
+
+  function loadProblem() {
+    setError(null);
+    setProblem(null);
+    api
+      .getDemoProblem()
+      .then((found) => setProblem(found))
+      .catch((err) => setError(err.message));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -50,13 +60,12 @@ export function Homepage() {
       )}
       <h2 className="card__title">Setup check</h2>
       {error && (
-        <>
-          <p className="error">{error}</p>
+        <ErrorState message={error} retry={loadProblem}>
           <p className="muted">
             Start the stack <code>docker compose up</code>, then seed it with{" "}
             <code>docker compose exec api python -m app.seed</code>
           </p>
-        </>
+        </ErrorState>
       )}
 
       {!error && !problem && (
