@@ -40,7 +40,10 @@ function formatErrorMessage(
           return parsed.error;
         }
       }
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.warn("ErrorState: failed to parse JSON error body", e);
+      }
       // Not valid JSON, fallback to raw string
     }
   }
