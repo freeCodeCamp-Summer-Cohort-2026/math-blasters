@@ -67,3 +67,14 @@ def test_error_envelope_structure_for_404_and_422(client):
     assert "error" in data_422
     assert data_422["error"]["code"] == "validation_error"
     assert "details" in data_422["error"]
+
+
+def test_non_finite_answer_does_not_crash_the_error_handler(client):
+    for literal in ("NaN", "Infinity", "-Infinity"):
+        response = client.post(
+            "/api/demo/check",
+            content=f'{{"answer": {literal}}}',
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.status_code == 422
+        assert response.json()["error"]["details"][0]["input"] is None

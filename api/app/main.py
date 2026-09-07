@@ -6,11 +6,13 @@ tests exercise the same wiring that runs in production.
 
 import json
 import logging
+import math
 import re
 import time
 import uuid
 
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -60,6 +62,10 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     )
 
 
+def _finite_or_none(value: float) -> float | None:
+    return value if math.isfinite(value) else None
+
+
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
@@ -67,7 +73,7 @@ async def validation_exception_handler(
         error=ErrorDetail(
             code="validation_error",
             message="Validation error",
-            details=exc.errors(),
+            details=jsonable_encoder(exc.errors(), custom_encoder={float: _finite_or_none}),
         )
     )
     return JSONResponse(
