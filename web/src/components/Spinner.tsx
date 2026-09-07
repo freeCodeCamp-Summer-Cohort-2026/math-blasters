@@ -20,12 +20,21 @@ export function Spinner({
   if (isDecorative) {
     return (
       <span
-        role="status"
-        aria-live="polite"
+        aria-hidden="true"
         className={`spinner spinner--${size} ${className}`.trim()}
-        {...rest}>
-        <span className="sr-only">{label}</span>
-      </span>
+        {...rest}
+      />
     );
   }
+
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className={`spinner spinner--${size} ${className}`.trim()}
+      {...rest}
+    >
+      <span className="sr-only">{label}</span>
+    </span>
+  );
 }
