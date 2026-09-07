@@ -94,10 +94,13 @@ describe("App (setup check)", () => {
     expect(screen.queryByText("Not quite.")).not.toBeInTheDocument();
   });
 
-  it("explains how to fix an unreachable API", async () => {
-    vi.spyOn(api, "getDemoProblem").mockRejectedValue(
-      new ApiError("Can't reach the API. Is it running on port 8000?", 0),
-    );
+  it("explains how to fix an unreachable API and allows retry", async () => {
+    const user = userEvent.setup();
+    const getProblemSpy = vi.spyOn(api, "getDemoProblem")
+      .mockRejectedValueOnce(
+        new ApiError("Can't reach the API. Is it running on port 8000?", 0),
+      )
+      .mockResolvedValueOnce(problem);
 
     render(<App />);
 
@@ -105,5 +108,13 @@ describe("App (setup check)", () => {
       expect(screen.getByText(/can't reach the api/i)).toBeInTheDocument();
     });
     expect(screen.getByText(/docker compose up/)).toBeInTheDocument();
+
+    const retryButton = screen.getByRole("button", { name: /try again/i });
+    expect(retryButton).toBeInTheDocument();
+
+    await user.click(retryButton);
+
+    expect(await screen.findByText("What is 3 + 4?")).toBeInTheDocument();
+    expect(getProblemSpy).toHaveBeenCalledTimes(2);
   });
 });
