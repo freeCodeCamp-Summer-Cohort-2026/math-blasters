@@ -28,11 +28,15 @@ describe("Skeleton", () => {
   });
 
   it("renders multiple lines when lines > 1 for text variant", () => {
-    render(<Skeleton variant="text" lines={3} label="Loading paragraph..." />);
+    render(<Skeleton variant="text" lines={3} label="Loading paragraph..." height="20px" />);
     const status = screen.getByRole("status");
     expect(status).toHaveClass("skeleton-group");
     const lines = status.querySelectorAll(".skeleton--text");
     expect(lines).toHaveLength(3);
+    expect((lines[0] as HTMLElement).style.width).toBe("100%");
+    expect((lines[1] as HTMLElement).style.width).toBe("100%");
+    expect((lines[2] as HTMLElement).style.width).toBe("75%");
+    expect((lines[2] as HTMLElement).style.height).toBe("20px");
   });
 
   it("applies custom width, height, style, and className", () => {
