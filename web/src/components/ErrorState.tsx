@@ -10,7 +10,7 @@ export interface ErrorStateProps {
   className?: string;
 }
 
-export function formatErrorMessage(
+function formatErrorMessage(
   error?: string | Error | ApiError | null,
 ): string {
   if (!error) return "An unexpected error occurred.";
