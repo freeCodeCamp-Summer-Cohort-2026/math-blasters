@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DemoProblem } from "../types";
 import { Link } from "react-router-dom";
-import { api } from "../api/client";
+import { api, type ApiError } from "../api/client";
 
 import { Button } from "../components/Button";
 import { Skeleton } from "../components/Skeleton";
@@ -13,7 +13,7 @@ import { ErrorState } from "../components/ErrorState";
 
 export function Homepage() {
   const [problem, setProblem] = useState<DemoProblem | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | Error | string | null>(null);
   const [value, setValue] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
@@ -24,7 +24,7 @@ export function Homepage() {
     api
       .getDemoProblem()
       .then((found) => setProblem(found))
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err));
   }
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function Homepage() {
     api
       .getDemoProblem()
       .then((found) => !cancelled && setProblem(found))
-      .catch((err) => !cancelled && setError(err.message));
+      .catch((err) => !cancelled && setError(err));
 
     return () => {
       cancelled = true;
@@ -44,8 +44,8 @@ export function Homepage() {
     try {
       const response = await api.checkDemoAnswer(Number(value));
       setResult(response.correct);
-    } catch {
-      setError("Couldn't check that answer.");
+    } catch (err) {
+      setError(err instanceof Error ? err : "Couldn't check that answer.");
     } finally {
       setChecking(false);
     }
