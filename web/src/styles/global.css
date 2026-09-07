@@ -370,3 +370,78 @@ a.btn {
     border-style: dotted;
   }
 }
+
+/* Screen-reader utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skeleton Container & Elements */
+.skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 25%,
+    var(--border) 50%,
+    var(--surface-sunken) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton--text {
+  height: 1.25rem;
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton--rectangular {
+  width: 100%;
+  height: 8rem;
+  border-radius: var(--radius-md);
+}
+
+.skeleton--circular {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-pill);
+}
+
+.skeleton--card {
+  width: 100%;
+  min-height: 14rem;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--surface-sunken);
+  }
+}
