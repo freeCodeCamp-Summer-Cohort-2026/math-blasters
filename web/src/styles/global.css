@@ -215,8 +215,6 @@ a.btn {
   background: var(--accent-soft);
 }
 
-
-
 /* The press: button drops onto its own shadow. */
 .btn--primary:active:not(:disabled) {
   transform: translateY(4px);
@@ -246,7 +244,7 @@ a.btn {
   font-size: 1.125rem;
 }
 
-.btn__label--dimmed{
+.btn__label--dimmed {
   opacity: 0.35;
 }
 .btn__spinner {
@@ -332,5 +330,43 @@ a.btn {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  } 
+  }
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: spinner-spin var(--duration-base) linear infinite;
+  vertical-align: middle;
+}
+.spinner--sm {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-width: 1.5px;
+}
+.spinner--md {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+.spinner--lg {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 2.5px;
+}
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-style: dotted;
+  }
 }
