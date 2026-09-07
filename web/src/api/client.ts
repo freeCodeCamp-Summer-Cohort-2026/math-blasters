@@ -41,7 +41,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       if (rawText.trim()) {
         try {
           const body = JSON.parse(rawText) as { error?: { message?: string } };
-        
+
           if (body?.error?.message && typeof body.error.message === "string") {
             message = body.error.message;
           }

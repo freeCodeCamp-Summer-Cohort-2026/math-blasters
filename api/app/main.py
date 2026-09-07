@@ -32,10 +32,7 @@ def status_code_to_error_code(status_code: int) -> str:
         return "forbidden"
     elif status_code == status.HTTP_404_NOT_FOUND:
         return "not_found"
-    elif status_code in (
-        status.HTTP_422_UNPROCESSABLE_CONTENT,
-        status.HTTP_422_UNPROCESSABLE_ENTITY,
-    ):
+    elif status_code == status.HTTP_422_UNPROCESSABLE_CONTENT:
         return "validation_error"
     elif status_code == status.HTTP_429_TOO_MANY_REQUESTS:
         return "rate_limited"
