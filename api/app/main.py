@@ -42,8 +42,10 @@ def status_code_to_error_code(status_code: int) -> str:
 
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    # `exc.detail` is always a message the app deliberately chose to raise with --
+    # unhandled exceptions never reach this handler, so there's nothing to mask here.
     code = status_code_to_error_code(exc.status_code)
-    message = "Internal server error" if exc.status_code >= 500 else str(exc.detail)
+    message = str(exc.detail)
 
     envelope = ErrorEnvelope(
         error=ErrorDetail(

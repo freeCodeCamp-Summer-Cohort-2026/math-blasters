@@ -63,4 +63,5 @@ def test_health_returns_503_when_unavailable(client):
     response = client.get("/api/health")
 
     assert response.status_code == 503
-    assert response.json()["detail"] == "Database Unavailable"
+    assert response.json()["error"]["code"] == "internal"
+    assert response.json()["error"]["message"] == "Database Unavailable"
