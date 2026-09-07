@@ -48,8 +48,8 @@ export function Skeleton({
             aria-hidden="true"
             className="skeleton skeleton--text"
             style={{
-              width: index === lines - 1 ? "75%" : "100%",
               ...customStyle,
+              width: index === lines - 1 ? "75%" : "100%",
             }}
           />
         ))}
