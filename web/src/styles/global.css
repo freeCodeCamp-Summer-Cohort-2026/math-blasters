@@ -445,3 +445,33 @@ a.btn {
     background: var(--surface-sunken);
   }
 }
+
+/* --- error state --- */
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--danger-soft);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius-md);
+  text-align: center;
+  width: 100%;
+}
+
+.error-state__message {
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.error-state__details {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.error-state__actions {
+  margin-top: var(--space-2);
+}
