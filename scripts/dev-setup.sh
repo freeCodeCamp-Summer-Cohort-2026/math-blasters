@@ -30,7 +30,7 @@ fi
 
 # Start containers with docker compose
 echo "Starting Docker Compose services..."
-docker compose up -d
+docker compose up --build -d
 
 # Checking API Health
 echo "Waiting for $API_HEALTH_URL ..."
