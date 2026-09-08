@@ -34,12 +34,22 @@ export function parseApiErrorMessage(raw: string, fallback: string): string {
             .map((item: { msg?: string }) => item.msg || JSON.stringify(item))
             .join(", ");
         }
+        if (
+          typeof parsed.error === "object" &&
+          parsed.error !== null &&
+          typeof parsed.error.message === "string"
+        ) {
+          return parsed.error.message;
+        }
         if (typeof parsed.message === "string") {
           return parsed.message;
         }
         if (typeof parsed.error === "string") {
           return parsed.error;
         }
+
+        // Object has no recognizable error fields; fall back to statusText/fallback
+        return fallback;
       }
     } catch {
       // Not valid JSON, fallback to raw string
@@ -51,10 +61,16 @@ export function parseApiErrorMessage(raw: string, fallback: string): string {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  const headers = new Headers(init?.headers);
+
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   try {
     response = await fetch(`${BASE_URL}${path}`, {
-      headers: { "Content-Type": "application/json" },
       ...init,
+      headers,
     });
   } catch {
     // Almost always the API not running -- say so plainly rather than
@@ -63,9 +79,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    const raw = await response.text();
-    const message = parseApiErrorMessage(raw, response.statusText);
-    throw new ApiError(message, response.status);
+    let raw = "";
+    try {
+      raw = await response.text();
+    } catch {
+      // ignore text read failure
+    }
+    const fallback = response.statusText || `HTTP ${response.status}`;
+    const message = parseApiErrorMessage(raw, fallback);
+    throw new ApiError(message || `HTTP ${response.status}`, response.status);
   }
 
   return (await response.json()) as T;

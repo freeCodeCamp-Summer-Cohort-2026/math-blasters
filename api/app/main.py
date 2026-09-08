@@ -6,17 +6,81 @@ tests exercise the same wiring that runs in production.
 
 import json
 import logging
+import math
 import re
 import time
 import uuid
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.config import get_settings
 from app.routers import demo, health
+from app.schemas import ErrorDetail, ErrorEnvelope
+
+
+def status_code_to_error_code(status_code: int) -> str:
+    if status_code == status.HTTP_400_BAD_REQUEST:
+        return "bad_request"
+    elif status_code == status.HTTP_401_UNAUTHORIZED:
+        return "unauthorized"
+    elif status_code == status.HTTP_403_FORBIDDEN:
+        return "forbidden"
+    elif status_code == status.HTTP_404_NOT_FOUND:
+        return "not_found"
+    elif status_code == status.HTTP_422_UNPROCESSABLE_CONTENT:
+        return "validation_error"
+    elif status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+        return "rate_limited"
+    elif 400 <= status_code < 500:
+        return "client_error"
+    return "internal"
+
+
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    # `exc.detail` is always a message the app deliberately chose to raise with --
+    # unhandled exceptions never reach this handler, so there's nothing to mask here.
+    code = status_code_to_error_code(exc.status_code)
+    message = str(exc.detail)
+
+    envelope = ErrorEnvelope(
+        error=ErrorDetail(
+            code=code,
+            message=message,
+            details=None,
+        )
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=envelope.model_dump(),
+    )
+
+
+def _finite_or_none(value: float) -> float | None:
+    return value if math.isfinite(value) else None
+
+
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    envelope = ErrorEnvelope(
+        error=ErrorDetail(
+            code="validation_error",
+            message="Validation error",
+            details=jsonable_encoder(exc.errors(), custom_encoder={float: _finite_or_none}),
+        )
+    )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content=envelope.model_dump(),
+    )
+
 
 logger = logging.getLogger("api.requests")
 SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
@@ -87,6 +151,10 @@ def create_app() -> FastAPI:
     )
     # Add last so this middleware is outermost and logs CORS preflight responses.
     app.add_middleware(RequestLoggingMiddleware)
+
+    # error handlers
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     for router in (health.router, demo.router):
         app.include_router(router, prefix="/api")
