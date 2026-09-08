@@ -52,9 +52,7 @@ export function parseApiErrorMessage(raw: string, fallback: string): string {
         return fallback;
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.warn("Api client: failed to parse JSON error body", err);
-      }
+      console.warn("Api client: failed to parse JSON error body", err);
     }
   }
 
@@ -85,9 +83,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     try {
       raw = await response.text();
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.warn("Api client: failed to read error response body", err);
-      }
+      console.warn("Api client: failed to read error response body", err);
     }
     const fallback = response.statusText || `HTTP ${response.status}`;
     const message = parseApiErrorMessage(raw, fallback);
