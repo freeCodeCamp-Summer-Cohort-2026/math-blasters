@@ -19,11 +19,18 @@ describe("Spinner", () => {
     expect(span).toHaveClass("spinner", "spinner--md");
   });
 
-  it("renders with specified size classes", () => {
-    const { rerender, container } = render(<Spinner size="sm" isDecorative />);
+  it("renders sm size class", () => {
+    const { container } = render(<Spinner size="sm" isDecorative />);
     expect(container.querySelector("span")).toHaveClass("spinner--sm");
+  });
 
-    rerender(<Spinner size="lg" isDecorative />);
+  it("renders md size class by default", () => {
+    const { container } = render(<Spinner isDecorative />);
+    expect(container.querySelector("span")).toHaveClass("spinner--md");
+  });
+
+  it("renders lg size class", () => {
+    const { container } = render(<Spinner size="lg" isDecorative />);
     expect(container.querySelector("span")).toHaveClass("spinner--lg");
   });
 

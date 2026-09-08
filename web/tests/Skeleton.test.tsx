@@ -16,14 +16,18 @@ describe("Skeleton", () => {
     expect(container.firstChild).toHaveClass("skeleton--text");
   });
 
-  it("renders rectangular, circular, and card variants", () => {
-    const { rerender, container } = render(<Skeleton variant="rectangular" />);
+  it("renders rectangular variant", () => {
+    const { container } = render(<Skeleton variant="rectangular" />);
     expect(container.firstChild).toHaveClass("skeleton--rectangular");
+  });
 
-    rerender(<Skeleton variant="circular" />);
+  it("renders circular variant", () => {
+    const { container } = render(<Skeleton variant="circular" />);
     expect(container.firstChild).toHaveClass("skeleton--circular");
+  });
 
-    rerender(<Skeleton variant="card" />);
+  it("renders card variant", () => {
+    const { container } = render(<Skeleton variant="card" />);
     expect(container.firstChild).toHaveClass("skeleton--card");
   });
 
