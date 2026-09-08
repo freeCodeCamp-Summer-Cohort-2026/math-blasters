@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DemoProblem } from "../types";
 import { Link } from "react-router-dom";
 import { api, type ApiError } from "../api/client";
@@ -17,25 +17,31 @@ export function Homepage() {
   const [value, setValue] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
+  const isMounted = useRef(true);
 
   function loadProblem() {
     setError(null);
     setProblem(null);
     api
       .getDemoProblem()
-      .then((found) => setProblem(found))
-      .catch((err) => setError(err));
+      .then((found) => {
+        if (isMounted.current) {
+          setProblem(found);
+        }
+      })
+      .catch((err) => {
+        if (isMounted.current) {
+          setError(err);
+        }
+      });
   }
 
   useEffect(() => {
-    let cancelled = false;
-    api
-      .getDemoProblem()
-      .then((found) => !cancelled && setProblem(found))
-      .catch((err) => !cancelled && setError(err));
+    isMounted.current = true;
+    loadProblem();
 
     return () => {
-      cancelled = true;
+      isMounted.current = false;
     };
   }, []);
 
@@ -43,11 +49,17 @@ export function Homepage() {
     setChecking(true);
     try {
       const response = await api.checkDemoAnswer(Number(value));
-      setResult(response.correct);
+      if (isMounted.current) {
+        setResult(response.correct);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err : "Couldn't check that answer.");
+      if (isMounted.current) {
+        setError(err instanceof Error ? err : "Couldn't check that answer.");
+      }
     } finally {
-      setChecking(false);
+      if (isMounted.current) {
+        setChecking(false);
+      }
     }
   }
 
