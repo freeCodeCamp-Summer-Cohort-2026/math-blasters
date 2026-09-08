@@ -14,6 +14,41 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Extracts and formats a user-friendly error message from API response text.
+ */
+export function parseApiErrorMessage(raw: string, fallback: string): string {
+  const trimmed = (raw || "").trim();
+  if (!trimmed) return fallback;
+
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+
+      if (typeof parsed === "object" && parsed !== null) {
+        if (typeof parsed.detail === "string") {
+          return parsed.detail;
+        }
+        if (Array.isArray(parsed.detail)) {
+          return parsed.detail
+            .map((item: { msg?: string }) => item.msg || JSON.stringify(item))
+            .join(", ");
+        }
+        if (typeof parsed.message === "string") {
+          return parsed.message;
+        }
+        if (typeof parsed.error === "string") {
+          return parsed.error;
+        }
+      }
+    } catch {
+      // Not valid JSON, fallback to raw string
+    }
+  }
+
+  return trimmed || fallback;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
@@ -28,7 +63,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new ApiError((await response.text()) || response.statusText, response.status);
+    const raw = await response.text();
+    const message = parseApiErrorMessage(raw, response.statusText);
+    throw new ApiError(message, response.status);
   }
 
   return (await response.json()) as T;
