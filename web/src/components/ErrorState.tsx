@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ApiError } from "../api/client";
+import { ApiError, parseApiErrorMessage } from "../api/client";
 import { Button } from "./Button";
 
 export interface ErrorStateProps {
@@ -10,49 +10,18 @@ export interface ErrorStateProps {
   className?: string;
 }
 
-function formatErrorMessage(
-  error?: string | Error | ApiError | null,
-): string {
+function getErrorMessage(error?: string | Error | ApiError | null): string {
   if (!error) return "An unexpected error occurred.";
-
   const raw = typeof error === "string" ? error : error.message;
-  if (!raw) return "An unexpected error occurred.";
-
-  const trimmed = raw.trim();
-
-  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-    try {
-      const parsed = JSON.parse(trimmed);
-
-      if (typeof parsed === "object" && parsed !== null) {
-        if (typeof parsed.detail === "string") {
-          return parsed.detail;
-        }
-        if (Array.isArray(parsed.detail)) {
-          return parsed.detail
-            .map((item: { msg?: string }) => item.msg || JSON.stringify(item))
-            .join(", ");
-        }
-        if (typeof parsed.message === "string") {
-          return parsed.message;
-        }
-        if (typeof parsed.error === "string") {
-          return parsed.error;
-        }
-      }
-    } catch (e) {
-      if (import.meta.env.DEV) {
-        console.warn("ErrorState: failed to parse JSON error body", e);
-      }
-      // Not valid JSON, fallback to raw string
-    }
-  }
-
-  return raw;
+  return parseApiErrorMessage(raw, "An unexpected error occurred.");
 }
 
 /**
  * Error state display component.
+ *
+ * - Announces errors assertively to screen readers (`role="alert"`, `aria-live="assertive"`).
+ * - Renders formatted error messages (delegating to client.ts parseApiErrorMessage).
+ * - Optionally renders a retry button when `retry` is provided.
  */
 export function ErrorState({
   message,
@@ -61,7 +30,7 @@ export function ErrorState({
   children,
   className = "",
 }: ErrorStateProps) {
-  const displayMessage = formatErrorMessage(message);
+  const displayMessage = getErrorMessage(message);
 
   return (
     <div
