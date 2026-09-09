@@ -247,28 +247,6 @@ a.btn {
 .btn__label--dimmed {
   opacity: 0.35;
 }
-.btn__spinner {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  box-sizing: border-box;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: var(--radius-pill);
-  animation: btn-spin var(--duration-base) linear infinite;
-  margin-right: var(--space-2);
-  vertical-align: middle;
-}
-@media (prefers-reduced-motion: reduce) {
-  .btn__spinner {
-    animation: none;
-  }
-}
-@keyframes btn-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /* -------------------------------------------------------- answer field --- */
 
