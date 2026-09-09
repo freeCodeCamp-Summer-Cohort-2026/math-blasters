@@ -147,3 +147,36 @@
   --shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
 }
+
+/* Page shell primitive */
+.page-layout {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.page-header {
+  margin-bottom: var(--space-5);
+  color: var(--text);
+}
+
+/* Card primitive */
+.card {
+  background-color: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.card-title {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+  color: var(--text);
+}

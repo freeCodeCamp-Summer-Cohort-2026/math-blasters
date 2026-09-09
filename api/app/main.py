@@ -12,17 +12,7 @@ import time
 import uuid
 
 from fastapi import FastAPI, Request, status
-<<<<<<< HEAD
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
-
-=======
->>>>>>> 2550ae9 (fix(api): implement fallback error text, update readme, and resolve conflicts)
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -44,14 +34,7 @@ def status_code_to_error_code(status_code: int) -> str:
         return "forbidden"
     elif status_code == status.HTTP_404_NOT_FOUND:
         return "not_found"
-<<<<<<< HEAD
     elif status_code == status.HTTP_422_UNPROCESSABLE_CONTENT:
-=======
-    elif status_code in (
-        status.HTTP_422_UNPROCESSABLE_CONTENT,
-        status.HTTP_422_UNPROCESSABLE_ENTITY,
-    ):
->>>>>>> 2550ae9 (fix(api): implement fallback error text, update readme, and resolve conflicts)
         return "validation_error"
     elif status_code == status.HTTP_429_TOO_MANY_REQUESTS:
         return "rate_limited"
@@ -64,11 +47,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     # `exc.detail` is always a message the app deliberately chose to raise with --
     # unhandled exceptions never reach this handler, so there's nothing to mask here.
     code = status_code_to_error_code(exc.status_code)
-<<<<<<< HEAD
     message = str(exc.detail)
-=======
-    message = "Internal server error" if exc.status_code >= 500 else str(exc.detail)
->>>>>>> 2550ae9 (fix(api): implement fallback error text, update readme, and resolve conflicts)
 
     envelope = ErrorEnvelope(
         error=ErrorDetail(
