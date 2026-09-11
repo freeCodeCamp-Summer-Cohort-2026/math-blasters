@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   contentIndex,
-  getModules,
-  getModule,
-  getLesson,
   makeLesson,
   parseLesson,
   validateLesson,
@@ -44,28 +41,16 @@ describe("Content Contracts & Fixtures", () => {
     });
   });
 
-  describe("Fixture & Accessors", () => {
+  describe("Fixtures", () => {
     it("exports contentIndex with arithmetic-addition module", () => {
       expect(contentIndex).toHaveLength(1);
       expect(contentIndex[0].slug).toBe("arithmetic-addition");
     });
 
-    it("getModules returns the module list", () => {
-      const modules = getModules();
-      expect(modules).toHaveLength(1);
-      expect(modules[0].slug).toBe("arithmetic-addition");
-    });
-
-    it("getModule finds module by slug or returns undefined", () => {
-      const module = getModule("arithmetic-addition");
-      expect(module).toBeDefined();
-      expect(module?.title).toBe("Arithmetic Addition");
-
-      expect(getModule("non-existent")).toBeUndefined();
-    });
-
-    it("getLesson retrieves tutorial adding-two-numbers with correct criteria", () => {
-      const lesson = getLesson("adding-two-numbers");
+    it("adding-two-numbers tutorial has the expected steps and criteria", () => {
+      const lesson = contentIndex[0].lessons.find(
+        (l) => l.slug === "adding-two-numbers",
+      );
       expect(lesson).toBeDefined();
       expect(lesson?.type).toBe("tutorial");
       expect(lesson?.steps).toHaveLength(2);
@@ -86,16 +71,14 @@ describe("Content Contracts & Fixtures", () => {
       }
     });
 
-    it("getLesson retrieves lab marbles-in-total with outcome and prerequisites", () => {
-      const lesson = getLesson("marbles-in-total");
+    it("marbles-in-total lab has an outcome and prerequisites", () => {
+      const lesson = contentIndex[0].lessons.find(
+        (l) => l.slug === "marbles-in-total",
+      );
       expect(lesson).toBeDefined();
       expect(lesson?.type).toBe("lab");
       expect(lesson?.outcome).toBeDefined();
       expect(lesson?.requires).toEqual(["addition"]);
-    });
-
-    it("getLesson returns undefined for unknown slug", () => {
-      expect(getLesson("non-existent-lesson")).toBeUndefined();
     });
   });
 

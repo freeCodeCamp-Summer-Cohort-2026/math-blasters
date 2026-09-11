@@ -85,7 +85,7 @@ export type LessonType = "tutorial" | "lab";
 export interface Lesson {
   slug: string;
   title: string;
-  type?: LessonType;
+  type: LessonType;
   description?: string;
   outcome?: string;
   requires?: string[];
