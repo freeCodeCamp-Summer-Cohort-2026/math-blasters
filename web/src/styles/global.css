@@ -293,6 +293,10 @@ a.btn {
   border-color: var(--accent);
 }
 
+.answer-field__input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
 .answer-field__input::-webkit-outer-spin-button,
 .answer-field__input::-webkit-inner-spin-button {
   appearance: none;

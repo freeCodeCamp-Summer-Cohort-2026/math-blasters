@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DemoProblem } from "../types";
 import { Link } from "react-router-dom";
+import { AnswerInput } from "../components/AnswerInput";
 import { api, type ApiError } from "../api/client";
 
 import { Button } from "../components/Button";
@@ -100,19 +101,20 @@ export function Homepage() {
           <p>{problem.prompt}</p>
           <p className="expression">{problem.expression}</p>
 
-          <label className="answer-field">
-            <span className="answer-field__label">Your answer</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              className="answer-field__input"
-              value={value}
-              onChange={(event) => {
-                setValue(event.target.value);
-                setResult(null);
-              }}
-            />
-          </label>
+          <AnswerInput
+            id="answer"
+            label="Your answer"
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+              setResult(null);
+            }}
+            onSubmit={check}
+            onReset={() => {
+              setValue("");
+              setResult(null);
+            }}
+          />
 
           <Button
             variant="primary"
