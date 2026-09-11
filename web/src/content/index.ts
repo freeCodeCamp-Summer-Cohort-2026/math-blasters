@@ -54,10 +54,11 @@ export function getLesson(slug: string): Lesson | undefined {
 // Signature-only Stubs (throw "not implemented")
 // ---------------------------------------------------------------------------
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /**
  * Parse raw lesson source into a Lesson domain object.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function parseLesson(_source: string, _path?: string): Lesson {
   throw new Error("not implemented");
 }
@@ -65,7 +66,6 @@ export function parseLesson(_source: string, _path?: string): Lesson {
 /**
  * Validate a Lesson domain object against schema rules.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function validateLesson(_lesson: Lesson, _path?: string): void {
   throw new Error("not implemented");
 }
@@ -73,7 +73,6 @@ export function validateLesson(_lesson: Lesson, _path?: string): void {
 /**
  * Check a step against a user submission.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function checkStep(_step: Step, _submission: unknown): StepResult {
   throw new Error("not implemented");
 }
@@ -81,10 +80,11 @@ export function checkStep(_step: Step, _submission: unknown): StepResult {
 /**
  * Check an individual criterion against a user submission.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function checkCriterion(
   _criterion: Criterion,
   _submission: unknown,
 ): CriterionResult {
   throw new Error("not implemented");
 }
+
+/* eslint-enable @typescript-eslint/no-unused-vars */
