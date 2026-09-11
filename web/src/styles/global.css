@@ -74,15 +74,6 @@ code {
   border-radius: var(--radius-sm);
 }
 
-.page {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: var(--space-3) var(--space-4) var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
 .muted {
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -119,10 +110,6 @@ code {
 
 .hero__title em {
   font-style: normal;
-  /* A full highlighter block, not a half-height sweep: the swatch is yellow in
-     both themes so the ink has to be dark in both, which means every glyph
-     needs to sit on the yellow. A partial sweep would leave the tops of the
-     letters as dark ink on a dark page. */
   background: var(--mango-300);
   color: #1f1a3d;
   padding: 0.02em 0.16em;
@@ -134,21 +121,6 @@ code {
 .hero__subtitle {
   color: var(--text-muted);
   max-width: 46ch;
-}
-
-/* ---------------------------------------------------------------- card --- */
-
-.card {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-  text-align: center;
 }
 
 .card__title {
