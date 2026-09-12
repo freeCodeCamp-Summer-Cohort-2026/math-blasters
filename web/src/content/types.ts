@@ -77,6 +77,25 @@ export interface AnswerStep {
 export type Step = ExplainStep | AnswerStep;
 
 // ---------------------------------------------------------------------------
+// Page facing accessors types
+// ---------------------------------------------------------------------------
+
+export interface PageAnswerStep {
+  type: "answer";
+  prompt: string;
+}
+
+export type PageStep = ExplainStep | PageAnswerStep;
+
+export type PageLesson = Omit<Lesson, "steps"> & {
+  steps: PageStep[];
+};
+
+export type PageModule = Omit<Module, "lessons"> & {
+  lessons: PageLesson[];
+};
+
+// ---------------------------------------------------------------------------
 // Lesson & Module Models
 // ---------------------------------------------------------------------------
 
