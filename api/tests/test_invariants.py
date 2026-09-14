@@ -1,7 +1,10 @@
 """Architectural invariant and API contract tests."""
 
 from fastapi import APIRouter
+from fastapi.testclient import TestClient
 from pydantic import BaseModel
+
+from app.main import create_app
 
 
 def test_answer_never_reaches_the_client(client):
@@ -56,7 +59,7 @@ def test_error_envelope_structure_for_404(client):
     assert data_404["error"]["details"] is None
 
 
-def test_validation_error_envelope_and_non_finite_numbers(client):
+def test_validation_error_envelope_and_non_finite_numbers():
     """422 Validation Error returns the envelope and sanitizes non-finite floats."""
 
     class DummyPayload(BaseModel):
@@ -68,19 +71,21 @@ def test_validation_error_envelope_and_non_finite_numbers(client):
     def _validate_endpoint(payload: DummyPayload):
         return {"count": payload.count}
 
-    client.app.include_router(test_router, prefix="/api")
+    isolated_app = create_app()
+    isolated_app.include_router(test_router)
 
-    resp_422 = client.post("/api/test-validation", json={"count": "banana"})
-    assert resp_422.status_code == 422
-    data_422 = resp_422.json()
-    assert data_422["error"]["code"] == "validation_error"
-    assert "details" in data_422["error"]
+    with TestClient(isolated_app) as test_client:
+        resp_422 = test_client.post("/test-validation", json={"count": "banana"})
+        assert resp_422.status_code == 422
+        data_422 = resp_422.json()
+        assert data_422["error"]["code"] == "validation_error"
+        assert "details" in data_422["error"]
 
-    for literal in ("NaN", "Infinity", "-Infinity"):
-        response = client.post(
-            "/api/test-validation",
-            content=f'{{"count": {literal}}}',
-            headers={"Content-Type": "application/json"},
-        )
-        assert response.status_code == 422
-        assert response.json()["error"]["details"][0]["input"] is None
+        for literal in ("NaN", "Infinity", "-Infinity"):
+            response = test_client.post(
+                "/test-validation",
+                content=f'{{"count": {literal}}}',
+                headers={"Content-Type": "application/json"},
+            )
+            assert response.status_code == 422
+            assert response.json()["error"]["details"][0]["input"] is None
