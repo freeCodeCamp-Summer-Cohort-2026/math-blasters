@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Card } from "../components/Card";
 import type { DemoProblem } from "../types";
 import { Link } from "react-router-dom";
 import { AnswerInput } from "../components/AnswerInput";
@@ -65,13 +66,12 @@ export function Homepage() {
   }
 
   return (
-    <section className="card">
+    <Card as="section" title="Setup check">
       {import.meta.env.DEV && (
         <Link to="/dev-only-feedback-styleguide" className="card__link">
           Styleguide
         </Link>
       )}
-      <h2 className="card__title">Setup check</h2>
       {error && (
         <ErrorState message={error} retry={loadProblem}>
           <p className="muted">
@@ -129,6 +129,6 @@ export function Homepage() {
           )}
         </>
       )}
-    </section>
+    </Card>
   );
 }
