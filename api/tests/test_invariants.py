@@ -46,7 +46,7 @@ def test_answer_never_reaches_the_client(client):
         methods = getattr(route, "methods", set())
         if not raw_path.startswith("/api"):
             continue
-        
+
         path = re.sub(r"\{[^}]+\}", "dummy", raw_path)
 
         for method in sorted(methods & standard_methods):
