@@ -1,5 +1,7 @@
 """Architectural invariant and API contract tests."""
 
+import re
+
 from fastapi import APIRouter
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
@@ -38,15 +40,23 @@ def test_answer_never_reaches_the_client(client):
                 f"OpenAPI schema '{schema_name}' mentions forbidden content field '{term}'."
             )
 
+    standard_methods = {"GET", "POST", "PUT", "PATCH", "DELETE"}
     for route in client.app.routes:
-        path = getattr(route, "path", "")
+        raw_path = getattr(route, "path", "")
         methods = getattr(route, "methods", set())
-        if path.startswith("/api") and "GET" in methods:
-            response = client.get(path)
-            for term in forbidden_terms:
-                assert term not in response.text.lower(), (
-                    f"GET {path} returned content containing forbidden term '{term}'."
-                )
+        if not raw_path.startswith("/api"):
+            continue
+        
+        path = re.sub(r"\{[^}]+\}", "dummy", raw_path)
+
+        for method in sorted(methods & standard_methods):
+            payloads = [{}] if method == "GET" else [{"json": {}}, {}]
+            for kwargs in payloads:
+                response = client.request(method, path, **kwargs)
+                for term in forbidden_terms:
+                    assert term not in response.text.lower(), (
+                        f"{method} {path} returned content containing forbidden term '{term}'."
+                    )
 
 
 def test_error_envelope_structure_for_404(client):
