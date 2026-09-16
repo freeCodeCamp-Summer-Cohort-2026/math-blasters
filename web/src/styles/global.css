@@ -642,3 +642,63 @@ a.btn {
     justify-content: flex-start;
   }
 }
+
+/* --- modules list --- */
+.module-card-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background-color: var(--surface);
+  text-align: center;
+  width: 100%;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.2s ease-in-out;
+}
+
+.module-card-link:hover {
+  background-color: var(--surface-sunken);
+  border-color: var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius-md);
+}
+
+.module-card-link:focus {
+  outline: 3px solid var(--sky-400);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+.module-card {
+  display: flex;
+  gap: var(--space-4);
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: end;
+  width: 100%;
+}
+
+.module-card-description {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  width: calc(70% - 1rem);
+  text-align: left;
+}
+
+.module-card-lessons {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--surface);
+  text-align: center;
+  width: 100%;
+}

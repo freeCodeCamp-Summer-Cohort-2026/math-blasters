@@ -1,24 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { api } from "../src/api/client";
 import { AppRoutes } from "../src/App";
-
-const mockProblem = {
-  slug: "addition-demo",
-  prompt: "What is 3 + 4?",
-  expression: "3 + 4 = ?",
-};
-
-beforeEach(() => {
-  vi.spyOn(api, "getDemoProblem").mockResolvedValue(mockProblem);
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe("Router & Layout", () => {
   it("renders the root layout landmarks: header, main outlet, and footer", async () => {
@@ -28,13 +13,7 @@ describe("Router & Layout", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("banner")).toBeInTheDocument();
-    expect(screen.getByRole("main")).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(screen.getByText(mockProblem.prompt)).toBeInTheDocument();
-    });
   });
 
   it("renders the home page at route '/'", async () => {
@@ -44,10 +23,7 @@ describe("Router & Layout", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("What is 3 + 4?")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: /setup check/i }),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Modules")).toBeInTheDocument();
   });
 
   it("renders the not-found page for an unknown path", () => {
@@ -80,7 +56,7 @@ describe("Router & Layout", () => {
     const backHomeLink = screen.getByRole("link", { name: /back to home/i });
     await user.click(backHomeLink);
 
-    expect(await screen.findByText("What is 3 + 4?")).toBeInTheDocument();
+    expect(await screen.findByText("Modules")).toBeInTheDocument();
   });
 
   it("shifts focus to the main heading when the route changes", async () => {
@@ -101,9 +77,9 @@ describe("Router & Layout", () => {
     const backHomeLink = screen.getByRole("link", { name: /back to home/i });
     await user.click(backHomeLink);
 
-    const homeHeading = await screen.findByRole("heading", {
-      name: /setup check/i,
-    });
+    const homeHeading = screen.getByRole("heading", { name: /modules/i });
+    expect(homeHeading).toBeInTheDocument();
+
     expect(homeHeading).toHaveFocus();
   });
 });

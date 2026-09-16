@@ -71,6 +71,28 @@ If you work in Docker, the same checks run as `docker compose exec api ...` and
 [Testing, linting and type checking](./README.md#testing-linting-and-type-checking)
 in the README.
 
+## Adding a lesson
+
+A lesson is a markdown file, not a database row — no migration, no seeder.
+
+1. New module: add `content/<module-slug>/module.yaml` with `slug`, `title`,
+   `summary` and a `position` (modules are ordered by it). Skip this if
+   you're adding a lesson to an existing module.
+2. Add the lesson at `content/<module-slug>/<NN>-<lesson-slug>.md`, where
+   `NN` is a two-digit prefix that orders the lesson within its module
+   (`01-`, `02-`, ...).
+3. Give it frontmatter — `slug`, `kind` (`tutorial` or `lab`), `title`,
+   `teaches` — then the body. See
+   `content/arithmetic-addition/01-adding-two-numbers.md` for a worked
+   example.
+4. From `web/`, run `npm run content:check`. It parses every file under
+   `content/` and fails on the first malformed one, printing the file and
+   the reason. CI runs the same check, so a broken lesson can't land
+   quietly.
+
+No code change and no review of `DemoProblem` needed — open the PR like any
+other.
+
 ## What we look for in review
 
 - **Tests.** New behaviour needs a test. Bug fixes need a test that fails
