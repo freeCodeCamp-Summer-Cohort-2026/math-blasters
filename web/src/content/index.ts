@@ -4,6 +4,8 @@ import type {
   CriterionResult,
   Lesson,
   Module,
+  PageLesson,
+  PageModule,
   Step,
   StepResult,
 } from "./types";
@@ -26,28 +28,56 @@ export const contentIndex: Module[] = [arithmeticAdditionModule];
 /**
  * Retrieve all available modules.
  */
-export function getModules(): Module[] {
-  return contentIndex;
+export function getModules(): PageModule[] {
+  return contentIndex.map(toPageModule);
 }
 
 /**
  * Retrieve a module by its slug.
  */
-export function getModule(slug: string): Module | undefined {
-  return contentIndex.find((module) => module.slug === slug);
+export function getModule(slug: string): PageModule | undefined {
+  const module = contentIndex.find((module) => module.slug === slug);
+
+  return module ? toPageModule(module) : undefined;
 }
 
 /**
  * Retrieve a lesson by its slug across all modules.
  */
-export function getLesson(slug: string): Lesson | undefined {
+export function getLesson(slug: string): PageLesson | undefined {
   for (const module of contentIndex) {
-    const lesson = module.lessons.find((l) => l.slug === slug);
+    const lesson = module.lessons.find((lesson) => lesson.slug === slug);
+
     if (lesson) {
-      return lesson;
+      return toPageLesson(lesson);
     }
   }
+
   return undefined;
+}
+
+function toPageLesson(lesson: Lesson): PageLesson {
+  const steps = lesson.steps.map((step) => {
+    if (step.type === "answer") {
+      const { prompt, type } = step;
+
+      return {prompt, type};
+    }
+
+    return step;
+  });
+
+  return {
+    ...lesson,
+    steps,
+  };
+}
+
+function toPageModule(module: Module): PageModule {
+  return {
+    ...module,
+    lessons: module.lessons.map(toPageLesson),
+  };
 }
 
 // ---------------------------------------------------------------------------
