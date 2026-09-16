@@ -20,7 +20,6 @@ describe("LessonStepper Component", () => {
   it("renders the first step initially with Back disabled and Next enabled", () => {
     render(<LessonStepper lesson={mockLesson} />);
 
-    expect(screen.getAllByText(/step 1 of 3/i)[0]).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /step 1 of 3/i })).toBeInTheDocument();
     expect(screen.getByText("Step kind: explain")).toBeInTheDocument();
 
@@ -43,7 +42,7 @@ describe("LessonStepper Component", () => {
     const nextBtn = screen.getByRole("button", { name: /next/i });
     await user.click(nextBtn);
 
-    expect(screen.getAllByText(/step 2 of 3/i)[0]).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toBeInTheDocument();
     expect(screen.getByText("Step kind: answer")).toBeInTheDocument();
 
     const progressBar = screen.getByRole("progressbar");
@@ -65,14 +64,14 @@ describe("LessonStepper Component", () => {
     await user.click(nextBtn); // Step 2
     await user.click(nextBtn); // Step 3 (final)
 
-    expect(screen.getAllByText(/step 3 of 3/i)[0]).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /step 3 of 3/i })).toBeInTheDocument();
     expect(nextBtn).toBeDisabled();
 
     const backBtn = screen.getByRole("button", { name: /back/i });
     expect(backBtn).toBeEnabled();
 
     await user.click(backBtn); // Step 2
-    expect(screen.getAllByText(/step 2 of 3/i)[0]).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toBeInTheDocument();
     expect(nextBtn).toBeEnabled();
   });
 

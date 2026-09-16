@@ -12,23 +12,15 @@
   width: 100%;
 }
 
-.meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.counter {
-  font-size: 0.875rem;
+.heading {
+  font-size: 1.5rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  margin: 0;
+  margin: var(--space-2) 0 0;
+  color: var(--text);
   outline: none;
 }
 
-.counter:focus-visible {
+.heading:focus-visible {
   outline: 3px solid var(--sky-400);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
