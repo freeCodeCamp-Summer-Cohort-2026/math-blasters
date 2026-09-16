@@ -510,7 +510,7 @@ a.btn {
 
 .module-page__description {
   color: var(--text-muted);
-  max-width: 60ch;
+  align-self: stretch;
 }
 
 /* --- the lesson list --- */
@@ -585,7 +585,6 @@ a.btn {
   grid-area: body;
   color: var(--text-muted);
   font-size: 0.9rem;
-  max-width: 60ch;
 }
 
 .lesson-card__marks {

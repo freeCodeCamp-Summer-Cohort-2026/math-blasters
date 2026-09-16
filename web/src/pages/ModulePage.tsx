@@ -45,7 +45,7 @@ export function ModulePage() {
       {/* An ordered list: lesson order is meaning, not styling. */}
       <ol className="lesson-list">
         {module.lessons.map((lesson, index) => (
-          <li key={lesson.slug} className="lesson-list__item">
+          <li key={lesson.slug}>
             <LessonCard lesson={lesson} position={index + 1} />
           </li>
         ))}
