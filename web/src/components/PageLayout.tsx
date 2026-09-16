@@ -1,6 +1,9 @@
-import type { ReactNode } from "react";
+import type { ElementType, ReactNode } from "react";
 
 export interface PageLayoutProps {
+  // The element the content region renders as, `main` by default.
+  // Pages nested inside the root `Layout` pass `as="section"` to keep one `main`.
+  as?: ElementType;
   heading?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
@@ -8,6 +11,7 @@ export interface PageLayoutProps {
 }
 
 export function PageLayout({
+  as: Content = "main",
   heading,
   footer,
   children,
@@ -16,7 +20,7 @@ export function PageLayout({
   return (
     <div className={`page-layout ${className}`.trim()}>
       {heading && <header className="page-header">{heading}</header>}
-      <main className="page-content">{children}</main>
+      <Content className="page-content">{children}</Content>
       {footer}
     </div>
   );

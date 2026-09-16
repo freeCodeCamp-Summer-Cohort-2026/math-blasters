@@ -40,6 +40,56 @@ main [tabindex="-1"]:focus {
   outline: none;
 }
 
+/* Page shell primitive for PageLayout.tsx. */
+.page-layout {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.page-header {
+  margin-bottom: var(--space-5);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------ card --- */
+
+/* Card primitive for Card.tsx. */
+.card {
+  background-color: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+.card-title {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+  font-weight: 800;
+}
+
+/* The default: a small label introducing the card's content. */
+.card-title--eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The card's own headline, when the card is a thing rather than a panel. */
+.card-title--heading {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
 /* ---------------------------------------------------------------- footer --- */
 
 .footer {
@@ -420,4 +470,176 @@ a.btn {
 
 .error-state__actions {
   margin-top: var(--space-2);
+}
+
+/* --------------------------------------------------------- module page --- */
+
+/* Nested in the root layout's shell, so it carries no page padding of its own. */
+.module-page.page-layout {
+  max-width: none;
+  padding: 0;
+}
+
+.module-page .page-header {
+  margin-bottom: var(--space-5);
+}
+
+.module-page__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.module-page__back {
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.875rem;
+  text-decoration: none;
+  padding: var(--space-1) 0;
+}
+
+.module-page__back:hover {
+  text-decoration: underline;
+}
+
+.module-page__title {
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 800;
+}
+
+.module-page__description {
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+/* --- the lesson list --- */
+
+.lesson-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.lesson-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-lg);
+}
+
+.lesson-card-link:focus-visible {
+  outline: 3px solid var(--sky-400);
+  outline-offset: 3px;
+}
+
+/* The base .card is a centred column; a lesson row reads left-to-right. */
+.lesson-card.card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "position title marks"
+    "position body  body";
+  align-items: center;
+  text-align: left;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4);
+  transition:
+    transform var(--duration-fast) var(--ease-spring),
+    box-shadow var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.lesson-card-link:hover .lesson-card.card {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Type scale comes from titleVariant="heading"; only the placement is local. */
+.lesson-card .card-title {
+  grid-area: title;
+  margin: 0;
+}
+
+.lesson-card__position {
+  grid-area: position;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.lesson-card__description {
+  grid-area: body;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  max-width: 60ch;
+}
+
+.lesson-card__marks {
+  grid-area: marks;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* --- the tutorial / lab badge --- */
+
+.lesson-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 2px solid transparent;
+}
+
+.lesson-badge__glyph {
+  flex: none;
+}
+
+/* Colour is the last signal: text, glyph and outline differ too. */
+.lesson-badge--tutorial {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  border-radius: var(--radius-pill);
+}
+
+.lesson-badge--lab {
+  background: var(--success-soft);
+  border-color: var(--success);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  border-style: dashed;
+}
+
+@media (max-width: 30rem) {
+  .lesson-card.card {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "position title"
+      "body     body"
+      "marks    marks";
+  }
+
+  .lesson-card__marks {
+    justify-content: flex-start;
+  }
 }
