@@ -25,6 +25,13 @@
   color: var(--text-muted);
   text-transform: uppercase;
   margin: 0;
+  outline: none;
+}
+
+.counter:focus-visible {
+  outline: 3px solid var(--sky-400);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .progressTrack {
@@ -47,20 +54,6 @@
   .progressFill {
     transition: none;
   }
-}
-
-.heading {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: var(--space-2) 0 0;
-  color: var(--text);
-  outline: none;
-}
-
-.heading:focus-visible {
-  outline: 3px solid var(--sky-400);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
 .stepContainer {

@@ -45,7 +45,9 @@ export function LessonStepper({ lesson }: LessonStepperProps) {
 
       <div className={styles.header}>
         <div className={styles.meta}>
-          <p className={styles.counter}>{progressText}</p>
+          <h2 ref={headingRef} tabIndex={-1} className={styles.counter}>
+            {progressText}
+          </h2>
         </div>
 
         <div
@@ -62,10 +64,6 @@ export function LessonStepper({ lesson }: LessonStepperProps) {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-
-        <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
-          {progressText}
-        </h2>
       </div>
 
       <div className={styles.stepContainer}>
