@@ -480,10 +480,6 @@ a.btn {
   padding: 0;
 }
 
-.module-page .page-header {
-  margin-bottom: var(--space-5);
-}
-
 .module-page__heading {
   display: flex;
   flex-direction: column;

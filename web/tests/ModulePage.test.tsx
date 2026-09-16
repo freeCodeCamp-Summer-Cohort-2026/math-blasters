@@ -102,9 +102,7 @@ describe("ModulePage", () => {
     expect(back).toHaveAttribute("href", "/");
 
     await user.click(back);
-    expect(
-      screen.queryByRole("heading", { level: 2, name: module.title }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("keeps the lesson links keyboard reachable in document order", async () => {
