@@ -16,8 +16,7 @@ body:
       label: Steps to reproduce
       placeholder: |
         1. Run `docker compose up`
-        2. Seed with `docker compose exec api python -m app.seed`
-        3. Open the Addition lab and ...
+        2. Open the Addition lab and ...
     validations:
       required: true
 
