@@ -81,7 +81,7 @@ A lesson is a markdown file, not a database row — no migration, no seeder.
 2. Add the lesson at `content/<module-slug>/<NN>-<lesson-slug>.md`, where
    `NN` is a two-digit prefix that orders the lesson within its module
    (`01-`, `02-`, ...).
-3. Give it frontmatter — `slug`, `kind` (`tutorial` or `lab`), `title`,
+3. Give it frontmatter — `slug`, `type` (`tutorial` or `lab`), `title`,
    `teaches` — then the body. See
    `content/arithmetic-addition/01-adding-two-numbers.md` for a worked
    example.

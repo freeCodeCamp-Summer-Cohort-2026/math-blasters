@@ -193,13 +193,20 @@ describe("parseCriteria", () => {
   });
   it("rejects an approx criterion with a malformed expected value", () => {
     const yaml = `- check: approx\n  expected: "not an object"\n  reason_code: invalid_expected`;
-    
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+  });
+  it("rejects an approx criterion with non-numeric value or epsilon", () => {
+    const yaml = `- check: approx\n  expected:\n    value: "3.14"\n    epsilon: 0.01\n  reason_code: invalid_expected`;
+
     expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
   });
   it("rejects an unknown name", () => {
     const yaml = `- check: unknown\n  expected: 42\n  reason_code: invalid_check`;
-    
-    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow(
+      "Unknown check \"unknown\" at lesson.md step 1 index 0. Valid checks are: equals, approx, in_range, equals_any, set_equals, equivalent.",
+    );
   });
   it("parses min and max for in_range criterion", () => {
     const yaml = `- check: in_range\n  expected:\n    min: 1\n    max: 10\n  reason_code: out_of_bounds`;
@@ -215,7 +222,12 @@ describe("parseCriteria", () => {
   });
   it("rejects an in_range criterion with a malformed expected value", () => {
     const yaml = `- check: in_range\n  expected: "not an object"\n  reason_code: invalid_expected`;
-    
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+  });
+  it("rejects an in_range criterion where min is greater than max", () => {
+    const yaml = `- check: in_range\n  expected:\n    min: 10\n    max: 1\n  reason_code: out_of_bounds`;
+
     expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
   });
   it("parses an equals_any criterion with numbers", () => {
@@ -229,7 +241,12 @@ describe("parseCriteria", () => {
   });
   it("rejects an equals_any criterion with a malformed expected value", () => {
     const yaml = `- check: equals_any\n  expected: "not an array"\n  reason_code: invalid_expected`;
-    
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+  });
+  it("rejects an equals_any criterion with an empty array", () => {
+    const yaml = `- check: equals_any\n  expected: []\n  reason_code: not_in_list`;
+
     expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
   });
   it("parses an equals_any criterion with strings", () => {
@@ -252,7 +269,12 @@ describe("parseCriteria", () => {
   });
   it("rejects a set_equals criterion with a malformed expected value", () => {
     const yaml = `- check: set_equals\n  expected: "not an array"\n  reason_code: invalid_expected`;
-    
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+  });
+  it("rejects a set_equals criterion with an empty array", () => {
+    const yaml = `- check: set_equals\n  expected: []\n  reason_code: sets_not_equal`;
+
     expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
   });
   it("parses a set_equals criterion with strings", () => {
@@ -275,7 +297,17 @@ describe("parseCriteria", () => {
   });
   it("rejects an equivalent criterion with a malformed expected value", () => {
     const yaml = `- check: equivalent\n  expected: 42\n  reason_code: invalid_expected`;
-    
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+  });
+  it("rejects an equivalent criterion whose expression doesn't parse", () => {
+    const yaml = `- check: equivalent\n  expected: "3 + "\n  reason_code: not_equivalent`;
+
+    expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
+  });
+  it("rejects an empty criteria list", () => {
+    const yaml = `[]`;
+
     expect(() => parseCriteria(yaml, "lesson.md", 1)).toThrow();
   });
   it("rejects a criterion with an empty reason_code", () => {

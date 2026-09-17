@@ -1,6 +1,6 @@
 ---
 slug: adding-two-numbers
-kind: tutorial
+type: tutorial
 title: Adding Two Numbers
 teaches: [addition, counting-on]
 ---

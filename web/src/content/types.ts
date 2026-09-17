@@ -107,6 +107,7 @@ export interface Lesson {
   type: LessonType;
   description?: string;
   outcome?: string;
+  teaches?: string[];
   requires?: string[];
   steps: Step[];
 }

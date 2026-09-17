@@ -1,6 +1,6 @@
 ---
 slug: marbles-in-total
-kind: lab
+type: lab
 title: Marbles in Total
 outcome: Combine groups of marbles to find total sums in applied scenarios.
 requires: [addition]
