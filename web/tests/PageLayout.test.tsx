@@ -29,4 +29,26 @@ describe("PageLayout Component", () => {
     expect(main).not.toContainElement(footer);
     expect(screen.getByRole("contentinfo")).toBe(footer.closest("footer"));
   });
+
+  it("renders the content region as a second main landmark by default", () => {
+    render(
+      <PageLayout>
+        <p>Main page content</p>
+      </PageLayout>,
+    );
+
+    expect(screen.getByRole("main")).toBeInTheDocument();
+  });
+
+  it("renders the content region as the given element instead", () => {
+    // Nested pages pass as="section" so the document keeps one main landmark.
+    const { container } = render(
+      <PageLayout as="section">
+        <p>Main page content</p>
+      </PageLayout>,
+    );
+
+    expect(screen.queryByRole("main")).not.toBeInTheDocument();
+    expect(container.querySelector("section.page-content")).toBeInTheDocument();
+  });
 });

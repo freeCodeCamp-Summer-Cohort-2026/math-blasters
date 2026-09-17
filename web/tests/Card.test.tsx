@@ -37,4 +37,37 @@ describe("Card Component", () => {
     const region = screen.getByRole("region", { name: "Setup check" });
     expect(region.tagName).toBe("SECTION");
   });
+
+  it("styles the title as an eyebrow by default", () => {
+    render(<Card title="Setup check">Body</Card>);
+
+    expect(screen.getByRole("heading", { name: "Setup check" })).toHaveClass(
+      "card-title",
+      "card-title--eyebrow",
+    );
+  });
+
+  it("styles the title as a headline when asked", () => {
+    render(
+      <Card title="Adding Two Numbers" titleVariant="heading">
+        Body
+      </Card>,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Adding Two Numbers" }),
+    ).toHaveClass("card-title", "card-title--heading");
+  });
+
+  it("keeps the heading level and the type scale independent", () => {
+    // An h3 can be the loudest thing on a card; an h2 can be a quiet label.
+    render(
+      <Card title="Loud but low" titleLevel="h3" titleVariant="heading">
+        Body
+      </Card>,
+    );
+
+    const heading = screen.getByRole("heading", { level: 3 });
+    expect(heading).toHaveClass("card-title--heading");
+  });
 });
