@@ -20,7 +20,9 @@
   outline: none;
 }
 
-.heading:focus-visible {
+/* Focused programmatically on every step change, so :focus rather than
+   :focus-visible - the latter does not match when Next was clicked. */
+.heading:focus {
   outline: 3px solid var(--sky-400);
   outline-offset: 2px;
   border-radius: var(--radius-sm);

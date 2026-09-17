@@ -25,7 +25,7 @@ describe("LessonStepper Component", () => {
 
     const progressBar = screen.getByRole("progressbar");
     expect(progressBar).toHaveAttribute("aria-valuenow", "1");
-    expect(progressBar).toHaveAttribute("aria-valuemin", "1");
+    expect(progressBar).toHaveAttribute("aria-valuemin", "0");
     expect(progressBar).toHaveAttribute("aria-valuemax", "3");
     expect(progressBar).toHaveAttribute("aria-valuetext", "Step 1 of 3");
 
@@ -75,17 +75,48 @@ describe("LessonStepper Component", () => {
     expect(nextBtn).toBeEnabled();
   });
 
-  it("announces step changes in an aria-live polite region", async () => {
+  it("announces a step change by moving focus, without a duplicate live region", async () => {
     const user = userEvent.setup();
     render(<LessonStepper lesson={mockLesson} />);
 
-    const liveRegion = screen.getByRole("status");
-    expect(liveRegion).toHaveTextContent("Step 1 of 3: explain step");
+    // Focus is not stolen on first paint.
+    expect(screen.getByRole("heading", { name: /step 1 of 3/i })).not.toHaveFocus();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
 
-    const nextBtn = screen.getByRole("button", { name: /next/i });
-    await user.click(nextBtn);
+    await user.click(screen.getByRole("button", { name: /next/i }));
 
-    expect(liveRegion).toHaveTextContent("Step 2 of 3: answer step");
+    // The focused heading is what a screen reader announces, and it is
+    // announced once because nothing else repeats its text.
+    expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("sits the step heading below the lesson title in the heading order", () => {
+    render(<LessonStepper lesson={mockLesson} />);
+
+    // Card renders the lesson title as an h2, so the step heading is an h3.
+    expect(screen.getByRole("heading", { level: 3, name: /step 1 of 3/i })).toBeInTheDocument();
+  });
+
+  it("can be driven through a whole lesson with the keyboard alone", async () => {
+    const user = userEvent.setup();
+    render(<LessonStepper lesson={mockLesson} />);
+
+    // Back is disabled on step 1, so the first tab stop is Next.
+    await user.tab();
+    expect(screen.getByRole("button", { name: /next/i })).toHaveFocus();
+
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
+
+    // Focus is on the heading, so tab forward to reach the controls again.
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /next/i })).toHaveFocus();
+
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("heading", { name: /step 3 of 3/i })).toHaveFocus();
+    expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
   });
 
   it("has no accessibility violations across steps (axe check)", async () => {

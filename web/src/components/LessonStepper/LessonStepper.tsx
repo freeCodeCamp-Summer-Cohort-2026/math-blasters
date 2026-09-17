@@ -38,16 +38,11 @@ export function LessonStepper({ lesson }: LessonStepperProps) {
 
   return (
     <div className={styles.stepper}>
-      {/* Polite screen reader live region */}
-      <div role="status" aria-live="polite" className="sr-only">
-        {`${progressText}: ${currentStep?.type ?? "step"} step`}
-      </div>
-
       <div className={styles.header}>
         <div
           role="progressbar"
           aria-valuenow={currentStepNumber}
-          aria-valuemin={1}
+          aria-valuemin={0}
           aria-valuemax={totalSteps}
           aria-valuetext={progressText}
           aria-label="Lesson progress"
@@ -59,9 +54,14 @@ export function LessonStepper({ lesson }: LessonStepperProps) {
           />
         </div>
 
-        <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
+        {/*
+          Sits under the lesson title, which Card renders as an h2.
+          Moving focus here is what announces a step change, so there is
+          no live region duplicating this text.
+        */}
+        <h3 ref={headingRef} tabIndex={-1} className={styles.heading}>
           {progressText}
-        </h2>
+        </h3>
       </div>
 
       <div className={styles.stepContainer}>
@@ -79,7 +79,7 @@ export function LessonStepper({ lesson }: LessonStepperProps) {
         <Button
           variant="primary"
           onClick={handleNext}
-          disabled={currentStepIndex === totalSteps - 1}
+          disabled={totalSteps === 0 || currentStepIndex >= totalSteps - 1}
         >
           Next
         </Button>
