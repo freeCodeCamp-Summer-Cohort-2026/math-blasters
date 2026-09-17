@@ -48,10 +48,16 @@ How many marbles do you have in total?
 \`\`\`
 `;
 
-const minimalTutorial = (frontmatterExtra = "", body = "--explain--\n\nSome explanation.\n") =>
+const minimalTutorial = (
+  frontmatterExtra = "",
+  body = "--explain--\n\nSome explanation.\n",
+) =>
   `---\nslug: sample-lesson\ntype: tutorial\ntitle: Sample Lesson\n${frontmatterExtra}---\n\n${body}`;
 
-const minimalLab = (frontmatterExtra = "", body = "--explain--\n\nSome explanation.\n") =>
+const minimalLab = (
+  frontmatterExtra = "",
+  body = "--explain--\n\nSome explanation.\n",
+) =>
   `---\nslug: sample-lesson\ntype: lab\ntitle: Sample Lesson\n${frontmatterExtra}---\n\n${body}`;
 
 const PATH = "content/sample-module/01-sample-lesson.md";
@@ -131,7 +137,9 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   it("rejects invalid YAML in the frontmatter", () => {
     const source = "---\nslug: [unterminated\n---\n\n--explain--\n\nHello.\n";
 
-    expect(() => parseLesson(source, PATH)).toThrow(`${PATH}: frontmatter is not valid YAML`);
+    expect(() => parseLesson(source, PATH)).toThrow(
+      `${PATH}: frontmatter is not valid YAML`,
+    );
   });
 
   it("rejects frontmatter that isn't a mapping", () => {
@@ -143,7 +151,8 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   });
 
   it("rejects a missing slug", () => {
-    const source = "---\ntype: tutorial\ntitle: Sample Lesson\n---\n\n--explain--\n\nHello.\n";
+    const source =
+      "---\ntype: tutorial\ntitle: Sample Lesson\n---\n\n--explain--\n\nHello.\n";
 
     expect(() => parseLesson(source, PATH)).toThrow(
       `${PATH}: the "slug" field is required and must be a non-empty string.`,
@@ -151,7 +160,8 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   });
 
   it("rejects a missing title", () => {
-    const source = "---\nslug: sample-lesson\ntype: tutorial\n---\n\n--explain--\n\nHello.\n";
+    const source =
+      "---\nslug: sample-lesson\ntype: tutorial\n---\n\n--explain--\n\nHello.\n";
 
     expect(() => parseLesson(source, PATH)).toThrow(
       `${PATH}: the "title" field is required and must be a non-empty string.`,
@@ -170,7 +180,9 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   it("rejects a slug that doesn't match the filename", () => {
     const source = minimalTutorial();
 
-    expect(() => parseLesson(source, "content/sample-module/01-different-slug.md")).toThrow(
+    expect(() =>
+      parseLesson(source, "content/sample-module/01-different-slug.md"),
+    ).toThrow(
       'the "slug" field ("sample-lesson") must match the filename ("different-slug")',
     );
   });
@@ -178,13 +190,26 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   it("rejects a path that doesn't look like a lesson file", () => {
     const source = minimalTutorial();
 
-    expect(() => parseLesson(source, "content/sample-module/sample-lesson")).toThrow(
-      "filename must look like",
+    expect(() =>
+      parseLesson(source, "content/sample-module/sample-lesson"),
+    ).toThrow("filename must look like");
+  });
+
+  it("rejects a filename with an extra numeric segment via the slug mismatch it produces", () => {
+    const source = minimalTutorial();
+
+    expect(() =>
+      parseLesson(source, "content/sample-module/01-02-sample-lesson.md"),
+    ).toThrow(
+      'the "slug" field ("sample-lesson") must match the filename ("02-sample-lesson")',
     );
   });
 
   it("rejects content before the first step marker", () => {
-    const source = minimalTutorial("", "A stray paragraph.\n\n--explain--\n\nHello.\n");
+    const source = minimalTutorial(
+      "",
+      "A stray paragraph.\n\n--explain--\n\nHello.\n",
+    );
 
     expect(() => parseLesson(source, PATH)).toThrow(
       `${PATH}: content before the first "--explain--" marker is not allowed.`,
@@ -194,13 +219,17 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   it("rejects a lesson with no steps at all", () => {
     const source = minimalTutorial("", "Just a paragraph, no markers.\n");
 
-    expect(() => parseLesson(source, PATH)).toThrow(`${PATH}: a lesson must have at least one step`);
+    expect(() => parseLesson(source, PATH)).toThrow(
+      `${PATH}: a lesson must have at least one step`,
+    );
   });
 
   it("rejects an empty explain step", () => {
     const source = minimalTutorial("", "--explain--\n\n");
 
-    expect(() => parseLesson(source, PATH)).toThrow(`${PATH}: step 1 ("explain") has no content.`);
+    expect(() => parseLesson(source, PATH)).toThrow(
+      `${PATH}: step 1 ("explain") has no content.`,
+    );
   });
 
   it("rejects an answer step with no fenced yaml block", () => {
@@ -228,7 +257,9 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
       "--answer--\n\n```yaml\n- check: equals\n  expected: 2\n  reason_code: wrong\n```\n",
     );
 
-    expect(() => parseLesson(source, PATH)).toThrow(`${PATH}: step 1 ("answer") has no prompt.`);
+    expect(() => parseLesson(source, PATH)).toThrow(
+      `${PATH}: step 1 ("answer") has no prompt.`,
+    );
   });
 
   it("rejects an answer step with content after the yaml block", () => {
@@ -251,7 +282,9 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
   });
 
   it("rejects a requires list that isn't a non-empty array of strings", () => {
-    const source = minimalLab("requires: [addition, 42]\noutcome: Do the thing.\n");
+    const source = minimalLab(
+      "requires: [addition, 42]\noutcome: Do the thing.\n",
+    );
 
     expect(() => parseLesson(source, PATH)).toThrow(
       `${PATH}: the "requires" field must be a non-empty list of strings.`,

@@ -6,7 +6,7 @@ import type { AnswerStep, ExplainStep, Lesson, LessonType, Step } from "./types"
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n?/;
 const STEP_MARKER_PATTERN = /^--(explain|answer)--[ \t]*$/gm;
 const YAML_FENCE_PATTERN = /```yaml\r?\n([\s\S]*?)\r?\n```/g;
-const FILENAME_PATTERN = /^(?:\d+-)?(.+)\.md$/;
+const FILENAME_PATTERN = /^(?:\d{2}-)?(.+)\.md$/;
 const LESSON_TYPES: LessonType[] = ["tutorial", "lab"];
 
 /**
