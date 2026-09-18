@@ -11,6 +11,7 @@ import {
   getModule,
   getLesson,
   getModules,
+  getModuleForLesson,
 } from "../src/content";
 import {parseCriteria} from "../src/content/criteria";
 import { expectNoCriteria } from "./helpers/accessors";
@@ -139,6 +140,17 @@ describe("content accessors", () => {
 
     it("returns undefined for an unknown lesson slug", () => {
         expect(getLesson("does-not-exist")).toBeUndefined();
+    });
+
+    it("returns the slug of the module a lesson belongs to", () => {
+        const module = contentIndex[0];
+        const lesson = module.lessons[0];
+
+        expect(getModuleForLesson(lesson.slug)).toBe(module.slug);
+    });
+
+    it("returns undefined for an unknown lesson slug from getModuleForLesson", () => {
+        expect(getModuleForLesson("does-not-exist")).toBeUndefined();
     });
 
     it("does not expose criteria from getModules", () => {
