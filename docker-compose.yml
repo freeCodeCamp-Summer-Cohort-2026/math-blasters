@@ -51,7 +51,13 @@ services:
     volumes:
       - ./web:/app
       - /app/node_modules
-    command: npm run dev -- --host 0.0.0.0
+      # `generate-manifest.ts` resolves `content/` two levels up from its own
+      # file (`web/scripts/../../content`), which inside the container lands
+      # on `/content` since only `web/` is mounted at `/app`.
+      - ./content:/content
+    # Anonymous node_modules volume survives rebuilds, so reinstall on start
+    # or a new dependency (e.g. tsx) stays missing until someone installs it by hand.
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
 
 volumes:
   db_data:

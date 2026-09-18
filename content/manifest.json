@@ -1,0 +1,20 @@
+{
+  "modules": [
+    {
+      "slug": "arithmetic-addition",
+      "title": "Arithmetic Addition",
+      "lessons": [
+        {
+          "slug": "adding-two-numbers",
+          "kind": "tutorial",
+          "title": "Adding Two Numbers"
+        },
+        {
+          "slug": "marbles-in-total",
+          "kind": "lab",
+          "title": "Marbles in Total"
+        }
+      ]
+    }
+  ]
+}
