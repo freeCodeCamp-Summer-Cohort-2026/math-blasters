@@ -51,6 +51,10 @@ services:
     volumes:
       - ./web:/app
       - /app/node_modules
+      # `generate-manifest.ts` resolves `content/` two levels up from its own
+      # file (`web/scripts/../../content`), which inside the container lands
+      # on `/content` since only `web/` is mounted at `/app`.
+      - ./content:/content
     command: npm run dev -- --host 0.0.0.0
 
 volumes:
