@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -133,7 +133,8 @@ describe("LessonStepper Component", () => {
 
     await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "2");
     await user.click(screen.getByRole("button", { name: /submit/i }));
-    expect(screen.getByRole("spinbutton", { name: /your answer/i })).toBeDisabled();
+    // Submitting must not leave the step stuck: it recovers once the (stubbed) check settles.
+    await waitFor(() => expect(screen.getByRole("spinbutton", { name: /your answer/i })).toBeEnabled());
 
     await user.click(screen.getByRole("button", { name: /next/i })); // step 3, explain
     await user.click(screen.getByRole("button", { name: /back/i })); // step 2 again

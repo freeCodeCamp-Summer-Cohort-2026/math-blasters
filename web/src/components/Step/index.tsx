@@ -19,7 +19,12 @@ export function Step({ step }: StepProps) {
     <AnswerStep
       step={step}
       status={status}
-      onSubmit={() => setStatus("checking")}
+      onSubmit={() => {
+        setStatus("checking");
+        // No real checker until useLesson (MB-18) merges; unlock the step
+        // instead of leaving it stuck on "checking" with no way to retry.
+        setTimeout(() => setStatus("not_yet"), 0);
+      }}
     />
   );
 }
