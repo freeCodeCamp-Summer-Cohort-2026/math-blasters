@@ -89,6 +89,10 @@ A lesson is a markdown file, not a database row — no migration, no seeder.
    `content/` and fails on the first malformed one, printing the file and
    the reason. CI runs the same check, so a broken lesson can't land
    quietly.
+5. From `web/`, run `npm run content:manifest` to regenerate
+   `content/manifest.json` and commit the result. It's the API's only record
+   of which slugs are real, so CI fails (`npm run content:manifest -- --check`)
+   if a lesson lands without a matching manifest entry.
 
 No code change and no review of `DemoProblem` needed — open the PR like any
 other.

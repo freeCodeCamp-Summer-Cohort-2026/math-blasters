@@ -97,6 +97,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check content manifest
+        run: npm run content:manifest -- --check
+
       - name: Test
         run: npm test
 
