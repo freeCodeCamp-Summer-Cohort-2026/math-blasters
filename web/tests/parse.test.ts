@@ -48,16 +48,13 @@ How many marbles do you have in total?
 \`\`\`
 `;
 
-const minimalTutorial = (
-  frontmatterExtra = "",
-  body = "--explain--\n\nSome explanation.\n",
-) =>
+const MINIMAL_ANSWERED_BODY =
+  "--explain--\n\nSome explanation.\n\n--answer--\n\nWhat is 1 + 1?\n\n```yaml\n- check: equals\n  expected: 2\n  reason_code: wrong\n```\n";
+
+const minimalTutorial = (frontmatterExtra = "", body = MINIMAL_ANSWERED_BODY) =>
   `---\nslug: sample-lesson\ntype: tutorial\ntitle: Sample Lesson\n${frontmatterExtra}---\n\n${body}`;
 
-const minimalLab = (
-  frontmatterExtra = "",
-  body = "--explain--\n\nSome explanation.\n",
-) =>
+const minimalLab = (frontmatterExtra = "", body = MINIMAL_ANSWERED_BODY) =>
   `---\nslug: sample-lesson\ntype: lab\ntitle: Sample Lesson\n${frontmatterExtra}---\n\n${body}`;
 
 const PATH = "content/sample-module/01-sample-lesson.md";
@@ -221,6 +218,17 @@ describe("parseLesson: frontmatter and structural rejection rules", () => {
 
     expect(() => parseLesson(source, PATH)).toThrow(
       `${PATH}: a lesson must have at least one step`,
+    );
+  });
+
+  it("rejects a lesson made only of explain steps", () => {
+    const source = minimalTutorial(
+      "",
+      "--explain--\n\nFirst part.\n\n--explain--\n\nSecond part.\n",
+    );
+
+    expect(() => parseLesson(source, PATH)).toThrow(
+      `${PATH}: a lesson must have at least one "--answer--" step`,
     );
   });
 

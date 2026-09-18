@@ -187,9 +187,17 @@ function splitIntoRawSteps(body: string, path: string): RawStep[] {
 }
 
 function parseSteps(body: string, path: string): Step[] {
-  return splitIntoRawSteps(body, path).map((rawStep) =>
+  const steps = splitIntoRawSteps(body, path).map((rawStep) =>
     rawStep.type === "explain" ? parseExplainStep(rawStep, path) : parseAnswerStep(rawStep, path),
   );
+
+  if (!steps.some((step) => step.type === "answer")) {
+    throw new Error(
+      `${path}: a lesson must have at least one "--answer--" step — a lesson made only of "--explain--" steps cannot be solved.`,
+    );
+  }
+
+  return steps;
 }
 
 function parseExplainStep(rawStep: RawStep, path: string): ExplainStep {
