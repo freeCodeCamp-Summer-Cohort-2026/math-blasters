@@ -4,7 +4,7 @@ import { Step } from "../src/components/Step";
 import type { PageStep } from "../src/content/types";
 
 describe("Step Component Boundary", () => {
-  it("renders a placeholder with the step kind for an explain step", () => {
+  it("renders an ExplainStep for an explain step", () => {
     const step: PageStep = {
       type: "explain",
       content: "Here is an explanation of addition.",
@@ -12,12 +12,11 @@ describe("Step Component Boundary", () => {
 
     render(<Step step={step} />);
 
-    const placeholder = screen.getByTestId("step-placeholder");
-    expect(placeholder).toBeInTheDocument();
-    expect(screen.getByText("Step kind: explain")).toBeInTheDocument();
+    expect(screen.getByText("Here is an explanation of addition.")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
-  it("renders a placeholder with the step kind for an answer step", () => {
+  it("renders an AnswerStep for an answer step", () => {
     const step: PageStep = {
       type: "answer",
       prompt: "What is 2 + 2?",
@@ -25,8 +24,8 @@ describe("Step Component Boundary", () => {
 
     render(<Step step={step} />);
 
-    const placeholder = screen.getByTestId("step-placeholder");
-    expect(placeholder).toBeInTheDocument();
-    expect(screen.getByText("Step kind: answer")).toBeInTheDocument();
+    expect(screen.getByText("What is 2 + 2?")).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /your answer/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /submit/i })).toBeInTheDocument();
   });
 });

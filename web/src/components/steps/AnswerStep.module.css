@@ -1,0 +1,35 @@
+.answerStep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Reuses the module page's lesson-badge pill treatment (soft accent fill, accent border/text); :global(.btn--ghost) pins specificity above the plain variant rule regardless of import order. */
+:global(.btn--ghost).submit {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: 0 3px 0 0 var(--accent);
+}
+
+:global(.btn--ghost).submit:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 0 var(--accent);
+}
+
+:global(.btn--ghost).submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.feedback {
+  margin-top: var(--space-2);
+}

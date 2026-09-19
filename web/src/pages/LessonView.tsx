@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { Card } from "../components/Card";
 import { LessonStepper } from "../components/LessonStepper";
-import { getLesson } from "../content";
+import { getLesson, getModuleForLesson } from "../content";
 import { NotFoundPage } from "./NotFoundPage";
 
 /**
@@ -17,9 +17,12 @@ export function LessonView() {
     return <NotFoundPage />;
   }
 
+  const moduleSlug = getModuleForLesson(lesson.slug);
+  const backHref = moduleSlug ? `/modules/${encodeURIComponent(moduleSlug)}` : undefined;
+
   return (
     <Card as="section" title={lesson.title}>
-      <LessonStepper lesson={lesson} />
+      <LessonStepper lesson={lesson} backHref={backHref} />
     </Card>
   );
 }
