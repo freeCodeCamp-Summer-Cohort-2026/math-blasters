@@ -11,7 +11,7 @@ describe("ExplainStep", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Adding two numbers" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Adding two numbers" })).toBeInTheDocument();
     expect(screen.getByText("Start here.")).toBeInTheDocument();
   });
 
