@@ -66,18 +66,10 @@ function evaluateEqualsAny(
   return expected.some((exp) => evaluateEquals(exp, normalizedSubmission));
 }
 
-function evaluateSetEquals(
-  expected: (number | string)[],
-  rawSubmission: string,
-): boolean {
-  const rawItems = rawSubmission.split(",");
-  const normalizedItems = rawItems
-    .map((item) => normalizeSubmission(item))
-    .filter((item) => item !== "");
+function matchesSet(expected: (number | string)[], items: string[]): boolean {
+  if (items.length === 0) return false;
 
-  if (normalizedItems.length === 0) return false;
-
-  for (const subItem of normalizedItems) {
+  for (const subItem of items) {
     const hasMatch = expected.some((exp) => evaluateEquals(exp, subItem));
     if (!hasMatch) {
       return false;
@@ -85,15 +77,41 @@ function evaluateSetEquals(
   }
 
   for (const exp of expected) {
-    const hasMatch = normalizedItems.some((subItem) =>
-      evaluateEquals(exp, subItem),
-    );
+    const hasMatch = items.some((subItem) => evaluateEquals(exp, subItem));
     if (!hasMatch) {
       return false;
     }
   }
 
   return true;
+}
+
+function evaluateSetEquals(
+  expected: (number | string)[],
+  rawSubmission: string,
+): boolean {
+  // Handles numbers formatted with thousands separators: "1,000", "1,000, 2,000", "1,000, 200, 300"
+  const norm = normalizeSubmission(rawSubmission);
+  const itemsFromNorm = norm
+    .split(",")
+    .map((item) => normalizeSubmission(item))
+    .filter((item) => item !== "");
+
+  if (matchesSet(expected, itemsFromNorm)) {
+    return true;
+  }
+
+  // Handles unspaced 3-digit lists like "100,200,300"
+  const itemsFromRaw = rawSubmission
+    .split(",")
+    .map((item) => normalizeSubmission(item))
+    .filter((item) => item !== "");
+
+  if (matchesSet(expected, itemsFromRaw)) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

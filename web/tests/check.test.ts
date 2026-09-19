@@ -298,6 +298,41 @@ describe("checkCriterion", () => {
       });
     });
 
+    it("handles numbers with thousands separators in sets", () => {
+      const thousandSetCriterion: SetEqualsCriterion = {
+        check: "set_equals",
+        expected: [1000, 2000],
+        reason_code: "wrong_set",
+      };
+      expect(checkCriterion(thousandSetCriterion, "1,000, 2,000")).toEqual({
+        passed: true,
+      });
+      expect(checkCriterion(thousandSetCriterion, "2,000, 1,000")).toEqual({
+        passed: true,
+      });
+      expect(checkCriterion(thousandSetCriterion, "1 000, 2 000")).toEqual({
+        passed: true,
+      });
+
+      const singleThousandCriterion: SetEqualsCriterion = {
+        check: "set_equals",
+        expected: [1000],
+        reason_code: "wrong_set",
+      };
+      expect(checkCriterion(singleThousandCriterion, "1,000")).toEqual({
+        passed: true,
+      });
+
+      const mixedCriterion: SetEqualsCriterion = {
+        check: "set_equals",
+        expected: [1000, 200, 300],
+        reason_code: "wrong_set",
+      };
+      expect(checkCriterion(mixedCriterion, "1,000, 200, 300")).toEqual({
+        passed: true,
+      });
+    });
+
     it("fails when missing, extra, or different elements", () => {
       expect(checkCriterion(numericSetCriterion, "1, 2")).toEqual({
         passed: false,
