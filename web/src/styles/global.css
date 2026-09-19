@@ -935,3 +935,11 @@ a.btn {
 .markdown pre:focus-visible {
   border-radius: var(--radius-md);
 }
+
+
+/* ---------- LAB VIEW ---------- */
+.outcome {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+  width: 100%;
+}
