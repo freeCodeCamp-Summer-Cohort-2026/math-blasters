@@ -88,8 +88,6 @@ export { checkStep, checkCriterion, normalizeSubmission } from "./check";
 // Signature-only Stubs (throw "not implemented")
 // ---------------------------------------------------------------------------
 
-export { checkEquivalent } from "./equivalent";
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
