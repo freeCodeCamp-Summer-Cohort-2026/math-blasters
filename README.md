@@ -118,6 +118,15 @@ A psycopg `OperationalError: connection refused` means nothing is listening at
 the address in `DATABASE_URL` — it isn't a problem with anything else in
 `.env`.
 
+### Resetting local learner identity
+
+The API identifies browsers with the `learner_token` cookie. To start with a 
+fresh local learner identity, clear that cookie for `localhost` in your
+browser's developer tools, then reload the page.
+
+Clearing the cookie creates a new learner on the next API request. This does
+not delete database rows. It only makes the browser use a new identity.
+
 ## Layout
 
 ```

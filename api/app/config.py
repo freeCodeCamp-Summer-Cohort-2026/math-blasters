@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Log-level
     log_level: str = "INFO"
 
+    # Local development uses HTTP; production should set COOKIE_SECURE=true.
+    cookie_secure: bool = False
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

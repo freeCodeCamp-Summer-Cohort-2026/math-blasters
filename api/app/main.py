@@ -11,7 +11,7 @@ import re
 import time
 import uuid
 
-from fastapi import FastAPI, Request, status
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.config import get_settings
+from app.learner import get_current_learner
 from app.routers import health
 from app.schemas import ErrorDetail, ErrorEnvelope
 
@@ -156,7 +157,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-    app.include_router(health.router, prefix="/api")
+    app.include_router(health.router, prefix="/api", dependencies=[Depends(get_current_learner)])
 
     return app
 

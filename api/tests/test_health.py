@@ -58,6 +58,13 @@ def test_health_returns_503_when_unavailable(client):
                 Exception("connection failed"),
             )
 
+        def add(self, learner):
+            raise OperationalError(
+                "Database Unavailable",
+                None,
+                Exception("connection failed"),
+            )
+
     client.app.dependency_overrides[get_session] = lambda: BrokenSession()
 
     response = client.get("/api/health")
