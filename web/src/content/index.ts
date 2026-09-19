@@ -1,13 +1,9 @@
 import { arithmeticAdditionModule } from "./fixtures";
 import type {
-  Criterion,
-  CriterionResult,
   Lesson,
   Module,
   PageLesson,
   PageModule,
-  Step,
-  StepResult,
 } from "./types";
 
 // Re-export all types & fixtures
@@ -83,6 +79,14 @@ function toPageModule(module: Module): PageModule {
 // ---------------------------------------------------------------------------
 // Signature-only Stubs (throw "not implemented")
 // ---------------------------------------------------------------------------
+// Evaluation Exports
+// ---------------------------------------------------------------------------
+
+export { checkStep, checkCriterion, normalizeSubmission } from "./check";
+
+// ---------------------------------------------------------------------------
+// Signature-only Stubs (throw "not implemented")
+// ---------------------------------------------------------------------------
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
@@ -97,23 +101,6 @@ export function parseLesson(_source: string, _path?: string): Lesson {
  * Validate a Lesson domain object against schema rules.
  */
 export function validateLesson(_lesson: Lesson, _path?: string): void {
-  throw new Error("not implemented");
-}
-
-/**
- * Check a step against a user submission.
- */
-export function checkStep(_step: Step, _submission: unknown): StepResult {
-  throw new Error("not implemented");
-}
-
-/**
- * Check an individual criterion against a user submission.
- */
-export function checkCriterion(
-  _criterion: Criterion,
-  _submission: unknown,
-): CriterionResult {
   throw new Error("not implemented");
 }
 

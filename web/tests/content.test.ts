@@ -96,15 +96,28 @@ describe("Content Contracts & Fixtures", () => {
       const lesson = makeLesson();
       expect(() => validateLesson(lesson)).toThrow("not implemented");
     });
+  });
 
-    it('checkStep throws "not implemented"', () => {
+  describe("Evaluation exports", () => {
+    it("evaluates checkStep via content export", () => {
       const step: Step = { type: "explain", content: "hello" };
-      expect(() => checkStep(step, "submission")).toThrow("not implemented");
+      expect(checkStep(step, "submission")).toEqual({
+        passed: true,
+        results: [],
+      });
     });
 
-    it('checkCriterion throws "not implemented"', () => {
-      const criterion: Criterion = { check: "equals", expected: 42 };
-      expect(() => checkCriterion(criterion, 42)).toThrow("not implemented");
+    it("evaluates checkCriterion via content export", () => {
+      const criterion: Criterion = {
+        check: "equals",
+        expected: 42,
+        reason_code: "wrong_num",
+      };
+      expect(checkCriterion(criterion, 42)).toEqual({ passed: true });
+      expect(checkCriterion(criterion, 43)).toEqual({
+        passed: false,
+        reason_code: "wrong_num",
+      });
     });
   });
 });
