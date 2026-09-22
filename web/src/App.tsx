@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { Layout } from "./components/Layout";
 import { Homepage } from "./pages/Homepage";
+import { LoginPage } from "./pages/LoginPage";
 import { ModulePage } from "./pages/ModulePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { LessonView } from "./pages/LessonView";
@@ -17,6 +18,7 @@ export function AppRoutes() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Homepage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/modules/:slug" element={<ModulePage />} />
         <Route path="/lessons/:slug" element={<LessonView />} />
         <Route path="/dev-only-feedback-styleguide" element={import.meta.env.DEV ? <FeedbackStyleGuideView /> : <NotFoundPage />} />
