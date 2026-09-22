@@ -72,6 +72,19 @@ describe("apiFetch", () => {
       }),
     );
   });
+
+  it("handles HTTP 204 No Content without throwing and returns undefined", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      json: async () => {
+        throw new SyntaxError("Unexpected end of JSON input");
+      },
+    } as unknown as Response);
+
+    const result = await apiFetch("/api/no-content");
+    expect(result).toBeUndefined();
+  });
 });
 
 describe("api.auth", () => {

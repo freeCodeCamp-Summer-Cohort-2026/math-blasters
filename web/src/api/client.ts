@@ -78,6 +78,9 @@ export async function apiFetch<T>(
       response.status,
     );
   }
+  if (response.status === 204) {
+    return undefined as unknown as T;
+  }
   return response.json();
 }
 
