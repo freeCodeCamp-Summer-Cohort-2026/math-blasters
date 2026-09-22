@@ -21,11 +21,24 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,
 );
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = useState<Account | null>(null);
-  const [loading, setLoading] = useState(true);
+export interface AuthProviderProps {
+  children: ReactNode;
+  initialAccount?: Account | null;
+  initialLoading?: boolean;
+}
+
+export function AuthProvider({
+  children,
+  initialAccount = null,
+  initialLoading = true,
+}: AuthProviderProps) {
+  const [account, setAccount] = useState<Account | null>(initialAccount);
+  const [loading, setLoading] = useState(initialLoading);
 
   useEffect(() => {
+    if (!initialLoading) {
+      return;
+    }
     let active = true;
     api.auth
       .getMe()
@@ -44,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialLoading]);
 
   const logout = useCallback(async () => {
     await api.auth.logout();

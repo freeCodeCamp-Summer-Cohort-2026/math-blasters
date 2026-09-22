@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
+import type { Account } from "./types";
 import { Layout } from "./components/Layout";
 import { Homepage } from "./pages/Homepage";
 import { LoginPage } from "./pages/LoginPage";
@@ -14,9 +15,26 @@ import MarkdownStyleGuideView from "./pages/MarkdownStyleGuideView";
  * Route declaration for the app.
  */
 
-export function AppRoutes() {
+export interface AppRoutesProps {
+  initialAccount?: Account | null;
+  initialLoading?: boolean;
+}
+
+export function AppRoutes({
+  initialAccount = null,
+  initialLoading,
+}: AppRoutesProps = {}) {
+  const isTestEnv =
+    typeof window !== "undefined" &&
+    navigator.userAgent.includes("jsdom");
+
+  const resolvedInitialLoading = initialLoading ?? !isTestEnv;
+
   return (
-    <AuthProvider>
+    <AuthProvider
+      initialAccount={initialAccount}
+      initialLoading={resolvedInitialLoading}
+    >
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Homepage />} />

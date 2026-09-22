@@ -15,9 +15,11 @@ describe("AuthContext", () => {
   );
 
   it("throws an error if useAuth is called outside AuthProvider", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(() => renderHook(() => useAuth())).toThrow(
       "useAuth must be used within an AuthProvider",
     );
+    errorSpy.mockRestore();
   });
 
   it("starts in loading state then resolves to signed-in state when account is returned", async () => {

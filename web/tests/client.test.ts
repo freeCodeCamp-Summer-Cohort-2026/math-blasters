@@ -150,11 +150,17 @@ describe("api.auth", () => {
     });
 
     it("handles logout network failure gracefully without throwing", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
         new Error("Network failure"),
       );
 
       await expect(api.auth.logout()).resolves.toBeUndefined();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "api.auth.logout: failed to log out on server",
+        expect.any(Error),
+      );
+      warnSpy.mockRestore();
     });
   });
 });
