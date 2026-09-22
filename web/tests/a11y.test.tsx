@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -37,13 +37,23 @@ describe("Accessibility checks (vitest-axe)", () => {
   it.each(ROUTES)("has no accessibility violations at %s", async (route) => {
     const { container } = renderRoute(route);
 
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Loading account details"),
+      ).not.toBeInTheDocument();
+    });
     await expectNoA11yViolations(container);
   });
 
-  it.each(ROUTES)("keeps exactly one main landmark at %s", (route) => {
+  it.each(ROUTES)("keeps exactly one main landmark at %s", async (route) => {
     renderRoute(route);
 
-    expect(screen.getAllByRole("main")).toHaveLength(1);
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Loading account details"),
+      ).not.toBeInTheDocument();
+      expect(screen.getAllByRole("main")).toHaveLength(1);
+    });
   });
 
   it("NavHeader in loading state should have no accessibility violations", async () => {

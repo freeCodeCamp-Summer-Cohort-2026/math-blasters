@@ -74,6 +74,23 @@ describe("AuthContext", () => {
     expect(result.current.account).toBeNull();
   });
 
+  it("resolves to signed-out state when getMe rejects", async () => {
+    vi.spyOn(api.auth, "getMe").mockRejectedValueOnce(
+      new Error("Network error"),
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    expect(result.current.loading).toBe(true);
+    expect(result.current.account).toBeNull();
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.account).toBeNull();
+  });
+
   it("logout calls api.auth.logout and resets account to null without page reload", async () => {
     const mockAccount: Account = {
       id: "usr_2",

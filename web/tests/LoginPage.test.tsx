@@ -12,12 +12,19 @@ describe("LoginPage", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: "Sign in to Math Blasters",
-      }),
-    ).toBeInTheDocument();
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: "Sign in to Math Blasters",
+    });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveAttribute("id", "login-heading");
+
+    const section = screen.getByRole("region", {
+      name: "Sign in to Math Blasters",
+    });
+    expect(section).toBeInTheDocument();
+    expect(section).toHaveAttribute("aria-labelledby", "login-heading");
+
     expect(
       screen.getByText(
         "Sign in to save your progress and access your lessons anywhere.",

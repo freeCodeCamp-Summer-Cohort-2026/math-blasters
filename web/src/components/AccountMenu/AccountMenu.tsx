@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { FocusEvent as ReactFocusEvent } from "react";
 import type { Account } from "../../types";
 import styles from "./AccountMenu.module.css";
 
@@ -16,13 +17,18 @@ function getInitials(name: string): string {
 
 export function AccountMenu({ account, onLogout }: AccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    setImageError(false);
+  }, [account.avatarUrl]);
+
+  useEffect(() => {
     if (!isOpen) return;
 
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: PointerEvent) {
       if (
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
@@ -38,14 +44,34 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    function handleFocusOut(event: FocusEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.relatedTarget as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusout", handleFocusOut);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusout", handleFocusOut);
     };
   }, [isOpen]);
+
+  const handleBlur = (event: ReactFocusEvent<HTMLDivElement>) => {
+    if (
+      containerRef.current &&
+      !containerRef.current.contains(event.relatedTarget as Node)
+    ) {
+      setIsOpen(false);
+    }
+  };
 
   const handleLogout = async () => {
     setIsOpen(false);
@@ -53,7 +79,11 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
   };
 
   return (
-    <div ref={containerRef} className={styles.container}>
+    <div
+      ref={containerRef}
+      className={styles.container}
+      onBlur={handleBlur}
+    >
       <button
         ref={triggerRef}
         type="button"
@@ -63,8 +93,13 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
         aria-controls="account-menu-dropdown"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {account.avatarUrl ? (
-          <img src={account.avatarUrl} alt="" className={styles.avatar} />
+        {account.avatarUrl && !imageError ? (
+          <img
+            src={account.avatarUrl}
+            alt=""
+            className={styles.avatar}
+            onError={() => setImageError(true)}
+          />
         ) : (
           <span className={styles.avatarFallback} aria-hidden="true">
             {getInitials(account.displayName)}

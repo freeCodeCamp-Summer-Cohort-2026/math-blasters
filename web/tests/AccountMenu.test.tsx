@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { AccountMenu } from "../src/components/AccountMenu/AccountMenu";
@@ -42,6 +42,23 @@ describe("AccountMenu", () => {
     });
     expect(trigger.querySelector("img")).toBeNull();
     const fallback = screen.getByText("KJ");
+    expect(fallback).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("renders initials fallback when avatar image fails to load", () => {
+    render(<AccountMenu account={mockAccount} onLogout={vi.fn()} />);
+
+    const trigger = screen.getByRole("button", {
+      name: "Katherine Johnson",
+    });
+    const img = trigger.querySelector("img");
+    expect(img).toBeInTheDocument();
+
+    fireEvent.error(img!);
+
+    expect(trigger.querySelector("img")).toBeNull();
+    const fallback = screen.getByText("KJ");
+    expect(fallback).toBeInTheDocument();
     expect(fallback).toHaveAttribute("aria-hidden", "true");
   });
 
@@ -98,6 +115,34 @@ describe("AccountMenu", () => {
     expect(screen.getByRole("menu")).toBeInTheDocument();
 
     await user.click(screen.getByTestId("outside"));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes dropdown when focus moves outside the menu container", async () => {
+    const user = userEvent.setup();
+    render(
+      <div>
+        <AccountMenu account={mockAccount} onLogout={vi.fn()} />
+        <button type="button">Outside focusable</button>
+      </div>,
+    );
+
+    const trigger = screen.getByRole("button", {
+      name: "Katherine Johnson",
+    });
+
+    await user.click(trigger);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    await user.tab();
+    expect(screen.getByRole("menuitem", { name: "Sign out" })).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole("button", { name: "Outside focusable" }),
+    ).toHaveFocus();
+
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });

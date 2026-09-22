@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import type { ReactNode } from "react";
@@ -26,12 +27,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    api.auth.getMe().then((res) => {
-      if (active) {
-        setAccount(res);
-        setLoading(false);
-      }
-    });
+    api.auth
+      .getMe()
+      .then((res) => {
+        if (active) {
+          setAccount(res);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setAccount(null);
+          setLoading(false);
+        }
+      });
     return () => {
       active = false;
     };
@@ -42,8 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccount(null);
   }, []);
 
+  const value = useMemo(
+    () => ({ account, loading, logout }),
+    [account, loading, logout],
+  );
+
   return (
-    <AuthContext.Provider value={{ account, loading, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
