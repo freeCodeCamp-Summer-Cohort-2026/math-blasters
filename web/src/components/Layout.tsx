@@ -55,7 +55,8 @@ export function Layout() {
   return (
     <div className="app-shell">
       <NavHeader />
-      <PageLayout as="main" heading={heroHeading} footer={footer}>
+      <PageLayout as="main" footer={footer}>
+        <div className="page-header">{heroHeading}</div>
         <div id="main-content" ref={mainRef} tabIndex={-1}>
           <Outlet />
         </div>
