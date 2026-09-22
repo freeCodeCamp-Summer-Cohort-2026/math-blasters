@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { parseApiErrorMessage } from "../src/api/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api, apiFetch, parseApiErrorMessage } from "../src/api/client";
 
 describe("parseApiErrorMessage", () => {
   it("extracts detail string from FastAPI error JSON", () => {
@@ -46,5 +46,102 @@ describe("parseApiErrorMessage", () => {
     expect(
       parseApiErrorMessage("Something went wrong on server", "Error"),
     ).toBe("Something went wrong on server");
+  });
+});
+
+describe("apiFetch", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("includes credentials: 'include' by default", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: "ok" }),
+    } as Response);
+
+    await apiFetch("/api/test");
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/test",
+      expect.objectContaining({
+        credentials: "include",
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+  });
+});
+
+describe("api.auth", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("getMe", () => {
+    it("returns Account object on 200 OK", async () => {
+      const mockAccount = {
+        id: "usr_123",
+        displayName: "Ada Lovelace",
+        avatarUrl: "https://example.com/avatar.png",
+      };
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAccount,
+      } as Response);
+
+      const result = await api.auth.getMe();
+      expect(result).toEqual(mockAccount);
+    });
+
+    it("returns null quietly when endpoint returns 401 Unauthorized", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+        text: async () => JSON.stringify({ detail: "Not authenticated" }),
+      } as Response);
+
+      const result = await api.auth.getMe();
+      expect(result).toBeNull();
+    });
+
+    it("returns null quietly when fetch throws network error", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+        new Error("Network connection lost"),
+      );
+
+      const result = await api.auth.getMe();
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("logout", () => {
+    it("calls POST /api/auth/logout with credentials: 'include'", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response);
+
+      await api.auth.logout();
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/auth/logout",
+        expect.objectContaining({
+          method: "POST",
+          credentials: "include",
+        }),
+      );
+    });
+
+    it("handles logout network failure gracefully without throwing", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+        new Error("Network failure"),
+      );
+
+      await expect(api.auth.logout()).resolves.toBeUndefined();
+    });
   });
 });

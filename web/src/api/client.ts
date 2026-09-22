@@ -1,3 +1,5 @@
+import type { Account } from "../types";
+
 /** Thin typed wrapper around fetch. */
 
 export class ApiError extends Error {
@@ -55,6 +57,47 @@ export function parseApiErrorMessage(raw: string, fallback: string): string {
   return trimmed || fallback;
 }
 
+export async function apiFetch<T>(
+  endpoint: string,
+  init?: RequestInit,
+): Promise<T> {
+  const options: RequestInit = {
+    ...init,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  };
+
+  const response = await fetch(endpoint, options);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new ApiError(
+      parseApiErrorMessage(text, response.statusText),
+      response.status,
+    );
+  }
+  return response.json();
+}
+
 export const api = {
-  // add required api contract when ready
+  auth: {
+    async getMe(): Promise<Account | null> {
+      try {
+        return await apiFetch<Account>("/api/auth/me");
+      } catch {
+        // Unreachable, 401, or error returns null quietly
+        return null;
+      }
+    },
+    async logout(): Promise<void> {
+      try {
+        await apiFetch<void>("/api/auth/logout", { method: "POST" });
+      } catch (err) {
+        console.warn("api.auth.logout: failed to log out on server", err);
+      }
+    },
+  },
 };
+
