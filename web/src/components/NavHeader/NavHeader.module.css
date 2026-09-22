@@ -1,0 +1,28 @@
+.navHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-family: inherit;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sky-400);
+  border-radius: var(--radius-sm);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}

@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { NavHeader } from "./NavHeader/NavHeader";
 import { PageLayout } from "./PageLayout";
-import { ThemeToggle } from "./ThemeToggle";
 
 /**
  * Root Layout route component
- * Provides global <header>, <main> outlet and <footer> using the PageLayout primitive.
+ * Provides top NavHeader, hero, <main> outlet, and footer.
  */
 
 export function Layout() {
@@ -35,7 +35,6 @@ export function Layout() {
 
   const heroHeading = (
     <div className="hero">
-      <p className="hero__eyebrow">Math Blasters</p>
       {/* Not an h1: it is the same on every route, so the page owns its own. */}
       <p className="hero__title">
         Learn math by <em>doing</em> it.
@@ -44,7 +43,6 @@ export function Layout() {
         Base template. Nothing here is the real product yet -- pick up an
         issue and build it.
       </p>
-      <ThemeToggle />
     </div>
   );
 
@@ -55,10 +53,13 @@ export function Layout() {
   );
 
   return (
-    <PageLayout as="main" heading={heroHeading} footer={footer}>
-      <div id="main-content" ref={mainRef} tabIndex={-1}>
-        <Outlet />
-      </div>
-    </PageLayout>
+    <div className="app-shell">
+      <NavHeader />
+      <PageLayout as="main" heading={heroHeading} footer={footer}>
+        <div id="main-content" ref={mainRef} tabIndex={-1}>
+          <Outlet />
+        </div>
+      </PageLayout>
+    </div>
   );
 }
