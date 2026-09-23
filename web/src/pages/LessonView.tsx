@@ -3,6 +3,7 @@ import { Card } from "../components/Card";
 import { LessonStepper } from "../components/LessonStepper";
 import { getLesson, getModuleForLesson } from "../content";
 import { NotFoundPage } from "./NotFoundPage";
+import { LabView } from "./LabView";
 
 /**
  * Route view for /lessons/:slug.
@@ -15,6 +16,10 @@ export function LessonView() {
 
   if (!lesson) {
     return <NotFoundPage />;
+  }
+
+  if (lesson.type === "lab") {
+    return <LabView lab={lesson} />;
   }
 
   const moduleSlug = getModuleForLesson(lesson.slug);

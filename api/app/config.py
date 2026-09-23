@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Log-level
     log_level: str = "INFO"
 
+    # Production-safe default; local HTTP development must explicitly opt out.
+    cookie_secure: bool = True
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

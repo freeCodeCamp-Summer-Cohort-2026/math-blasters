@@ -1,30 +1,43 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import { AppRoutes } from "../src/App";
 import { expectNoA11yViolations } from "./helpers/a11y";
-import { Homepage } from "../src/pages/Homepage";
-import { NotFoundPage } from "../src/pages/NotFoundPage";
+
+// Rendered through AppRoutes, shell included. Checking a page component on its
+// own hides exactly the faults that come from nesting one inside the root
+// Layout, which is how a duplicate `main` landmark survived on the home page.
+const ROUTES = [
+  "/",
+  "/modules/arithmetic-addition",
+  "/lessons/adding-two-numbers",
+  "/lessons/marbles-in-total",
+  "/unknown-route",
+  // Dev-only, but `import.meta.env.DEV` is true under vitest, so they are
+  // reachable here and worth the same check.
+  "/dev-only-markdown-styleguide",
+  "/dev-only-feedback-styleguide",
+];
+
+function renderRoute(route: string) {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <AppRoutes />
+    </MemoryRouter>,
+  );
+}
 
 describe("Accessibility checks (vitest-axe)", () => {
-  it("home page and root layout should have no accessibility violations", async () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={["/"]}>
-        <Homepage />
-      </MemoryRouter>
-    );
-    expect(container).toBeInTheDocument();
+  it.each(ROUTES)("has no accessibility violations at %s", async (route) => {
+    const { container } = renderRoute(route);
+
     await expectNoA11yViolations(container);
   });
 
-  it("not-found page and root layout should have no accessibility violations", async () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={["/unknown-route"]}>
-        <NotFoundPage />
-      </MemoryRouter>
-    );
+  it.each(ROUTES)("keeps exactly one main landmark at %s", (route) => {
+    renderRoute(route);
 
-    expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
-    await expectNoA11yViolations(container);
+    expect(screen.getAllByRole("main")).toHaveLength(1);
   });
 });

@@ -36,9 +36,10 @@ export function Layout() {
   const heroHeading = (
     <div className="hero">
       <p className="hero__eyebrow">Math Blasters</p>
-      <h1 className="hero__title">
+      {/* Not an h1: it is the same on every route, so the page owns its own. */}
+      <p className="hero__title">
         Learn math by <em>doing</em> it.
-      </h1>
+      </p>
       <p className="hero__subtitle">
         Base template. Nothing here is the real product yet -- pick up an
         issue and build it.
@@ -54,7 +55,7 @@ export function Layout() {
   );
 
   return (
-    <PageLayout heading={heroHeading} footer={footer}>
+    <PageLayout as="main" heading={heroHeading} footer={footer}>
       <div id="main-content" ref={mainRef} tabIndex={-1}>
         <Outlet />
       </div>

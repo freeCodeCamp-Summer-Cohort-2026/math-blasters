@@ -13,7 +13,14 @@ describe("Router & Layout", () => {
       </MemoryRouter>,
     );
 
+    // By content, not by the banner role: testing-library maps every <header>
+    // to banner, including one a page nests inside main. axe scopes it properly.
+    expect(screen.getByText("Math Blasters")).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+
+    // getByRole throws on a second match, which is the point here: the root
+    // Layout owns the document's only main landmark.
+    expect(screen.getByRole("main")).toBeInTheDocument();
   });
 
   it("renders the home page at route '/'", async () => {

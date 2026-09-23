@@ -41,7 +41,7 @@ export function ModulePage() {
   );
 
   return (
-    <PageLayout as="section" className="module-page" heading={heading}>
+    <PageLayout className="module-page" heading={heading}>
       {/* An ordered list: lesson order is meaning, not styling. */}
       <ol className="lesson-list">
         {module.lessons.map((lesson, index) => (

@@ -1,8 +1,8 @@
 import type { ElementType, ReactNode } from "react";
 
 export interface PageLayoutProps {
-  // The element the content region renders as, `main` by default.
-  // Pages nested inside the root `Layout` pass `as="section"` to keep one `main`.
+  // The element the content region renders as, `section` by default.
+  // Only the root `Layout` passes `as="main"`: the document gets one `main`.
   as?: ElementType;
   heading?: ReactNode;
   footer?: ReactNode;
@@ -11,7 +11,7 @@ export interface PageLayoutProps {
 }
 
 export function PageLayout({
-  as: Content = "main",
+  as: Content = "section",
   heading,
   footer,
   children,

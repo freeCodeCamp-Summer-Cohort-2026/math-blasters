@@ -99,6 +99,12 @@ describe("LessonStepper Component", () => {
     expect(screen.getByRole("heading", { level: 3, name: /step 1 of 3/i })).toBeInTheDocument();
   });
 
+  it("drops to an h2 when the caller's title is an h1", () => {
+    render(<LessonStepper lesson={mockLesson} headingLevel="h2" />);
+
+    expect(screen.getByRole("heading", { level: 2, name: /step 1 of 3/i })).toBeInTheDocument();
+  });
+
   it("can be driven through a whole lesson with the keyboard alone", async () => {
     const user = userEvent.setup();
     render(<LessonStepper lesson={mockLesson} />);

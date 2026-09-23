@@ -9,9 +9,15 @@ export interface LessonStepperProps {
   lesson: PageLesson;
   /** Where "Back" goes once there's no previous step to step back to: the module page this lesson opened from. Omitted, Back stays disabled on the first step. */
   backHref?: string;
+  // h3 under a tutorial's h2 title, h2 under a lab's h1 outcome.
+  headingLevel?: "h2" | "h3";
 }
 
-export function LessonStepper({ lesson, backHref }: LessonStepperProps) {
+export function LessonStepper({
+  lesson,
+  backHref,
+  headingLevel = "h3",
+}: LessonStepperProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const totalSteps = lesson.steps.length;
   const currentStep = lesson.steps[currentStepIndex];
@@ -39,6 +45,7 @@ export function LessonStepper({ lesson, backHref }: LessonStepperProps) {
   const currentStepNumber = currentStepIndex + 1;
   const progressPercent = totalSteps > 0 ? (currentStepNumber / totalSteps) * 100 : 0;
   const progressText = `Step ${currentStepNumber} of ${totalSteps}`;
+  const Heading = headingLevel;
 
   return (
     <div className={styles.stepper}>
@@ -59,13 +66,13 @@ export function LessonStepper({ lesson, backHref }: LessonStepperProps) {
         </div>
 
         {/*
-          Sits under the lesson title, which Card renders as an h2.
+          Sits under the page's own title, so the caller picks the level.
           Moving focus here is what announces a step change, so there is
           no live region duplicating this text.
         */}
-        <h3 ref={headingRef} tabIndex={-1} className={styles.heading}>
+        <Heading ref={headingRef} tabIndex={-1} className={styles.heading}>
           {progressText}
-        </h3>
+        </Heading>
       </div>
 
       <div className={styles.stepContainer}>
