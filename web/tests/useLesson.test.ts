@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { useLayoutEffect } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { useLesson } from "../src/content/useLesson";
 import type { StepChecker } from "../src/content/useLesson";
@@ -35,11 +36,16 @@ const realLesson = getLesson("adding-two-numbers")!;
 
 // A checker whose result the test settles by hand, standing in for the async checker MB-57 brings.
 function deferredChecker() {
-  const calls: { resolve: (r: AnswerCheck) => void; reject: (e: unknown) => void }[] = [];
+  const calls: { resolve: (r: AnswerCheck | undefined) => void; reject: (e: unknown) => void }[] = [];
   const checker = vi.fn<StepChecker>(
-    () => new Promise<AnswerCheck>((resolve, reject) => calls.push({ resolve, reject })),
+    () => new Promise<AnswerCheck | undefined>((resolve, reject) => calls.push({ resolve, reject })),
   );
   return { checker, calls };
+}
+
+// Swallows the hook's checker-bug log so the test output stays clean, and returns the spy to assert on.
+function silenceConsoleError() {
+  return vi.spyOn(console, "error").mockImplementation(() => {});
 }
 
 function submitAndFlush(
@@ -53,7 +59,10 @@ function submitAndFlush(
 
 describe("useLesson", () => {
   beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   it("starts on the first step with every step untried and the lesson not passed", () => {
     const { result } = setup();
@@ -179,12 +188,45 @@ describe("useLesson", () => {
     expect(checker).toHaveBeenCalledWith(twoAnswerLesson.slug, 2, "right");
   });
 
-  it("treats a throwing checker as a fail rather than leaving the step checking", () => {
+  it("treats a throwing checker as a fail rather than leaving the step checking, and logs it", () => {
+    const logged = silenceConsoleError();
     const { result } = setup(twoAnswerLesson, () => {
       throw new Error("boom");
     });
     submitAndFlush(result, 1, "right");
+    expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+    expect(logged).toHaveBeenCalledWith(
+      expect.stringContaining(`"${twoAnswerLesson.slug}" step 1`),
+      new Error("boom"),
+    );
+  });
+
+  it("treats a checker with no result as a fail, logs it, and lets the step be submitted again", () => {
+    const logged = silenceConsoleError();
+    let calls = 0;
+    const { result } = setup(twoAnswerLesson, () => (++calls === 1 ? undefined : { passed: true }));
+    submitAndFlush(result, 1, "right");
+    expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+    expect(logged).toHaveBeenCalledTimes(1);
+
+    submitAndFlush(result, 1, "right");
+    expect(result.current.steps[1]).toEqual({ status: "passed" });
+  });
+
+  it("does not log a wrong answer, which is not a checker bug", () => {
+    const logged = silenceConsoleError();
+    const { result } = setup();
+    submitAndFlush(result, 1, "wrong");
     expect(result.current.steps[1].status).toBe("not_yet");
+    expect(logged).not.toHaveBeenCalled();
+  });
+
+  it("fails and logs a lesson the real checker can't find", () => {
+    const logged = silenceConsoleError();
+    const { result } = renderHook(() => useLesson(makeLesson({ slug: "not-in-the-index" })));
+    submitAndFlush(result, 1, "2");
+    expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+    expect(logged).toHaveBeenCalledTimes(1);
   });
 
   it("defaults to the real checker, working from a page lesson with no criteria", () => {
@@ -205,6 +247,16 @@ describe("useLesson", () => {
     expect(result.current.currentStep).toBe(2);
     act(() => result.current.goToStep(1));
     expect(result.current.currentStep).toBe(1);
+  });
+
+  it("accepts submits on the new lesson after switching", () => {
+    const { result, rerender } = setup();
+    submitAndFlush(result, 1, "right");
+    rerender({ l: { ...twoAnswerLesson, slug: "another-lesson" }, c: fakeChecker });
+    submitAndFlush(result, 1, "right");
+    submitAndFlush(result, 2, "right");
+    expect(result.current.steps[1]).toEqual({ status: "passed" });
+    expect(result.current.lessonPassed).toBe(true);
   });
 
   it("starts fresh when given a different lesson", () => {
@@ -307,12 +359,28 @@ describe("useLesson", () => {
       expect(result.current.lessonPassed).toBe(true);
     });
 
-    it("treats a rejected check as a fail", async () => {
+    it("treats a rejected check as a fail, and logs it", async () => {
+      const logged = silenceConsoleError();
       const { checker, calls } = deferredChecker();
       const { result } = setup(twoAnswerLesson, checker);
       submitAndFlush(result, 1, "right");
       await act(async () => calls[0].reject(new Error("mathjs failed to load")));
       expect(result.current.steps[1].status).toBe("not_yet");
+      expect(logged).toHaveBeenCalledWith(expect.any(String), new Error("mathjs failed to load"));
+    });
+
+    it("treats an async check with no result as a fail, and lets the step be submitted again", async () => {
+      const logged = silenceConsoleError();
+      const { checker, calls } = deferredChecker();
+      const { result } = setup(twoAnswerLesson, checker);
+      submitAndFlush(result, 1, "right");
+      await act(async () => calls[0].resolve(undefined));
+      expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+      expect(logged).toHaveBeenCalledTimes(1);
+
+      submitAndFlush(result, 1, "right");
+      await act(async () => calls[1].resolve({ passed: true }));
+      expect(result.current.steps[1]).toEqual({ status: "passed" });
     });
 
     it("ignores a re-submit while an async check is still pending", async () => {
@@ -336,6 +404,41 @@ describe("useLesson", () => {
       await act(async () => calls[0].resolve({ passed: true }));
       expect(result.current.steps[1].status).toBe("untried");
       expect(result.current.lessonPassed).toBe(false);
+    });
+  });
+
+  describe("a submit on the new lesson before the old lesson's cleanup runs", () => {
+    // A layout effect runs after the switch commits but before passive effects, the window a deferred cleanup leaves open.
+    function setupSwitch(checker: StepChecker) {
+      return renderHook(
+        ({ l }) => {
+          const lesson = useLesson(l, checker);
+          const { submit } = lesson;
+          useLayoutEffect(() => {
+            if (l.slug === "another-lesson") submit(1, "right");
+          }, [l.slug, submit]);
+          return lesson;
+        },
+        { initialProps: { l: twoAnswerLesson } },
+      );
+    }
+
+    it("is not cancelled by that cleanup", () => {
+      const { result, rerender } = setupSwitch(fakeChecker);
+      rerender({ l: { ...twoAnswerLesson, slug: "another-lesson" } });
+      act(() => vi.runAllTimers());
+      expect(result.current.steps[1]).toEqual({ status: "passed" });
+    });
+
+    it("is not blocked by the old lesson's check on the same step", () => {
+      const checker = vi.fn(fakeChecker);
+      const { result, rerender } = setupSwitch(checker);
+      act(() => result.current.submit(1, "right"));
+      rerender({ l: { ...twoAnswerLesson, slug: "another-lesson" } });
+      act(() => vi.runAllTimers());
+      expect(checker).toHaveBeenCalledTimes(1);
+      expect(checker).toHaveBeenCalledWith("another-lesson", 1, "right");
+      expect(result.current.steps[1]).toEqual({ status: "passed" });
     });
   });
 });

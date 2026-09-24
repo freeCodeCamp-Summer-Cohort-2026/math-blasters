@@ -10,7 +10,15 @@ export type StepChecker = (
   lessonSlug: string,
   stepIndex: number,
   submission: unknown,
-) => AnswerCheck | PromiseLike<AnswerCheck>;
+) => CheckOutcome | PromiseLike<CheckOutcome>;
+
+/** `undefined` means the checker had no result, as `checkAnswer` does for an unknown lesson or step. */
+type CheckOutcome = AnswerCheck | undefined;
+
+interface InFlightCheck {
+  slug: string;
+  cancel: () => void;
+}
 
 /** What the UI sees for one step: its status and, after a failed check, the reason code. Never the criterion. */
 export interface StepState {
@@ -110,13 +118,18 @@ export function useLesson(lesson: PageLesson, checker: StepChecker = checkAnswer
   const state = isStale ? initialState(lesson) : stored;
   if (isStale) dispatch({ type: "reset", lesson });
 
-  // Checks in flight, keyed by step index; one per step, so a double submit can't run the checker twice.
-  const pending = useRef(new Map<number, () => void>());
+  // Checks in flight, keyed by lesson and step; one per step, so a double submit can't run the checker twice.
+  const pending = useRef(new Map<string, InFlightCheck>());
   useEffect(() => {
     const inFlight = pending.current;
+    const slug = lesson.slug;
+    // Cancels only this lesson's checks: this cleanup can run after the next lesson has already started one.
     return () => {
-      inFlight.forEach((cancel) => cancel());
-      inFlight.clear();
+      inFlight.forEach((check, key) => {
+        if (check.slug !== slug) return;
+        check.cancel();
+        inFlight.delete(key);
+      });
     };
   }, [lesson.slug]);
 
@@ -128,34 +141,43 @@ export function useLesson(lesson: PageLesson, checker: StepChecker = checkAnswer
       const step = lesson.steps[index];
       if (step?.type !== "answer") return;
       // Re-checking a passed step can't change it, and a second submit mid-check would race the first.
-      if (stepsRef.current[index]?.status === "passed" || pending.current.has(index)) return;
-
       const slug = lesson.slug;
+      const key = `${slug}:${index}`;
+      if (stepsRef.current[index]?.status === "passed" || pending.current.has(key)) return;
+
       let cancelled = false;
-      const land = ({ passed, reason_code }: AnswerCheck) => {
+      // Never throws, so neither path below can leave an unhandled error or a step stuck on "checking".
+      const land = (outcome: CheckOutcome, error?: unknown) => {
         if (cancelled) return;
-        pending.current.delete(index);
-        dispatch({ type: "checked", slug, index, passed, reason_code });
+        pending.current.delete(key);
+        if (!outcome || typeof outcome.passed !== "boolean") {
+          // A throw, a rejection or no result is a checker bug, not a wrong answer: log it, show a fail.
+          console.error(`useLesson: no check result for lesson "${slug}" step ${index}`, error);
+          dispatch({ type: "checked", slug, index, passed: false });
+          return;
+        }
+        dispatch({ type: "checked", slug, index, passed: outcome.passed, reason_code: outcome.reason_code });
       };
-      // A throwing or rejecting checker is a fail, never a step stuck on "checking".
-      const fail = () => land({ passed: false });
 
       dispatch({ type: "checking", slug, index });
       const cancelPaint = afterPaint(() => {
-        let outcome: AnswerCheck | PromiseLike<AnswerCheck>;
+        let outcome: CheckOutcome | PromiseLike<CheckOutcome>;
         try {
           outcome = checker(slug, index, submission);
-        } catch {
-          fail();
+        } catch (error) {
+          land(undefined, error);
           return;
         }
         // Sync results land in this tick; async ones (MB-57) stay pending until they settle.
-        if (isPromiseLike(outcome)) outcome.then(land, fail);
+        if (isPromiseLike(outcome)) outcome.then((result) => land(result), (error) => land(undefined, error));
         else land(outcome);
       });
-      pending.current.set(index, () => {
-        cancelled = true;
-        cancelPaint();
+      pending.current.set(key, {
+        slug,
+        cancel: () => {
+          cancelled = true;
+          cancelPaint();
+        },
       });
     },
     [lesson, checker],

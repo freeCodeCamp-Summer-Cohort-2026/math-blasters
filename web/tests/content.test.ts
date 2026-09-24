@@ -207,10 +207,10 @@ describe("checkAnswer", () => {
     expect(checkAnswer("marbles-in-total", 1, "11")).toEqual({ passed: true });
   });
 
-  it("fails an unknown lesson, an explain step and an out-of-range index", () => {
-    expect(checkAnswer("does-not-exist", 1, "7")).toEqual({ passed: false });
-    expect(checkAnswer("adding-two-numbers", 0, "7")).toEqual({ passed: false });
-    expect(checkAnswer("adding-two-numbers", 99, "7")).toEqual({ passed: false });
+  it("returns undefined for an unknown lesson, an explain step and an out-of-range index, like the accessors", () => {
+    expect(checkAnswer("does-not-exist", 1, "7")).toBeUndefined();
+    expect(checkAnswer("adding-two-numbers", 0, "7")).toBeUndefined();
+    expect(checkAnswer("adding-two-numbers", 99, "7")).toBeUndefined();
   });
 
   it("never exposes criteria", () => {
