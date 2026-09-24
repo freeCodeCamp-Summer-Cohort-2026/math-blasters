@@ -109,6 +109,9 @@ export function checkAnswer(
   return reason_code === undefined ? { passed } : { passed, reason_code };
 }
 
+// useLesson imports checkAnswer back from here; the cycle is safe because it is only read when a submit runs.
+export * from "./useLesson";
+
 // ---------------------------------------------------------------------------
 // Signature-only Stubs (throw "not implemented")
 // ---------------------------------------------------------------------------

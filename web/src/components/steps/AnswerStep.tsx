@@ -1,15 +1,14 @@
 import { useId, useState } from "react";
 import type { ReactNode } from "react";
-import type { PageAnswerStep } from "../../content/types";
+import type { PageAnswerStep, SubmissionStatus } from "../../content";
 import { AnswerInput } from "../AnswerInput";
 import { Button } from "../Button";
 import { RenderMarkdown } from "../Markdown";
-import type { SubmissionStatus } from "../../content/useLesson";
 import styles from "./AnswerStep.module.css";
 
 /** The per-step submission state is owned by `useLesson`; re-exported so existing imports keep working. */
-export { SUBMISSION_STATUSES } from "../../content/useLesson";
-export type { SubmissionStatus } from "../../content/useLesson";
+export { SUBMISSION_STATUSES } from "../../content";
+export type { SubmissionStatus } from "../../content";
 
 export interface AnswerStepProps {
   step: PageAnswerStep;
