@@ -7,14 +7,18 @@ import { api } from "../src/api/client";
 
 describe("App Layout Root", () => {
   it("renders the real homepage components on startup", async () => {
-    render(<App initialLoading={false} />);
+    vi.spyOn(api.auth, "getMe").mockResolvedValue(null);
+    render(<App />);
 
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
 
     expect(await screen.findByText("Modules")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: "Sign in" }),
+    ).toBeInTheDocument();
   });
 
-  it("defaults initialLoading to true and shows loading skeleton on startup", () => {
+  it("shows the loading skeleton while /me is pending", () => {
     vi.spyOn(api.auth, "getMe").mockReturnValue(new Promise(() => {}));
 
     render(<App />);

@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { AppRoutes } from "../src/App";
+import { apiUrl } from "../src/api/client";
+import { SettledAppRoutes } from "./helpers/app";
 import { LoginPage } from "../src/pages/LoginPage";
 
 describe("LoginPage", () => {
@@ -42,20 +43,20 @@ describe("LoginPage", () => {
     const githubLink = screen.getByRole("link", {
       name: "Continue with GitHub",
     });
-    expect(githubLink).toHaveAttribute("href", "/api/auth/login/github");
+    expect(githubLink).toHaveAttribute("href", apiUrl("/auth/github/start"));
     expect(githubLink).toHaveClass("btn", "btn--secondary", "btn--lg");
 
     const googleLink = screen.getByRole("link", {
       name: "Continue with Google",
     });
-    expect(googleLink).toHaveAttribute("href", "/api/auth/login/google");
+    expect(googleLink).toHaveAttribute("href", apiUrl("/auth/google/start"));
     expect(googleLink).toHaveClass("btn", "btn--secondary", "btn--lg");
   });
 
-  it("renders LoginPage when navigating to /login in AppRoutes", async () => {
+  it("renders LoginPage when navigating to /login", async () => {
     render(
       <MemoryRouter initialEntries={["/login"]}>
-        <AppRoutes initialLoading={false} />
+        <SettledAppRoutes />
       </MemoryRouter>,
     );
 

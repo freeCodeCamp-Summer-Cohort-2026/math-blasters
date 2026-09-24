@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { AppRoutes } from "../src/App";
+import { SettledAppRoutes } from "./helpers/app";
 import { arithmeticAdditionModule } from "../src/content";
 import { expectNoA11yViolations } from "./helpers/a11y";
 
@@ -13,7 +13,7 @@ const modulePath = `/modules/${module.slug}`;
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <AppRoutes initialLoading={false} />
+      <SettledAppRoutes />
     </MemoryRouter>,
   );
 }

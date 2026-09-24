@@ -155,4 +155,23 @@ describe("AuthContext", () => {
     expect(logoutSpy).toHaveBeenCalledTimes(1);
     expect(result.current.account).toBeNull();
   });
+
+  it("keeps the account when the server sign-out fails", async () => {
+    const mockAccount: Account = { id: "usr_3", displayName: "Mary Jackson" };
+
+    vi.spyOn(api.auth, "getMe").mockResolvedValueOnce(mockAccount);
+    vi.spyOn(api.auth, "logout").mockRejectedValueOnce(new Error("offline"));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await expect(result.current.logout()).rejects.toThrow("offline");
+    });
+
+    expect(result.current.account).toEqual(mockAccount);
+  });
 });

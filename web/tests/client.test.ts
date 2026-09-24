@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api, apiFetch, parseApiErrorMessage } from "../src/api/client";
+import {
+  API_BASE_URL,
+  api,
+  apiFetch,
+  apiUrl,
+  parseApiErrorMessage,
+} from "../src/api/client";
 
 describe("parseApiErrorMessage", () => {
   it("extracts detail string from FastAPI error JSON", () => {
@@ -54,22 +60,40 @@ describe("apiFetch", () => {
     vi.restoreAllMocks();
   });
 
-  it("includes credentials: 'include' by default", async () => {
+  it("resolves paths against VITE_API_URL, falling back to the compose default", () => {
+    expect(API_BASE_URL).toBe(
+      (import.meta.env.VITE_API_URL ?? "http://localhost:8000/api").replace(/\/+$/, ""),
+    );
+    expect(apiUrl("/auth/me")).toBe(`${API_BASE_URL}/auth/me`);
+  });
+
+  it("sends credentials and no Content-Type on a bodiless GET", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
       ok: true,
       json: async () => ({ status: "ok" }),
     } as Response);
 
-    await apiFetch("/api/test");
+    await apiFetch("/test");
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "/api/test",
-      expect.objectContaining({
-        credentials: "include",
-        headers: expect.objectContaining({
-          "Content-Type": "application/json",
-        }),
-      }),
+      apiUrl("/test"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+    const init = fetchSpy.mock.calls[0][1]!;
+    expect(new Headers(init.headers).has("Content-Type")).toBe(false);
+  });
+
+  it("sets a JSON Content-Type when there is a body", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    } as Response);
+
+    await apiFetch("/test", { method: "POST", body: "{}" });
+
+    const init = fetchSpy.mock.calls[0][1]!;
+    expect(new Headers(init.headers).get("Content-Type")).toBe(
+      "application/json",
     );
   });
 
@@ -82,7 +106,7 @@ describe("apiFetch", () => {
       },
     } as unknown as Response);
 
-    const result = await apiFetch("/api/no-content");
+    const result = await apiFetch("/no-content");
     expect(result).toBeUndefined();
   });
 });
@@ -93,20 +117,45 @@ describe("api.auth", () => {
   });
 
   describe("getMe", () => {
-    it("returns Account object on 200 OK", async () => {
-      const mockAccount = {
-        id: "usr_123",
-        displayName: "Ada Lovelace",
-        avatarUrl: "https://example.com/avatar.png",
-      };
-
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+    it("maps the snake_case /me payload (MB-50) to an Account", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
         ok: true,
-        json: async () => mockAccount,
+        json: async () => ({
+          id: 123,
+          display_name: "Ada Lovelace",
+          avatar_url: "https://example.com/avatar.png",
+          email: "ada@example.com",
+        }),
       } as Response);
 
       const result = await api.auth.getMe();
-      expect(result).toEqual(mockAccount);
+      expect(fetchSpy).toHaveBeenCalledWith(
+        apiUrl("/auth/me"),
+        expect.anything(),
+      );
+      expect(result).toEqual({
+        id: "123",
+        displayName: "Ada Lovelace",
+        avatarUrl: "https://example.com/avatar.png",
+      });
+    });
+
+    it("leaves avatarUrl undefined when avatar_url is null", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 1, display_name: "Ada", avatar_url: null }),
+      } as Response);
+
+      expect(await api.auth.getMe()).toEqual({ id: "1", displayName: "Ada" });
+    });
+
+    it("returns null when /me returns null (signed out)", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: async () => null,
+      } as Response);
+
+      expect(await api.auth.getMe()).toBeNull();
     });
 
     it("returns null quietly when endpoint returns 401 Unauthorized", async () => {
@@ -158,7 +207,7 @@ describe("api.auth", () => {
   });
 
   describe("logout", () => {
-    it("calls POST /api/auth/logout with credentials: 'include'", async () => {
+    it("calls POST /auth/logout with credentials: 'include'", async () => {
       const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
         ok: true,
         json: async () => ({}),
@@ -167,7 +216,7 @@ describe("api.auth", () => {
       await api.auth.logout();
 
       expect(fetchSpy).toHaveBeenCalledWith(
-        "/api/auth/logout",
+        apiUrl("/auth/logout"),
         expect.objectContaining({
           method: "POST",
           credentials: "include",
@@ -175,18 +224,12 @@ describe("api.auth", () => {
       );
     });
 
-    it("handles logout network failure gracefully without throwing", async () => {
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    it("rejects when the server did not sign out", async () => {
       vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
         new Error("Network failure"),
       );
 
-      await expect(api.auth.logout()).resolves.toBeUndefined();
-      expect(warnSpy).toHaveBeenCalledWith(
-        "api.auth.logout: failed to log out on server",
-        expect.any(Error),
-      );
-      warnSpy.mockRestore();
+      await expect(api.auth.logout()).rejects.toThrow("Network failure");
     });
   });
 });

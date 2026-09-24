@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
-import { AppRoutes } from "../src/App";
+import { SettledAppRoutes } from "./helpers/app";
 import { NavHeader } from "../src/components/NavHeader/NavHeader";
 import { AuthContext } from "../src/context/AuthContext";
 import { expectNoA11yViolations } from "./helpers/a11y";
@@ -28,7 +28,7 @@ const ROUTES = [
 function renderRoute(route: string) {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <AppRoutes initialLoading={false} />
+      <SettledAppRoutes />
     </MemoryRouter>,
   );
 }
@@ -111,7 +111,7 @@ describe("Accessibility checks (vitest-axe)", () => {
 
     // Open state check
     await user.click(trigger);
-    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
     await expectNoA11yViolations(container);
   });
 });

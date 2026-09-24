@@ -1,5 +1,12 @@
+import { apiUrl } from "../api/client";
 import { Card } from "../components/Card";
 import styles from "./LoginPage.module.css";
+
+// Full navigations, not fetches: the API redirects on to the provider (MB-51).
+const PROVIDERS = [
+  { id: "github", label: "Continue with GitHub" },
+  { id: "google", label: "Continue with Google" },
+];
 
 export function LoginPage() {
   return (
@@ -16,18 +23,15 @@ export function LoginPage() {
           Sign in to save your progress and access your lessons anywhere.
         </p>
         <div className={styles.providers}>
-          <a
-            href="/api/auth/login/github"
-            className="btn btn--secondary btn--lg"
-          >
-            Continue with GitHub
-          </a>
-          <a
-            href="/api/auth/login/google"
-            className="btn btn--secondary btn--lg"
-          >
-            Continue with Google
-          </a>
+          {PROVIDERS.map(({ id, label }) => (
+            <a
+              key={id}
+              href={apiUrl(`/auth/${id}/start`)}
+              className="btn btn--secondary btn--lg"
+            >
+              {label}
+            </a>
+          ))}
         </div>
       </Card>
     </div>

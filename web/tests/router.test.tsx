@@ -3,13 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { AppRoutes } from "../src/App";
+import { SettledAppRoutes } from "./helpers/app";
 
 describe("Router & Layout", () => {
   it("renders the root layout landmarks: header, main outlet, and footer", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <AppRoutes initialLoading={false} />
+        <SettledAppRoutes />
       </MemoryRouter>,
     );
 
@@ -26,7 +26,7 @@ describe("Router & Layout", () => {
   it("renders the home page at route '/'", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <AppRoutes initialLoading={false} />
+        <SettledAppRoutes />
       </MemoryRouter>,
     );
 
@@ -36,7 +36,7 @@ describe("Router & Layout", () => {
   it("renders the not-found page for an unknown path", () => {
     render(
       <MemoryRouter initialEntries={["/some/non-existent/path"]}>
-        <AppRoutes initialLoading={false} />
+        <SettledAppRoutes />
       </MemoryRouter>,
     );
 
@@ -56,7 +56,7 @@ describe("Router & Layout", () => {
 
     render(
       <MemoryRouter initialEntries={["/not-found"]}>
-        <AppRoutes initialLoading={false} />
+        <SettledAppRoutes />
       </MemoryRouter>,
     );
 
@@ -71,7 +71,7 @@ describe("Router & Layout", () => {
 
     render(
       <MemoryRouter initialEntries={["/invalid-route"]}>
-        <AppRoutes initialLoading={false} />
+        <SettledAppRoutes />
       </MemoryRouter>,
     );
 

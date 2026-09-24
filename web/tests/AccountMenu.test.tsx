@@ -11,15 +11,16 @@ describe("AccountMenu", () => {
     avatarUrl: "https://example.com/katherine.png",
   };
 
+  const signOut = () => screen.queryByRole("button", { name: "Sign out" });
+
   it("renders trigger button with avatar alt='' and adjacent display name", () => {
     render(<AccountMenu account={mockAccount} onLogout={vi.fn()} />);
 
     const trigger = screen.getByRole("button", {
       name: "Katherine Johnson",
     });
-    expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+    expect(trigger).not.toHaveAttribute("aria-haspopup");
     expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(trigger).toHaveAttribute("aria-controls", "account-menu-dropdown");
 
     const img = trigger.querySelector("img");
     expect(img).toBeInTheDocument();
@@ -62,7 +63,7 @@ describe("AccountMenu", () => {
     expect(fallback).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("opens dropdown on click, sets aria-expanded='true', and exposes menu items", async () => {
+  it("opens the panel on click, sets aria-expanded and aria-controls, and exposes Sign out", async () => {
     const user = userEvent.setup();
     render(<AccountMenu account={mockAccount} onLogout={vi.fn()} />);
 
@@ -70,14 +71,16 @@ describe("AccountMenu", () => {
       name: "Katherine Johnson",
     });
 
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(signOut()).not.toBeInTheDocument();
+    expect(trigger).not.toHaveAttribute("aria-controls");
 
     await user.click(trigger);
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    const menu = screen.getByRole("menu");
-    expect(menu).toHaveAttribute("id", "account-menu-dropdown");
-    expect(screen.getByRole("menuitem", { name: "Sign out" })).toBeInTheDocument();
+    const panelId = trigger.getAttribute("aria-controls");
+    expect(panelId).toBeTruthy();
+    expect(document.getElementById(panelId!)).toContainElement(signOut());
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
   it("closes dropdown and restores focus to trigger on Escape key", async () => {
@@ -89,11 +92,11 @@ describe("AccountMenu", () => {
     });
 
     await user.click(trigger);
-    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(signOut()).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
 
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(signOut()).not.toBeInTheDocument();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(trigger).toHaveFocus();
   });
@@ -112,10 +115,10 @@ describe("AccountMenu", () => {
     });
 
     await user.click(trigger);
-    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(signOut()).toBeInTheDocument();
 
     await user.click(screen.getByTestId("outside"));
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(signOut()).not.toBeInTheDocument();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
@@ -133,21 +136,21 @@ describe("AccountMenu", () => {
     });
 
     await user.click(trigger);
-    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(signOut()).toBeInTheDocument();
 
     await user.tab();
-    expect(screen.getByRole("menuitem", { name: "Sign out" })).toHaveFocus();
+    expect(signOut()).toHaveFocus();
 
     await user.tab();
     expect(
       screen.getByRole("button", { name: "Outside focusable" }),
     ).toHaveFocus();
 
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(signOut()).not.toBeInTheDocument();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("invokes onLogout when clicking 'Sign out' menuitem", async () => {
+  it("invokes onLogout and closes when clicking Sign out", async () => {
     const user = userEvent.setup();
     const onLogout = vi.fn();
     render(<AccountMenu account={mockAccount} onLogout={onLogout} />);
@@ -156,10 +159,28 @@ describe("AccountMenu", () => {
       screen.getByRole("button", { name: "Katherine Johnson" }),
     );
 
-    const signOutItem = screen.getByRole("menuitem", { name: "Sign out" });
-    await user.click(signOutItem);
+    await user.click(screen.getByRole("button", { name: "Sign out" }));
 
     expect(onLogout).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(signOut()).not.toBeInTheDocument();
+  });
+
+  it("stays open and says so when sign-out fails", async () => {
+    const user = userEvent.setup();
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const onLogout = vi.fn().mockRejectedValueOnce(new Error("offline"));
+    render(<AccountMenu account={mockAccount} onLogout={onLogout} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Katherine Johnson" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't sign out. Please try again.",
+    );
+    expect(signOut()).toBeInTheDocument();
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 });

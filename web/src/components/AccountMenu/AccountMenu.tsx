@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FocusEvent as ReactFocusEvent } from "react";
 import type { Account } from "../../types";
 import styles from "./AccountMenu.module.css";
@@ -15,11 +15,14 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// A disclosure, not an ARIA menu: one plain button inside, reached with Tab.
 export function AccountMenu({ account, onLogout }: AccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [logoutFailed, setLogoutFailed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
 
   useEffect(() => {
     setImageError(false);
@@ -44,23 +47,12 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
       }
     }
 
-    function handleFocusOut(event: FocusEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.relatedTarget as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
     document.addEventListener("pointerdown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("focusout", handleFocusOut);
 
     return () => {
       document.removeEventListener("pointerdown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("focusout", handleFocusOut);
     };
   }, [isOpen]);
 
@@ -73,9 +65,20 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
     }
   };
 
+  const toggle = () => {
+    setLogoutFailed(false);
+    setIsOpen((prev) => !prev);
+  };
+
   const handleLogout = async () => {
-    setIsOpen(false);
-    await onLogout();
+    setLogoutFailed(false);
+    try {
+      await onLogout();
+      setIsOpen(false);
+    } catch (err) {
+      console.warn("AccountMenu: sign-out failed", err);
+      setLogoutFailed(true);
+    }
   };
 
   return (
@@ -88,10 +91,9 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
         ref={triggerRef}
         type="button"
         className={styles.trigger}
-        aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-controls="account-menu-dropdown"
-        onClick={() => setIsOpen((prev) => !prev)}
+        aria-controls={isOpen ? panelId : undefined}
+        onClick={toggle}
       >
         {account.avatarUrl && !imageError ? (
           <img
@@ -109,22 +111,22 @@ export function AccountMenu({ account, onLogout }: AccountMenuProps) {
       </button>
 
       {isOpen && (
-        <div
-          role="menu"
-          id="account-menu-dropdown"
-          className={styles.dropdown}
-        >
-          <div className={styles.userInfo} role="none">
+        <div id={panelId} className={styles.dropdown}>
+          <p className={styles.userInfo}>
             <span className={styles.userLabel}>{account.displayName}</span>
-          </div>
+          </p>
           <button
             type="button"
-            role="menuitem"
             className={styles.menuItem}
             onClick={handleLogout}
           >
             Sign out
           </button>
+          {logoutFailed && (
+            <p role="alert" className={styles.error}>
+              Couldn't sign out. Please try again.
+            </p>
+          )}
         </div>
       )}
     </div>

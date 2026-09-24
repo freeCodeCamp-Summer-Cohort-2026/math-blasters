@@ -15,6 +15,7 @@ import type { Account } from "../types";
 export interface AuthContextValue {
   account: Account | null;
   loading: boolean;
+  /** Rejects if the server did not sign out; the account is kept in that case. */
   logout: () => Promise<void>;
 }
 
@@ -50,6 +51,7 @@ export function AuthProvider({
           setLoading(false);
         }
       })
+      // getMe resolves null on failure today; this keeps the header off the skeleton if that changes.
       .catch((err) => {
         if (active) {
           console.error("AuthProvider: failed to fetch current user", err);
@@ -62,6 +64,7 @@ export function AuthProvider({
     };
   }, []);
 
+  // Clear only once the server confirms, so a failed sign-out never looks like a real one.
   const logout = useCallback(async () => {
     await api.auth.logout();
     setAccount(null);

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { AppRoutes } from "../src/App";
+import { SettledAppRoutes } from "./helpers/app";
 import { LabView } from "../src/pages/LabView";
 import { makeLesson } from "../src/content/fixtures";
 import { expectNoA11yViolations } from "./helpers/a11y";
@@ -15,7 +15,7 @@ const OUTCOME =
 function renderLab(slug = "marbles-in-total") {
   return render(
     <MemoryRouter initialEntries={[`/lessons/${slug}`]}>
-      <AppRoutes initialLoading={false} />
+      <SettledAppRoutes />
     </MemoryRouter>,
   );
 }

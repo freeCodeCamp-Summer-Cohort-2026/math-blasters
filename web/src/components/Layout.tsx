@@ -53,7 +53,7 @@ export function Layout() {
   );
 
   return (
-    <div className="app-shell">
+    <>
       <NavHeader />
       <PageLayout as="main" footer={footer}>
         <div className="page-header">{heroHeading}</div>
@@ -61,6 +61,6 @@ export function Layout() {
           <Outlet />
         </div>
       </PageLayout>
-    </div>
+    </>
   );
 }
