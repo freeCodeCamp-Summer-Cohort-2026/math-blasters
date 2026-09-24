@@ -1,5 +1,7 @@
+import { checkStep } from "./check";
 import { arithmeticAdditionModule } from "./fixtures";
 import type {
+  AnswerCheck,
   Lesson,
   Module,
   PageLesson,
@@ -90,6 +92,18 @@ function toPageModule(module: Module): PageModule {
 // ---------------------------------------------------------------------------
 
 export { checkStep, checkCriterion, normalizeSubmission } from "./check";
+
+/** Checks one step of a lesson looked up by slug, so pages never hold criteria; anything but an answer step fails. */
+export function checkAnswer(lessonSlug: string, stepIndex: number, submission: unknown): AnswerCheck {
+  const lesson = contentIndex
+    .flatMap((module) => module.lessons)
+    .find((lesson) => lesson.slug === lessonSlug);
+  const step = lesson?.steps[stepIndex];
+  if (step?.type !== "answer") return { passed: false };
+
+  const { passed, reason_code } = checkStep(step, submission);
+  return reason_code === undefined ? { passed } : { passed, reason_code };
+}
 
 // ---------------------------------------------------------------------------
 // Signature-only Stubs (throw "not implemented")

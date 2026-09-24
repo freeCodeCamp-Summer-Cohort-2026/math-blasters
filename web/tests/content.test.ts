@@ -12,6 +12,7 @@ import {
   getLesson,
   getModules,
   getModuleForLesson,
+  checkAnswer,
 } from "../src/content";
 import { parseCriteria } from "../src/content/criteria";
 import { expectNoCriteria } from "./helpers/accessors";
@@ -186,6 +187,34 @@ describe("content accessors", () => {
 
     expect(pageModule).toBeDefined();
     expectNoCriteria(pageModule);
+  });
+});
+
+describe("checkAnswer", () => {
+  // adding-two-numbers: step 0 explains, step 1 asks "What is $3 + 4$?" (expected 7, reason wrong_total).
+  it("passes a right answer", () => {
+    expect(checkAnswer("adding-two-numbers", 1, "7")).toEqual({ passed: true });
+  });
+
+  it("fails a wrong answer with the authored reason code and nothing else", () => {
+    expect(checkAnswer("adding-two-numbers", 1, "8")).toEqual({
+      passed: false,
+      reason_code: "wrong_total",
+    });
+  });
+
+  it("checks a lesson in any module, including a lab", () => {
+    expect(checkAnswer("marbles-in-total", 1, "11")).toEqual({ passed: true });
+  });
+
+  it("fails an unknown lesson, an explain step and an out-of-range index", () => {
+    expect(checkAnswer("does-not-exist", 1, "7")).toEqual({ passed: false });
+    expect(checkAnswer("adding-two-numbers", 0, "7")).toEqual({ passed: false });
+    expect(checkAnswer("adding-two-numbers", 99, "7")).toEqual({ passed: false });
+  });
+
+  it("never exposes criteria", () => {
+    expectNoCriteria(checkAnswer("adding-two-numbers", 1, "8"));
   });
 });
 
