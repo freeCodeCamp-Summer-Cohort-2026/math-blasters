@@ -89,8 +89,11 @@ export const api = {
     async getMe(): Promise<Account | null> {
       try {
         return await apiFetch<Account>("/api/auth/me");
-      } catch {
-        // Unreachable, 401, or error returns null quietly
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          return null;
+        }
+        console.warn("api.auth.getMe: failed to fetch current user", err);
         return null;
       }
     },

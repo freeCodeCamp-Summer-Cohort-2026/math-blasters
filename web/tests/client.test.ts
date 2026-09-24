@@ -110,6 +110,7 @@ describe("api.auth", () => {
     });
 
     it("returns null quietly when endpoint returns 401 Unauthorized", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -119,15 +120,40 @@ describe("api.auth", () => {
 
       const result = await api.auth.getMe();
       expect(result).toBeNull();
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
-    it("returns null quietly when fetch throws network error", async () => {
-      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
-        new Error("Network connection lost"),
-      );
+    it("returns null and logs warning when endpoint returns 500 Internal Server Error", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: async () => "Internal Server Error",
+      } as Response);
 
       const result = await api.auth.getMe();
       expect(result).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "api.auth.getMe: failed to fetch current user",
+        expect.any(Error),
+      );
+      warnSpy.mockRestore();
+    });
+
+    it("returns null and logs warning when fetch throws network error", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const networkError = new Error("Network connection lost");
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(networkError);
+
+      const result = await api.auth.getMe();
+      expect(result).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "api.auth.getMe: failed to fetch current user",
+        networkError,
+      );
+      warnSpy.mockRestore();
     });
   });
 
