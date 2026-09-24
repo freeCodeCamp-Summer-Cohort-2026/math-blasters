@@ -28,7 +28,7 @@ const ROUTES = [
 function renderRoute(route: string) {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <AppRoutes />
+      <AppRoutes initialLoading={false} />
     </MemoryRouter>,
   );
 }

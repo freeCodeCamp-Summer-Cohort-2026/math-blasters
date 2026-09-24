@@ -55,7 +55,7 @@ describe("LoginPage", () => {
   it("renders LoginPage when navigating to /login in AppRoutes", async () => {
     render(
       <MemoryRouter initialEntries={["/login"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 

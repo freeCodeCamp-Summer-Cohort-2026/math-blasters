@@ -13,7 +13,7 @@ const modulePath = `/modules/${module.slug}`;
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <AppRoutes />
+      <AppRoutes initialLoading={false} />
     </MemoryRouter>,
   );
 }

@@ -9,7 +9,7 @@ describe("LessonView Route (/lessons/:slug)", () => {
   it("renders the lesson player for a known lesson slug", () => {
     render(
       <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -30,7 +30,7 @@ describe("LessonView Route (/lessons/:slug)", () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -48,7 +48,7 @@ describe("LessonView Route (/lessons/:slug)", () => {
   it("renders the not-found route for an unknown lesson slug", () => {
     render(
       <MemoryRouter initialEntries={["/lessons/non-existent-lesson"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -66,7 +66,7 @@ describe("LessonView Route (/lessons/:slug)", () => {
   it("has no accessibility violations on the lesson page", async () => {
     const { container } = render(
       <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 

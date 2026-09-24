@@ -9,7 +9,7 @@ describe("Router & Layout", () => {
   it("renders the root layout landmarks: header, main outlet, and footer", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -26,7 +26,7 @@ describe("Router & Layout", () => {
   it("renders the home page at route '/'", async () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -36,7 +36,7 @@ describe("Router & Layout", () => {
   it("renders the not-found page for an unknown path", () => {
     render(
       <MemoryRouter initialEntries={["/some/non-existent/path"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -56,7 +56,7 @@ describe("Router & Layout", () => {
 
     render(
       <MemoryRouter initialEntries={["/not-found"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 
@@ -71,7 +71,7 @@ describe("Router & Layout", () => {
 
     render(
       <MemoryRouter initialEntries={["/invalid-route"]}>
-        <AppRoutes />
+        <AppRoutes initialLoading={false} />
       </MemoryRouter>,
     );
 

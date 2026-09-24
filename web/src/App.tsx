@@ -22,18 +22,12 @@ export interface AppRoutesProps {
 
 export function AppRoutes({
   initialAccount = null,
-  initialLoading,
+  initialLoading = true,
 }: AppRoutesProps = {}) {
-  const isTestEnv =
-    typeof window !== "undefined" &&
-    navigator.userAgent.includes("jsdom");
-
-  const resolvedInitialLoading = initialLoading ?? !isTestEnv;
-
   return (
     <AuthProvider
       initialAccount={initialAccount}
-      initialLoading={resolvedInitialLoading}
+      initialLoading={initialLoading}
     >
       <Routes>
         <Route element={<Layout />}>
@@ -68,10 +62,12 @@ export function AppRoutes({
   );
 }
 
-export function App() {
+export type AppProps = AppRoutesProps;
+
+export function App(props: AppProps = {}) {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <AppRoutes {...props} />
     </BrowserRouter>
   );
 }

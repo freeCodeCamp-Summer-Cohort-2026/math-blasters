@@ -15,7 +15,7 @@ const OUTCOME =
 function renderLab(slug = "marbles-in-total") {
   return render(
     <MemoryRouter initialEntries={[`/lessons/${slug}`]}>
-      <AppRoutes />
+      <AppRoutes initialLoading={false} />
     </MemoryRouter>,
   );
 }
