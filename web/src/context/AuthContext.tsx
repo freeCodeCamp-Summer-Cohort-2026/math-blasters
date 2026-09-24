@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { ReactNode } from "react";
@@ -34,9 +35,10 @@ export function AuthProvider({
 }: AuthProviderProps) {
   const [account, setAccount] = useState<Account | null>(initialAccount);
   const [loading, setLoading] = useState(initialLoading);
+  const initialLoadingRef = useRef(initialLoading);
 
   useEffect(() => {
-    if (!initialLoading) {
+    if (!initialLoadingRef.current) {
       return;
     }
     let active = true;
@@ -48,8 +50,9 @@ export function AuthProvider({
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (active) {
+          console.error("AuthProvider: failed to fetch current user", err);
           setAccount(null);
           setLoading(false);
         }
@@ -57,7 +60,7 @@ export function AuthProvider({
     return () => {
       active = false;
     };
-  }, [initialLoading]);
+  }, []);
 
   const logout = useCallback(async () => {
     await api.auth.logout();

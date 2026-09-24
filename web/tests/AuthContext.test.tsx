@@ -76,10 +76,10 @@ describe("AuthContext", () => {
     expect(result.current.account).toBeNull();
   });
 
-  it("resolves to signed-out state when getMe rejects", async () => {
-    vi.spyOn(api.auth, "getMe").mockRejectedValueOnce(
-      new Error("Network error"),
-    );
+  it("resolves to signed-out state when getMe rejects and logs error", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const networkError = new Error("Network error");
+    vi.spyOn(api.auth, "getMe").mockRejectedValueOnce(networkError);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -91,6 +91,45 @@ describe("AuthContext", () => {
     });
 
     expect(result.current.account).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      "AuthProvider: failed to fetch current user",
+      networkError,
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("does not call getMe on mount when initialLoading is false", () => {
+    const getMeSpy = vi.spyOn(api.auth, "getMe");
+
+    renderHook(() => useAuth(), {
+      wrapper: ({ children }) => (
+        <AuthProvider initialLoading={false}>{children}</AuthProvider>
+      ),
+    });
+
+    expect(getMeSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not re-fetch getMe when re-rendered with a new initialLoading value", async () => {
+    const getMeSpy = vi.spyOn(api.auth, "getMe").mockResolvedValue(null);
+
+    const { rerender } = render(
+      <AuthProvider initialLoading={true}>
+        <div>Child</div>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getMeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <AuthProvider initialLoading={false}>
+        <div>Child</div>
+      </AuthProvider>,
+    );
+
+    expect(getMeSpy).toHaveBeenCalledTimes(1);
   });
 
   it("logout calls api.auth.logout and resets account to null without page reload", async () => {
