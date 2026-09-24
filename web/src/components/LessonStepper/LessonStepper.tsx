@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import type { PageLesson } from "../../content/types";
 import { Button } from "../Button";
 import { Step } from "../Step";
@@ -6,17 +7,21 @@ import styles from "./LessonStepper.module.css";
 
 export interface LessonStepperProps {
   lesson: PageLesson;
+  /** Where "Back" goes once there's no previous step to step back to: the module page this lesson opened from. Omitted, Back stays disabled on the first step. */
+  backHref?: string;
   // h3 under a tutorial's h2 title, h2 under a lab's h1 outcome.
   headingLevel?: "h2" | "h3";
 }
 
 export function LessonStepper({
   lesson,
+  backHref,
   headingLevel = "h3",
 }: LessonStepperProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const totalSteps = lesson.steps.length;
   const currentStep = lesson.steps[currentStepIndex];
+  const isFirstStep = currentStepIndex === 0;
 
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const isInitialMount = useRef(true);
@@ -71,17 +76,20 @@ export function LessonStepper({
       </div>
 
       <div className={styles.stepContainer}>
-        {currentStep && <Step step={currentStep} />}
+        {/* Keyed on the step index so each step gets a fresh Step instance: submission state must not leak between steps. */}
+        {currentStep && <Step key={currentStepIndex} step={currentStep} />}
       </div>
 
       <div className={styles.controls}>
-        <Button
-          variant="secondary"
-          onClick={handleBack}
-          disabled={currentStepIndex === 0}
-        >
-          Back
-        </Button>
+        {isFirstStep && backHref ? (
+          <Link to={backHref} className="btn btn--secondary btn--md" aria-label="Back to module">
+            Back
+          </Link>
+        ) : (
+          <Button variant="secondary" onClick={handleBack} disabled={isFirstStep}>
+            Back
+          </Button>
+        )}
         <Button
           variant="primary"
           onClick={handleNext}

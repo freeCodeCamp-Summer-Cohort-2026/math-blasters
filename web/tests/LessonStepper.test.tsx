@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { LessonStepper } from "../src/components/LessonStepper/LessonStepper";
 import type { PageLesson } from "../src/content/types";
@@ -21,7 +22,7 @@ describe("LessonStepper Component", () => {
     render(<LessonStepper lesson={mockLesson} />);
 
     expect(screen.getByRole("heading", { name: /step 1 of 3/i })).toBeInTheDocument();
-    expect(screen.getByText("Step kind: explain")).toBeInTheDocument();
+    expect(screen.getByText("Introduction to adding")).toBeInTheDocument();
 
     const progressBar = screen.getByRole("progressbar");
     expect(progressBar).toHaveAttribute("aria-valuenow", "1");
@@ -43,7 +44,7 @@ describe("LessonStepper Component", () => {
     await user.click(nextBtn);
 
     expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toBeInTheDocument();
-    expect(screen.getByText("Step kind: answer")).toBeInTheDocument();
+    expect(screen.getByText("Calculate 1 + 1")).toBeInTheDocument();
 
     const progressBar = screen.getByRole("progressbar");
     expect(progressBar).toHaveAttribute("aria-valuenow", "2");
@@ -115,14 +116,81 @@ describe("LessonStepper Component", () => {
     await user.keyboard("{Enter}");
     expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
 
-    // Focus is on the heading, so tab forward to reach the controls again.
+    // Step 2 is an answer step, so its input and submit button sit in the tab order ahead of the stepper's own Back/Next controls.
     await user.tab();
+    expect(screen.getByRole("spinbutton", { name: /your answer/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /submit/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /back/i })).toHaveFocus();
     await user.tab();
     expect(screen.getByRole("button", { name: /next/i })).toHaveFocus();
 
     await user.keyboard("{Enter}");
     expect(screen.getByRole("heading", { name: /step 3 of 3/i })).toHaveFocus();
     expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+  });
+
+  it("gives a revisited answer step a fresh submission state rather than carrying over a stuck one", async () => {
+    const user = userEvent.setup();
+    render(<LessonStepper lesson={mockLesson} />);
+
+    await user.click(screen.getByRole("button", { name: /next/i })); // step 2, answer
+
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "2");
+    await user.click(screen.getByRole("button", { name: /submit/i }));
+    // Submitting must not leave the step stuck: it recovers once the (stubbed) check settles.
+    await waitFor(() => expect(screen.getByRole("spinbutton", { name: /your answer/i })).toBeEnabled());
+
+    await user.click(screen.getByRole("button", { name: /next/i })); // step 3, explain
+    await user.click(screen.getByRole("button", { name: /back/i })); // step 2 again
+
+    const revisitedInput = screen.getByRole("spinbutton", { name: /your answer/i });
+    expect(revisitedInput).toBeEnabled();
+    expect(revisitedInput).toHaveValue(null);
+    expect(screen.getByRole("button", { name: /submit/i })).toBeEnabled();
+  });
+
+  it("renders Back as a link to backHref on the first step instead of a disabled button", () => {
+    render(
+      <MemoryRouter>
+        <LessonStepper lesson={mockLesson} backHref="/modules/arithmetic-addition" />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole("button", { name: /back/i })).not.toBeInTheDocument();
+
+    const backLink = screen.getByRole("link", { name: /back/i });
+    expect(backLink).toHaveAttribute("href", "/modules/arithmetic-addition");
+  });
+
+  it("reverts Back to the normal step-back button once past the first step, even with backHref set", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <LessonStepper lesson={mockLesson} backHref="/modules/arithmetic-addition" />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /next/i })); // step 2
+
+    expect(screen.queryByRole("link", { name: /back/i })).not.toBeInTheDocument();
+    const backBtn = screen.getByRole("button", { name: /back/i });
+    expect(backBtn).toBeEnabled();
+
+    await user.click(backBtn); // back to step 1
+    expect(screen.getByRole("heading", { name: /step 1 of 3/i })).toHaveFocus();
+    expect(screen.getByRole("link", { name: /back/i })).toHaveAttribute(
+      "href",
+      "/modules/arithmetic-addition",
+    );
+  });
+
+  it("keeps Back a disabled button on the first step when no backHref is given", () => {
+    render(<LessonStepper lesson={mockLesson} />);
+
+    expect(screen.queryByRole("link", { name: /back/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /back/i })).toBeDisabled();
   });
 
   it("has no accessibility violations across steps (axe check)", async () => {

@@ -1,18 +1,30 @@
+import { useState } from "react";
 import type { PageStep } from "../../content/types";
-import styles from "./Step.module.css";
+import { AnswerStep, ExplainStep } from "../steps";
+import type { SubmissionStatus } from "../steps";
 
 export interface StepProps {
   step: PageStep;
 }
 
-/**
- * Isolated Step component boundary.
- * Renders a placeholder showing the step kind until full step renderers land.
- */
+/** Dispatches to the renderer for the step's kind (MB-45); submission status is local state until `useLesson` (MB-18) merges and takes over, unchanged in shape. */
 export function Step({ step }: StepProps) {
+  const [status, setStatus] = useState<SubmissionStatus>("untried");
+
+  if (step.type === "explain") {
+    return <ExplainStep step={step} />;
+  }
+
   return (
-    <div data-testid="step-placeholder" className={styles.placeholder}>
-      <p className={styles.kind}>Step kind: {step.type}</p>
-    </div>
+    <AnswerStep
+      step={step}
+      status={status}
+      onSubmit={() => {
+        setStatus("checking");
+        // No real checker until useLesson (MB-18) merges; unlock the step
+        // instead of leaving it stuck on "checking" with no way to retry.
+        setTimeout(() => setStatus("not_yet"), 0);
+      }}
+    />
   );
 }

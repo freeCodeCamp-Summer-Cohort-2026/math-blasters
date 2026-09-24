@@ -72,6 +72,8 @@ export interface AnswerStep {
   type: "answer";
   prompt: string;
   criteria: Criterion[];
+  checking?: string;
+  hints?: string[];
 }
 
 export type Step = ExplainStep | AnswerStep;

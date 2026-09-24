@@ -52,6 +52,15 @@ export function getLesson(slug: string): PageLesson | undefined {
   return undefined;
 }
 
+/** Retrieve the slug of the module a lesson belongs to, so a lesson-only route (/lessons/:slug carries no module slug) can still link back to it. */
+export function getModuleForLesson(lessonSlug: string): string | undefined {
+  const module = contentIndex.find((module) =>
+    module.lessons.some((lesson) => lesson.slug === lessonSlug),
+  );
+
+  return module?.slug;
+}
+
 function toPageLesson(lesson: Lesson): PageLesson {
   const steps = lesson.steps.map((step) => {
     if (step.type === "answer") {

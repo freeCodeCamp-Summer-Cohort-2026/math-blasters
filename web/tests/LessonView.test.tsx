@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { AppRoutes } from "../src/App";
@@ -23,6 +24,25 @@ describe("LessonView Route (/lessons/:slug)", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
+  });
+
+  it("links Back on the first step to the module the lesson belongs to", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+
+    const backLink = screen.getByRole("link", { name: /back/i });
+    expect(backLink).toHaveAttribute("href", "/modules/arithmetic-addition");
+
+    await user.click(backLink);
+
+    expect(
+      screen.getByRole("heading", { name: /arithmetic addition/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/adding two numbers/i)).toBeInTheDocument();
   });
 
   it("renders the not-found route for an unknown lesson slug", () => {

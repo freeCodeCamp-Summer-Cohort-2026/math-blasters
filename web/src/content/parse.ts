@@ -237,7 +237,17 @@ function parseAnswerStep(rawStep: RawStep, path: string): AnswerStep {
     );
   }
 
-  const criteria = parseCriteria(fence[1], path, rawStep.stepNumber);
+  const parsed = parseCriteria(fence[1], path, rawStep.stepNumber);
 
-  return { type: "answer", prompt, criteria };
+  const step: AnswerStep = { type: "answer", prompt, criteria: parsed.criteria };
+
+  if (parsed.checking !== undefined) {
+    step.checking = parsed.checking;
+  }
+  
+  if (parsed.hints !== undefined) {
+    step.hints = parsed.hints;
+  }
+
+  return step;
 }

@@ -3,10 +3,57 @@ import { parse as parseExpression } from "mathjs";
 import type { Criterion } from "./types";
 
 const VALID_CHECKS = ["equals", "approx", "in_range", "equals_any", "set_equals", "equivalent"];
+const VALID_CRITERIA_KEYS = ["criteria", "checking", "hints"];
 
-export function parseCriteria(yamlSource: string, path: string, stepNumber: number): Criterion[] {
-  const parsed = parse(yamlSource);
+type ParsedAnswerCriteria = {
+  criteria: Criterion[];
+  checking?: string;
+  hints?: string[];
+};
 
+export function parseCriteria(yamlSource: string, path: string, stepNumber: number): ParsedAnswerCriteria {
+  let parsed = parse(yamlSource);
+
+  let checking: string | undefined;
+  let hints: string[] | undefined;
+
+  // Mapping new format 
+  if(!Array.isArray(parsed) && typeof parsed === "object" && parsed !== null) {
+    const data = parsed as Record<string, unknown>;
+
+    const unknownKeys = Object.keys(data).filter((key) => !VALID_CRITERIA_KEYS.includes(key));
+
+    if (unknownKeys.length > 0) {
+      throw new Error(
+        `Unknown keys in ${path} at step ${stepNumber}: ${unknownKeys.join(", ")}. Valid keys are: ${VALID_CRITERIA_KEYS.join(", ")}.`,
+      );
+    }
+
+    if(typeof data.checking !== "undefined") {
+      if(typeof data.checking !== "string" || data.checking.trim() === "") {
+        throw new Error(`${path}: the "checking" field must be a non-empty string, at step ${stepNumber}.`);
+      }
+
+      checking = data.checking;
+    }
+
+    if(typeof data.hints !== "undefined") {
+      if(!Array.isArray(data.hints) || data.hints.length === 0) {
+        throw new Error(`${path}: the "hints" field must be a non-empty list of strings, at step ${stepNumber}.`);
+      }
+
+      // check that each hint is a string and not empty
+      if(!Array.isArray(data.hints) || !data.hints.every((item) => typeof item === "string" && item.trim() !== "")) {
+        throw new Error(`${path}: the "hints" field must be a non-empty list of strings, at step ${stepNumber}.`);
+      }
+
+      hints = data.hints;
+    }
+
+    parsed = data.criteria;
+  }
+
+  // keeping rest of earlier code for backwards compatibility as intended
   if (!Array.isArray(parsed) || parsed.length === 0) {
     throw new Error(
       `Expected a non-empty array of criteria in ${path} at step ${stepNumber}, but got: ${typeof parsed}`,
@@ -86,5 +133,9 @@ export function parseCriteria(yamlSource: string, path: string, stepNumber: numb
     }
   });
 
-  return parsed as Criterion[];
+  return {
+    criteria: parsed,
+    checking: checking,
+    hints: hints,
+  };
 }

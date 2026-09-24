@@ -98,6 +98,45 @@ describe("parseLesson: full examples", () => {
       criteria: [{ check: "equals", expected: 11, reason_code: "wrong_total" }],
     });
   });
+
+  it("threads checking and hints from the mapping form onto the answer step", () => {
+    const source = `---
+slug: adding-two-numbers
+type: tutorial
+title: Adding two numbers
+teaches: [addition, counting-on]
+---
+
+--explain--
+
+Adding means putting two amounts together.
+
+--answer--
+
+What is $3 + 4$?
+
+\`\`\`yaml
+checking: the total number of marbles across all three jars
+hints:
+  - Count each jar separately first.
+  - Add the first two, then add the third.
+criteria:
+  - check: equals
+    expected: 7
+    reason_code: wrong_total
+\`\`\`
+`;
+
+    const lesson = parseLesson(source, TUTORIAL_PATH);
+
+    expect(lesson.steps[1]).toEqual({
+      type: "answer",
+      prompt: "What is $3 + 4$?",
+      criteria: [{ check: "equals", expected: 7, reason_code: "wrong_total" }],
+      checking: "the total number of marbles across all three jars",
+      hints: ["Count each jar separately first.", "Add the first two, then add the third."],
+    });
+  });
 });
 
 describe("parseLesson: semantic validation (via validateLesson)", () => {
