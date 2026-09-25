@@ -21,7 +21,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.config import get_settings
-from app.routers import health
+from app.routers import auth, health
 from app.schemas import ErrorDetail, ErrorEnvelope
 
 
@@ -157,6 +157,8 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     app.include_router(health.router, prefix="/api")
+
+    app.include_router(auth.router, prefix="/api")
 
     return app
 
