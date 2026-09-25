@@ -93,6 +93,16 @@ criteria:
 
 The bare list of criteria (no `checking`/`hints`) is still valid and means exactly what it always has.
 
+Each criterion may also carry an optional `reason`: a sentence shown to a learner whose answer fails that criterion, in place of the generic sentence for its `reason_code`. It must not give away the answer; the build rejects a `reason` that contains the expected value.
+
+```
+criteria:
+  - check: equals
+    expected: 15
+    reason_code: wrong_total
+    reason: Count each jar on its own, then add the three counts together.
+```
+
 1. New module: add `content/<module-slug>/module.yaml` with `slug`, `title`,
    `summary` and a `position` (modules are ordered by it). Skip this if
    you're adding a lesson to an existing module.

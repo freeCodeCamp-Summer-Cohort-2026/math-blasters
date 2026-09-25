@@ -3,7 +3,7 @@ import { useLayoutEffect } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { useLesson } from "../src/content/useLesson";
 import type { StepChecker } from "../src/content/useLesson";
-import { getLesson, makeLesson } from "../src/content";
+import { contentIndex, getLesson, makeLesson } from "../src/content";
 import type { AnswerCheck, Lesson, PageLesson } from "../src/content/types";
 
 // Two answer steps around an explain step, so "every answer step" means more than one.
@@ -170,6 +170,31 @@ describe("useLesson", () => {
     submitAndFlush(result, 99, "right");
     expect(checker).not.toHaveBeenCalled();
     expect(result.current.steps[0].status).toBe("untried");
+  });
+
+  it("carries an authored reason into the not_yet state through the real checker", () => {
+    const lesson = makeLesson({
+      slug: "reasoned",
+      steps: [
+        {
+          type: "answer",
+          prompt: "What is $5 + 6$?",
+          criteria: [{ check: "equals", expected: 11, reason_code: "wrong_sum", reason: "Start at 5 and count on 6 more." }],
+        },
+      ],
+    });
+    contentIndex.push({ slug: "reasoned-module", title: "Reasoned", lessons: [lesson] });
+    try {
+      const { result } = renderHook(() => useLesson(getLesson("reasoned")!));
+      submitAndFlush(result, 0, "10");
+      expect(result.current.steps[0]).toEqual({
+        status: "not_yet",
+        reason_code: "wrong_sum",
+        reason: "Start at 5 and count on 6 more.",
+      });
+    } finally {
+      contentIndex.pop();
+    }
   });
 
   it("exposes the reason_code but never the criterion", () => {

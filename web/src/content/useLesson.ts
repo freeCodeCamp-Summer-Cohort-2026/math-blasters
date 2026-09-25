@@ -20,10 +20,11 @@ interface InFlightCheck {
   cancel: () => void;
 }
 
-/** What the UI sees for one step: its status and, after a failed check, the reason code. Never the criterion. */
+/** What the UI sees for one step: its status and, after a failed check, the reason code and any authored reason. Never the criterion. */
 export interface StepState {
   status: SubmissionStatus;
   reason_code?: string;
+  reason?: string;
 }
 
 interface LessonState {
@@ -36,7 +37,7 @@ interface LessonState {
 type LessonAction =
   | { type: "goTo"; index: number }
   | { type: "checking"; slug: string; index: number }
-  | { type: "checked"; slug: string; index: number; passed: boolean; reason_code?: string }
+  | { type: "checked"; slug: string; index: number; passed: boolean; reason_code?: string; reason?: string }
   | { type: "reset"; lesson: PageLesson };
 
 function initialState(lesson: PageLesson): LessonState {
@@ -71,7 +72,11 @@ function reducer(state: LessonState, action: LessonAction): LessonState {
           ? { status: "checking" }
           : action.passed
             ? { status: "passed" }
-            : { status: "not_yet", reason_code: action.reason_code };
+            : {
+                status: "not_yet",
+                reason_code: action.reason_code,
+                ...(action.reason !== undefined && { reason: action.reason }),
+              };
       const steps = state.steps.slice();
       steps[action.index] = next;
       return { ...state, steps };
@@ -156,7 +161,14 @@ export function useLesson(lesson: PageLesson, checker: StepChecker = checkAnswer
           dispatch({ type: "checked", slug, index, passed: false });
           return;
         }
-        dispatch({ type: "checked", slug, index, passed: outcome.passed, reason_code: outcome.reason_code });
+        dispatch({
+          type: "checked",
+          slug,
+          index,
+          passed: outcome.passed,
+          reason_code: outcome.reason_code,
+          reason: outcome.reason,
+        });
       };
 
       dispatch({ type: "checking", slug, index });
