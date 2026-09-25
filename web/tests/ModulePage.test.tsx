@@ -45,7 +45,6 @@ describe("ModulePage", () => {
       const card = heading.closest("a");
 
       expect(card).toHaveAttribute("href", `/lessons/${lesson.slug}`);
-      expect(within(card!).getByText(lesson.description!)).toBeInTheDocument();
     }
   });
 

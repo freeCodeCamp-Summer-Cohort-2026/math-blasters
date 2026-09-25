@@ -1,21 +1,140 @@
-import { arithmeticAdditionModule } from "./fixtures";
 import type {
   Lesson,
   Module,
   PageLesson,
   PageModule,
 } from "./types";
+import { parse as parseYaml } from "yaml";
+import { parseLesson } from "./parse";
 
+const moduleSources = import.meta.glob<string>("@content/**/module.yaml", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+});
+const moduleEntries = Object.entries(moduleSources);
+type ModuleMetadata = {
+  slug: string;
+  title: string;
+  description: string;
+  position: number;
+  modulePath: string;
+};
+
+const modules: ModuleMetadata[] = [];
+
+for (const [path, source] of moduleEntries) {
+  const metadata = parseModuleMetadata(source, path);
+
+  modules.push({
+    ...metadata,
+    modulePath: path.slice(0, path.lastIndexOf("/")),
+  });
+}
+
+function parseModuleMetadata(
+  source: string,
+  path: string,
+): Omit<ModuleMetadata, "modulePath"> {
+  let data: unknown;
+
+  try {
+    data = parseYaml(source);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`${path}: module metadata is not valid YAML — ${reason}`);
+  }
+
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new Error(`${path}: module metadata must be a YAML mapping of fields.`);
+  }
+
+  const record = data as Record<string, unknown>;
+
+  return {
+    slug: requireString(record, "slug", path),
+    title: requireString(record, "title", path),
+    description: requireString(record, "summary", path),
+    position: requireNumber(record, "position", path),
+  };
+}
+
+function requireString(
+  data: Record<string, unknown>,
+  field: string,
+  path: string,
+): string {
+  const value = data[field];
+
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(
+      `${path}: the "${field}" field is required and must be a non-empty string.`,
+    );
+  }
+
+  return value;
+}
+
+function requireNumber(
+  data: Record<string, unknown>,
+  field: string,
+  path: string,
+): number {
+  const value = data[field];
+
+  if (typeof value !== "number") {
+    throw new Error(
+      `${path}: the "${field}" field is required and must be a number.`,
+    );
+  }
+
+  return value;
+}
+
+const lessonSources = import.meta.glob<string>("@content/**/*.md", { eager: true, query: "?raw", import: "default", });
+const lessonEntries = Object.entries(lessonSources).sort(([a], [b]) =>
+  a.localeCompare(b),
+);
+const lessonsByModule = new Map<string, Lesson[]>();
+const lessonSlugs = new Map<string, string>();
+for (let index = 0; index < lessonEntries.length; index++) {
+  const [path, source]: [string, string] = lessonEntries[index];
+  const modulePath = path.slice(0, path.lastIndexOf("/"));
+  
+  const lesson = parseLesson(source, path);
+  const existingPath = lessonSlugs.get(lesson.slug);
+
+  if (existingPath !== undefined) {
+    throw new Error(
+      `Duplicate lesson slug "${lesson.slug}" found in ${existingPath} and ${path}.`,
+    );
+  }
+
+  lessonSlugs.set(lesson.slug, path);
+
+  const moduleLessons = lessonsByModule.get(modulePath) ?? [];
+  moduleLessons.push(lesson);
+  lessonsByModule.set(modulePath, moduleLessons);
+}
+
+const contentModules: Module[] = [...modules]
+  .sort((a, b) => a.position - b.position)
+  .map(({ modulePath, slug, title, description }) => ({
+    slug,
+    title,
+    description,
+    lessons: lessonsByModule.get(modulePath) ?? [],
+  }));
+
+export { parseLesson } from "./parse";
 // Re-export all types & fixtures
 export * from "./types";
 export * from "./fixtures";
 
 /**
- * Content index containing all registered modules.
- * For now, this is populated with fixture data. It will be swapped for the
- * build-time glob / loader in a subsequent phase without changing the public contract.
+ * Content index containing all registered modules loaded from the real content files at build time.
  */
-export const contentIndex: Module[] = [arithmeticAdditionModule];
+export const contentIndex: Module[] = contentModules;
 
 // ---------------------------------------------------------------------------
 // Accessor Stubs (operating synchronously against contentIndex)
@@ -96,13 +215,6 @@ export { checkStep, checkCriterion, normalizeSubmission } from "./check";
 // ---------------------------------------------------------------------------
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
-/**
- * Parse raw lesson source into a Lesson domain object.
- */
-export function parseLesson(_source: string, _path?: string): Lesson {
-  throw new Error("not implemented");
-}
 
 /**
  * Validate a Lesson domain object against schema rules.

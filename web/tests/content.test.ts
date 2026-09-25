@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   contentIndex,
+  arithmeticAdditionModule,
   makeLesson,
-  parseLesson,
   validateLesson,
   checkStep,
   checkCriterion,
@@ -48,6 +48,9 @@ describe("Content Contracts & Fixtures", () => {
   });
 
   describe("Fixtures", () => {
+    it("keeps the real content index in sync with the fixture", () => {
+      expect(contentIndex).toEqual([arithmeticAdditionModule]);
+    });
     it("exports contentIndex with arithmetic-addition module", () => {
       expect(contentIndex).toHaveLength(1);
       expect(contentIndex[0].slug).toBe("arithmetic-addition");
@@ -89,10 +92,6 @@ describe("Content Contracts & Fixtures", () => {
   });
 
   describe("Signature-only stubs", () => {
-    it('parseLesson throws "not implemented"', () => {
-      expect(() => parseLesson("some source")).toThrow("not implemented");
-    });
-
     it('validateLesson throws "not implemented"', () => {
       const lesson = makeLesson();
       expect(() => validateLesson(lesson)).toThrow("not implemented");
