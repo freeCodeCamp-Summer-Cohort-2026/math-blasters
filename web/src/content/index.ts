@@ -92,6 +92,7 @@ function toPageModule(module: Module): PageModule {
 // ---------------------------------------------------------------------------
 
 export { checkStep, checkCriterion, normalizeSubmission } from "./check";
+export { reasonSentence, REASON_SENTENCES, GENERIC_REASON_SENTENCE } from "./reasons";
 
 /** Checks one step of a lesson looked up by slug, so pages never hold criteria; undefined unless it is an answer step, like the accessors. */
 export function checkAnswer(
@@ -105,8 +106,12 @@ export function checkAnswer(
   const step = lesson?.steps[stepIndex];
   if (step?.type !== "answer") return undefined;
 
-  const { passed, reason_code } = checkStep(step, submission);
-  return reason_code === undefined ? { passed } : { passed, reason_code };
+  const { passed, reason_code, reason } = checkStep(step, submission);
+  return {
+    passed,
+    ...(reason_code !== undefined && { reason_code }),
+    ...(reason !== undefined && { reason }),
+  };
 }
 
 // useLesson imports checkAnswer back from here; the cycle is safe because it is only read when a submit runs.

@@ -15,6 +15,7 @@ import {
   checkAnswer,
 } from "../src/content";
 import { parseCriteria } from "../src/content/criteria";
+import { parseLesson as parseLessonSource } from "../src/content/parse";
 import { expectNoCriteria } from "./helpers/accessors";
 
 describe("Content Contracts & Fixtures", () => {
@@ -215,6 +216,24 @@ describe("checkAnswer", () => {
 
   it("never exposes criteria", () => {
     expectNoCriteria(checkAnswer("adding-two-numbers", 1, "8"));
+  });
+
+  it("passes an authored reason from a parsed lesson through to the page", () => {
+    const lesson = parseLessonSource(
+      "---\ntitle: Reasoned\nslug: reasoned\ntype: tutorial\n---\n\n--answer--\n\nWhat is $5 + 6$?\n\n```yaml\n- check: equals\n  expected: 11\n  reason_code: wrong_sum\n  reason: Start at 5 and count on 6 more.\n```\n",
+      "reasoned/01-reasoned.md",
+    );
+    contentIndex.push({ slug: "reasoned", title: "Reasoned", lessons: [lesson] });
+    try {
+      expect(checkAnswer("reasoned", 0, "10")).toEqual({
+        passed: false,
+        reason_code: "wrong_sum",
+        reason: "Start at 5 and count on 6 more.",
+      });
+      expect(checkAnswer("reasoned", 0, "11")).toEqual({ passed: true });
+    } finally {
+      contentIndex.pop();
+    }
   });
 });
 

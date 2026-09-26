@@ -114,11 +114,21 @@ function evaluateSetEquals(
   return false;
 }
 
+/** Adds the criterion's author-written reason to a failed result that has one. */
+function withReason(
+  criterion: Criterion,
+  result: CriterionResult,
+): CriterionResult {
+  return result.passed || criterion.reason === undefined
+    ? result
+    : { ...result, reason: criterion.reason };
+}
+
 /**
  * Check an individual criterion against a user submission.
  * - Empty submission never passes.
  * - Returns { passed: true } on pass.
- * - Returns { passed: false, reason_code } on failure.
+ * - Returns { passed: false, reason_code, reason? } on failure.
  * - Never returns, logs, or throws the expected value.
  */
 export function checkCriterion(
@@ -128,10 +138,10 @@ export function checkCriterion(
   const norm = normalizeSubmission(submission);
 
   if (norm === "") {
-    return {
+    return withReason(criterion, {
       passed: false,
       reason_code: criterion.reason_code,
-    };
+    });
   }
 
   let passed = false;
@@ -157,17 +167,17 @@ export function checkCriterion(
       break;
     case "equivalent":
       // Dispatches to checkEquivalent in equivalent.ts.
-      return checkEquivalent(criterion, submission);
+      return withReason(criterion, checkEquivalent(criterion, submission));
   }
 
   if (passed) {
     return { passed: true };
   }
 
-  return {
+  return withReason(criterion, {
     passed: false,
     reason_code: criterion.reason_code,
-  };
+  });
 }
 
 /**
@@ -193,5 +203,6 @@ export function checkStep(step: Step, submission: unknown): StepResult {
     passed,
     results,
     reason_code: firstFailing?.reason_code,
+    ...(firstFailing?.reason !== undefined && { reason: firstFailing.reason }),
   };
 }
