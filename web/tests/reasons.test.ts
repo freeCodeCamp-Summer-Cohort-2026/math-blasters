@@ -50,7 +50,7 @@ describe("reasonSentence", () => {
     const codes = reasonCodes([...committedLessons, ...fixtureLessons]);
     expect(codes.length).toBeGreaterThan(0);
     for (const code of codes) {
-      expect(REASON_SENTENCES, `no sentence for reason_code "${code}"`).toHaveProperty(code);
+      expect(Object.hasOwn(REASON_SENTENCES, code), `no sentence for reason_code "${code}"`).toBe(true);
     }
   });
 
