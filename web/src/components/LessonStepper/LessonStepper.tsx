@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import type { PageLesson } from "../../content/types";
+import { useLesson } from "../../content";
+import type { PageLesson, StepChecker } from "../../content";
 import { Button } from "../Button";
 import { Step } from "../Step";
 import styles from "./LessonStepper.module.css";
@@ -11,17 +12,31 @@ export interface LessonStepperProps {
   backHref?: string;
   // h3 under a tutorial's h2 title, h2 under a lab's h1 outcome.
   headingLevel?: "h2" | "h3";
+  /** Optional custom checker for dependency injection (defaults to checkAnswer). */
+  checker?: StepChecker;
 }
 
 export function LessonStepper({
   lesson,
   backHref,
   headingLevel = "h3",
+  checker,
 }: LessonStepperProps) {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const {
+    currentStep: currentStepIndex,
+    next: handleNext,
+    previous: handleBack,
+    steps: stepStates,
+    submit,
+  } = useLesson(lesson, checker);
+
   const totalSteps = lesson.steps.length;
   const currentStep = lesson.steps[currentStepIndex];
+  const currentStepState = stepStates[currentStepIndex];
   const isFirstStep = currentStepIndex === 0;
+  const hasNextStep = currentStepIndex < totalSteps - 1;
+  const isNextGated = hasNextStep && currentStep?.type === "answer" && currentStepState?.status !== "passed";
+  const isNextDisabled = !hasNextStep || isNextGated;
 
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const isInitialMount = useRef(true);
@@ -33,14 +48,6 @@ export function LessonStepper({
     }
     headingRef.current?.focus();
   }, [currentStepIndex]);
-
-  const handleBack = () => {
-    setCurrentStepIndex((prev) => Math.max(0, prev - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentStepIndex((prev) => Math.min(totalSteps - 1, prev + 1));
-  };
 
   const currentStepNumber = currentStepIndex + 1;
   const progressPercent = totalSteps > 0 ? (currentStepNumber / totalSteps) * 100 : 0;
@@ -77,7 +84,14 @@ export function LessonStepper({
 
       <div className={styles.stepContainer}>
         {/* Keyed on the step index so each step gets a fresh Step instance: submission state must not leak between steps. */}
-        {currentStep && <Step key={currentStepIndex} step={currentStep} />}
+        {currentStep && (
+          <Step
+            key={currentStepIndex}
+            step={currentStep}
+            status={currentStepState?.status}
+            onSubmit={(value) => submit(currentStepIndex, value)}
+          />
+        )}
       </div>
 
       <div className={styles.controls}>
@@ -90,13 +104,21 @@ export function LessonStepper({
             Back
           </Button>
         )}
-        <Button
-          variant="primary"
-          onClick={handleNext}
-          disabled={totalSteps === 0 || currentStepIndex >= totalSteps - 1}
-        >
-          Next
-        </Button>
+        <div className={styles.nextGroup}>
+          {isNextGated && (
+            <span className={styles.gateReason}>
+              An answer is needed first
+            </span>
+          )}
+          <Button
+            variant="primary"
+            onClick={handleNext}
+            disabled={isNextDisabled}
+            aria-label={isNextGated ? "Next: An answer is needed first" : undefined}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

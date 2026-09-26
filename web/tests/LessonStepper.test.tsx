@@ -54,12 +54,22 @@ describe("LessonStepper Component", () => {
 
     const backBtn = screen.getByRole("button", { name: /back/i });
     expect(backBtn).toBeEnabled();
-    expect(nextBtn).toBeEnabled();
+    // Step 2 is an unsolved answer step, so Next is disabled with gate reason
+    expect(nextBtn).toBeDisabled();
+    expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
+    expect(nextBtn).toHaveAttribute("aria-label", "Next: An answer is needed first");
   });
 
   it("disables Next on the final step and allows stepping back", async () => {
     const user = userEvent.setup();
-    render(<LessonStepper lesson={mockLesson} />);
+    render(
+      <LessonStepper
+        lesson={{
+          ...mockLesson,
+          steps: mockLesson.steps.map(() => ({ type: "explain", content: "" })),
+        }}
+      />,
+    );
 
     const nextBtn = screen.getByRole("button", { name: /next/i });
     await user.click(nextBtn); // Step 2
@@ -107,7 +117,7 @@ describe("LessonStepper Component", () => {
 
   it("can be driven through a whole lesson with the keyboard alone", async () => {
     const user = userEvent.setup();
-    render(<LessonStepper lesson={mockLesson} />);
+    render(<LessonStepper lesson={mockLesson} checker={() => ({ passed: true })} />);
 
     // Back is disabled on step 1, so the first tab stop is Next.
     await user.tab();
@@ -116,15 +126,24 @@ describe("LessonStepper Component", () => {
     await user.keyboard("{Enter}");
     expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
 
-    // Step 2 is an answer step, so its input and submit button sit in the tab order ahead of the stepper's own Back/Next controls.
+    // Step 2 is an answer step: answer and submit to unlock Next
     await user.tab();
     expect(screen.getByRole("spinbutton", { name: /your answer/i })).toHaveFocus();
+    await user.keyboard("2");
+
     await user.tab();
     expect(screen.getByRole("button", { name: /submit/i })).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    // Wait for step to pass and Next to enable
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+    });
+
     await user.tab();
     expect(screen.getByRole("button", { name: /back/i })).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole("button", { name: /next/i })).toHaveFocus();
+    expect(screen.getByRole("button", { name: /^next$/i })).toHaveFocus();
 
     await user.keyboard("{Enter}");
     expect(screen.getByRole("heading", { name: /step 3 of 3/i })).toHaveFocus();
@@ -139,16 +158,114 @@ describe("LessonStepper Component", () => {
 
     await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "2");
     await user.click(screen.getByRole("button", { name: /submit/i }));
-    // Submitting must not leave the step stuck: it recovers once the (stubbed) check settles.
+    // Submitting must not leave the step stuck: it recovers once the check settles.
     await waitFor(() => expect(screen.getByRole("spinbutton", { name: /your answer/i })).toBeEnabled());
 
-    await user.click(screen.getByRole("button", { name: /next/i })); // step 3, explain
-    await user.click(screen.getByRole("button", { name: /back/i })); // step 2 again
+    // Back is always available: return to step 1 explanation, then step back to step 2
+    await user.click(screen.getByRole("button", { name: /back/i })); // back to step 1 (explain)
+    expect(screen.getByRole("heading", { name: /step 1 of 3/i })).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: /next/i })); // step 2 again
+    expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
 
     const revisitedInput = screen.getByRole("spinbutton", { name: /your answer/i });
     expect(revisitedInput).toBeEnabled();
     expect(revisitedInput).toHaveValue(null);
     expect(screen.getByRole("button", { name: /submit/i })).toBeEnabled();
+  });
+
+  describe("gating advancing past unsolved answer steps (Issue #98)", () => {
+    it("blocks Next on an unsolved answer step and displays 'An answer is needed first' visibly and in accessible name", async () => {
+      const user = userEvent.setup();
+      render(<LessonStepper lesson={mockLesson} />);
+
+      await user.click(screen.getByRole("button", { name: /next/i })); // go to step 2 (answer)
+
+      const nextBtn = screen.getByRole("button", { name: /an answer is needed first/i });
+      expect(nextBtn).toBeDisabled();
+      expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
+      expect(nextBtn).toHaveAttribute("aria-label", "Next: An answer is needed first");
+    });
+
+    it("unblocks Next once the answer step passes", async () => {
+      const user = userEvent.setup();
+      render(<LessonStepper lesson={mockLesson} checker={() => ({ passed: true })} />);
+
+      await user.click(screen.getByRole("button", { name: /next/i })); // go to step 2 (answer)
+
+      const nextBtn = screen.getByRole("button", { name: /next/i });
+      expect(nextBtn).toBeDisabled();
+      expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
+
+      await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "2");
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+      });
+      expect(screen.queryByText("An answer is needed first")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^next$/i })).not.toHaveAttribute("aria-label");
+
+      // Verify it can advance to step 3 now
+      await user.click(screen.getByRole("button", { name: /^next$/i }));
+      expect(screen.getByRole("heading", { name: /step 3 of 3/i })).toBeInTheDocument();
+    });
+
+    it("leaves Next unaffected on an explain step", () => {
+      render(<LessonStepper lesson={mockLesson} />);
+
+      // Step 1 is an explain step
+      const nextBtn = screen.getByRole("button", { name: /^next$/i });
+      expect(nextBtn).toBeEnabled();
+      expect(screen.queryByText("An answer is needed first")).not.toBeInTheDocument();
+      expect(nextBtn).not.toHaveAttribute("aria-label");
+    });
+
+    it("never gates the Back button on an unsolved answer step", async () => {
+      const user = userEvent.setup();
+      render(<LessonStepper lesson={mockLesson} />);
+
+      await user.click(screen.getByRole("button", { name: /next/i })); // step 2 (answer)
+
+      const backBtn = screen.getByRole("button", { name: /back/i });
+      expect(backBtn).toBeEnabled();
+
+      await user.click(backBtn);
+      expect(screen.getByRole("heading", { name: /step 1 of 3/i })).toBeInTheDocument();
+    });
+
+    it("applies the exact same gating rule to a lab", async () => {
+      const user = userEvent.setup();
+      const mockLab: PageLesson = { ...mockLesson, type: "lab" };
+
+      render(<LessonStepper lesson={mockLab} headingLevel="h2" />);
+
+      await user.click(screen.getByRole("button", { name: /next/i })); // Step 2 (answer)
+
+      const nextBtn = screen.getByRole("button", { name: /an answer is needed first/i });
+      expect(nextBtn).toBeDisabled();
+      expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
+      expect(nextBtn).toHaveAttribute("aria-label", "Next: An answer is needed first");
+
+      const backBtn = screen.getByRole("button", { name: /back/i });
+      expect(backBtn).toBeEnabled();
+    });
+
+    it("does not show the gate reason on the final step", () => {
+      const singleStepLesson: PageLesson = {
+        slug: "single-step",
+        title: "Single Step",
+        type: "tutorial",
+        steps: [{ type: "answer", prompt: "Sole question" }],
+      };
+
+      render(<LessonStepper lesson={singleStepLesson} />);
+
+      const nextBtn = screen.getByRole("button", { name: /^next$/i });
+      expect(nextBtn).toBeDisabled();
+      expect(screen.queryByText("An answer is needed first")).not.toBeInTheDocument();
+      expect(nextBtn).not.toHaveAttribute("aria-label");
+    });
   });
 
   it("renders Back as a link to backHref on the first step instead of a disabled button", () => {
