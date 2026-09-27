@@ -103,14 +103,18 @@ The bare list of criteria (no `checking`/`hints`) is still valid and means exact
    `teaches` — then the body. See
    `content/arithmetic-addition/01-adding-two-numbers.md` for a worked
    example.
-4. From `web/`, run `npm run content:check`. It parses every file under
+4. From `web/`, run `npm run content:validate`. It parses every lesson under
    `content/` and fails on the first malformed one, printing the file and
    the reason. CI runs the same check, so a broken lesson can't land
    quietly.
 5. From `web/`, run `npm run content:manifest` to regenerate
    `content/manifest.json` and commit the result. It's the API's only record
    of which slugs are real, so CI fails (`npm run content:manifest -- --check`)
-   if a lesson lands without a matching manifest entry.
+   if a lesson lands without a matching manifest entry. The check also fails
+   on a module or lesson slug that is used twice.
+
+`npm run build` runs both checks before building, so a stale manifest or a
+broken lesson fails the build locally too.
 
 No code change and no review of `DemoProblem` needed — open the PR like any
 other.

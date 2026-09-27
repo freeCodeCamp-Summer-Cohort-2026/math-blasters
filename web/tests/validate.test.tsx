@@ -1,4 +1,4 @@
-import { makeLesson } from "../src/content";
+import { makeLesson } from "../src/content/fixtures";
 import { validateLesson } from "../src/content/validate";
 
 describe("validate lesson", () => {

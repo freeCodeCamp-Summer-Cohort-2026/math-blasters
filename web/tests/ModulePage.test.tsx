@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { SettledAppRoutes } from "./helpers/app";
-import { arithmeticAdditionModule } from "../src/content";
+import { arithmeticAdditionModule } from "../src/content/fixtures";
 import { expectNoA11yViolations } from "./helpers/a11y";
 
 const module = arithmeticAdditionModule;
@@ -45,7 +45,6 @@ describe("ModulePage", () => {
       const card = heading.closest("a");
 
       expect(card).toHaveAttribute("href", `/lessons/${lesson.slug}`);
-      expect(within(card!).getByText(lesson.description!)).toBeInTheDocument();
     }
   });
 

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -32,6 +32,58 @@ describe("buildManifest", () => {
         },
       ],
     });
+  });
+
+  it("throws when lesson slugs are duplicated across modules", () => {
+    const tmpContentDir = mkdtempSync(join(tmpdir(), "manifest-duplicate-test-"));
+
+    try {
+      const moduleA = join(tmpContentDir, "module-a");
+      const moduleB = join(tmpContentDir, "module-b");
+
+      mkdirSync(moduleA, { recursive: true });
+      mkdirSync(moduleB, { recursive: true });
+
+      writeFileSync(
+        join(moduleA, "module.yaml"),
+        "slug: module-a\ntitle: Module A\nsummary: A\nposition: 1\n",
+      );
+      writeFileSync(
+        join(moduleB, "module.yaml"),
+        "slug: module-b\ntitle: Module B\nsummary: B\nposition: 2\n",
+      );
+
+      const lesson = `---
+slug: duplicate
+type: tutorial
+title: Duplicate
+teaches: [basics]
+---
+
+--explain--
+
+A lesson.
+
+--answer--
+
+What is $1 + 1$?
+
+\`\`\`yaml
+- check: equals
+  expected: 2
+  reason_code: wrong_total
+\`\`\`
+`;
+
+      writeFileSync(join(moduleA, "01-duplicate.md"), lesson);
+      writeFileSync(join(moduleB, "01-duplicate.md"), lesson);
+
+      expect(() => buildManifest(tmpContentDir)).toThrow(
+        'Duplicate lesson slug "duplicate" found in modules "module-a" and "module-b".',
+      );
+    } finally {
+      rmSync(tmpContentDir, { recursive: true, force: true });
+    }
   });
 
   it("serializes deterministically, so regenerating with no content change is a no-op", () => {
