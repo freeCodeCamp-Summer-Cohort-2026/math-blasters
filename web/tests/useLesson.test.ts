@@ -3,7 +3,8 @@ import { useLayoutEffect } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { useLesson } from "../src/content/useLesson";
 import type { StepChecker } from "../src/content/useLesson";
-import { contentIndex, getLesson, makeLesson } from "../src/content";
+import { contentIndex, getLesson } from "../src/content";
+import { makeLesson } from "../src/content/fixtures";
 import type { AnswerCheck, Lesson, PageLesson } from "../src/content/types";
 
 // Two answer steps around an explain step, so "every answer step" means more than one.

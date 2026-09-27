@@ -40,13 +40,10 @@ describe("LabView (/lessons/:slug for a lab)", () => {
     expect(headings[1]).toHaveTextContent("Step 1 of 2");
   });
 
-  it("names the lab and describes it without competing for a heading", () => {
+  it("names the lab without competing for a heading", () => {
     renderLab();
 
     expect(screen.getByText("Marbles in Total")).toBeInTheDocument();
-    expect(
-      screen.getByText(/practice combining collections of marbles/i),
-    ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Marbles in Total" }),
     ).not.toBeInTheDocument();

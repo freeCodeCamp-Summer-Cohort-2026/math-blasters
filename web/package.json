@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run content:manifest -- --check && npm run content:validate && tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "content:manifest": "tsx scripts/generate-manifest.ts",
+    "content:validate": "tsx scripts/validate-content.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -36,10 +36,35 @@ export const DEFAULT_MANIFEST_PATH = join(DEFAULT_CONTENT_DIR, "manifest.json");
 
 /** Build the manifest from every module and lesson file under `contentDir`. */
 export function buildManifest(contentDir: string): Manifest {
+  const lessonSlugs = new Map<string, string>();
+  const moduleSlugs = new Set<string>();
+
   const modules = listModuleDirs(contentDir)
     .map((name) => readModule(contentDir, name))
     .sort((a, b) => a.position - b.position || a.module.slug.localeCompare(b.module.slug))
     .map(({ module }) => module);
+
+  for (const module of modules) {
+    if (moduleSlugs.has(module.slug)) {
+      throw new Error(`Duplicate module slug "${module.slug}" found.`);
+    }
+
+    moduleSlugs.add(module.slug);
+  }
+
+  for (const module of modules) {
+    for (const lesson of module.lessons) {
+      const existingModule = lessonSlugs.get(lesson.slug);
+
+      if (existingModule !== undefined) {
+        throw new Error(
+          `Duplicate lesson slug "${lesson.slug}" found in modules "${existingModule}" and "${module.slug}".`,
+        );
+      }
+
+      lessonSlugs.set(lesson.slug, module.slug);
+    }
+  }
 
   return { modules };
 }
