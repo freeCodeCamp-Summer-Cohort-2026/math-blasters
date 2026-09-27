@@ -11,6 +11,7 @@ import {
   getModules,
   getModuleForLesson,
   checkAnswer,
+  answerInputKind,
 } from "../src/content";
 import { arithmeticAdditionModule, makeLesson } from "../src/content/fixtures";
 import { parseCriteria } from "../src/content/criteria";
@@ -49,16 +50,19 @@ describe("Content Contracts & Fixtures", () => {
   });
 
   describe("Fixtures", () => {
+    // By slug, not position: other modules can sit before or after it.
+    const arithmetic = contentIndex.find((m) => m.slug === "arithmetic-addition");
+
     it("keeps the real content index in sync with the fixture", () => {
-      expect(contentIndex).toEqual([arithmeticAdditionModule]);
-    });
-    it("exports contentIndex with arithmetic-addition module", () => {
-      expect(contentIndex).toHaveLength(1);
-      expect(contentIndex[0].slug).toBe("arithmetic-addition");
+      // The fixture's lessons, not all of them, and not the summary: content edits need no fixture edit.
+      expect(arithmetic).toMatchObject({
+        slug: arithmeticAdditionModule.slug,
+        lessons: expect.arrayContaining(arithmeticAdditionModule.lessons),
+      });
     });
 
     it("adding-two-numbers tutorial has the expected steps and criteria", () => {
-      const lesson = contentIndex[0].lessons.find(
+      const lesson = arithmetic?.lessons.find(
         (l) => l.slug === "adding-two-numbers",
       );
       expect(lesson).toBeDefined();
@@ -82,7 +86,7 @@ describe("Content Contracts & Fixtures", () => {
     });
 
     it("marbles-in-total lab has an outcome and prerequisites", () => {
-      const lesson = contentIndex[0].lessons.find(
+      const lesson = arithmetic?.lessons.find(
         (l) => l.slug === "marbles-in-total",
       );
       expect(lesson).toBeDefined();
@@ -186,6 +190,41 @@ describe("content accessors", () => {
 
     expect(pageModule).toBeDefined();
     expectNoCriteria(pageModule);
+  });
+});
+
+describe("answerInputKind", () => {
+  it.each<[string, Criterion]>([
+    ["equivalent", { check: "equivalent", expected: "x/2" }],
+    ["set_equals", { check: "set_equals", expected: [1, 2] }],
+    ["a string equals", { check: "equals", expected: "square" }],
+    ["a string in equals_any", { check: "equals_any", expected: [4, "four"] }],
+  ])("asks for text for %s", (_name, criterion) => {
+    expect(answerInputKind([criterion])).toBe("text");
+  });
+
+  it.each<[string, Criterion]>([
+    ["a number equals", { check: "equals", expected: 7 }],
+    ["numbers in equals_any", { check: "equals_any", expected: [4, 5] }],
+    ["approx", { check: "approx", expected: { value: 0.25, epsilon: 0.01 } }],
+    ["in_range", { check: "in_range", expected: { min: 1, max: 3 } }],
+  ])("asks for a number for %s", (_name, criterion) => {
+    expect(answerInputKind([criterion])).toBe("number");
+  });
+
+  it("asks for text when any criterion on the step needs it", () => {
+    expect(
+      answerInputKind([
+        { check: "equals", expected: 7 },
+        { check: "equivalent", expected: "7" },
+      ]),
+    ).toBe("text");
+  });
+
+  it("gives a page step its input kind and still no criteria", () => {
+    const step = getLesson("adding-two-numbers")?.steps[1];
+
+    expect(step).toEqual({ type: "answer", prompt: "What is $3 + 4$?", input: "number" });
   });
 });
 

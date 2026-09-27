@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { AnswerInputKind } from "../content";
 
 type AnswerInputProps = {
     id: string;
@@ -11,6 +12,8 @@ type AnswerInputProps = {
     disabled?: boolean;
     invalid?: boolean;
     errorId?: string;
+    /** "text" for expressions and lists, which a number field can't hold. */
+    kind?: AnswerInputKind;
 };
 
 export const AnswerInput = ({
@@ -23,7 +26,8 @@ export const AnswerInput = ({
     placeholder,
     invalid,
     disabled,
-    errorId
+    errorId,
+    kind = "number"
 }: AnswerInputProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,8 +64,9 @@ export const AnswerInput = ({
             <input
                 ref={inputRef}
                 id={id}
-                type="number"
-                inputMode="numeric"
+                type={kind}
+                // decimal, not numeric: a numeric keypad has no decimal point for answers like 3.5.
+                inputMode={kind === "number" ? "decimal" : undefined}
                 value={value}
                 onChange={onChange}
                 onKeyDown={(e) => {

@@ -42,6 +42,7 @@ export function AnswerStep({ step, status = "untried", onSubmit, feedback }: Ans
           onSubmit={handleSubmit}
           onReset={() => setValue("")}
           disabled={isChecking}
+          kind={step.input}
         />
         <Button
           variant="ghost"

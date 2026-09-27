@@ -4,10 +4,11 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { SettledAppRoutes } from "./helpers/app";
-import { arithmeticAdditionModule } from "../src/content/fixtures";
+import { getModule } from "../src/content";
 import { expectNoA11yViolations } from "./helpers/a11y";
 
-const module = arithmeticAdditionModule;
+// The real module, not the fixture: the fixture holds only some of its lessons.
+const module = getModule("arithmetic-addition")!;
 const modulePath = `/modules/${module.slug}`;
 
 function renderAt(path: string) {

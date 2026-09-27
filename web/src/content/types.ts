@@ -88,9 +88,14 @@ export type Step = ExplainStep | AnswerStep;
 // Page facing accessors types
 // ---------------------------------------------------------------------------
 
+/** Which field an answer step needs: "text" when the answer isn't a single number. */
+export type AnswerInputKind = "number" | "text";
+
 export interface PageAnswerStep {
   type: "answer";
   prompt: string;
+  /** Which field the page shows; absent means a number field. */
+  input?: AnswerInputKind;
 }
 
 export type PageStep = ExplainStep | PageAnswerStep;

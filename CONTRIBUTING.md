@@ -74,6 +74,14 @@ in the README.
 ## Adding a lesson
 
 A lesson is a markdown file, not a database row — no migration, no seeder.
+A new module or lesson needs no code change either.
+
+An answer step shows a number field, or a text field when any criterion is
+`equivalent` or `set_equals`, or has a text `expected`.
+
+An `equivalent` check accepts any expression equal to the answer, so "simplify
+$2x + 3x$" is passed by typing `2x + 3x` back. Ask in words, or ask for a
+number such as the coefficient.
 
 An answer step's criteria block may also include two optional fields, `checking` and `hints`:
 
@@ -102,6 +110,10 @@ criteria:
     reason_code: wrong_total
     reason: Count each jar on its own, then add the three counts together.
 ```
+
+Quote a `reason` that contains `: `, or the YAML breaks:
+`reason: "Halve it: divide by two."`. A new `reason_code` needs a sentence in
+`web/src/content/reasons.ts` only when some criterion using it has no `reason`.
 
 1. New module: add `content/<module-slug>/module.yaml` with `slug`, `title`,
    `summary` and a `position` (modules are ordered by it). Skip this if

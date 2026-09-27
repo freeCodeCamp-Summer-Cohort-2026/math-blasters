@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONTENT_DIR } from "../scripts/generate-manifest";
-import { contentIndex } from "../src/content";
+import { arithmeticAdditionModule, makeLesson } from "../src/content/fixtures";
 import { parseLesson } from "../src/content/parse";
 import {
   GENERIC_REASON_SENTENCE,
@@ -19,10 +19,13 @@ function lessonFiles(dir: string): string[] {
   });
 }
 
+/** Codes that reach the sentence map: an authored reason wins, so its criterion needs no entry. */
 function reasonCodes(lessons: Lesson[]): string[] {
   return lessons.flatMap((lesson) =>
     lesson.steps.flatMap((step) =>
-      step.type === "answer" ? step.criteria.map((c) => c.reason_code ?? "") : [],
+      step.type === "answer"
+        ? step.criteria.filter((c) => !c.reason?.trim()).map((c) => c.reason_code ?? "")
+        : [],
     ),
   );
 }
@@ -30,7 +33,8 @@ function reasonCodes(lessons: Lesson[]): string[] {
 const committedLessons = lessonFiles(DEFAULT_CONTENT_DIR).map((path) =>
   parseLesson(readFileSync(path, "utf-8"), relative(join(DEFAULT_CONTENT_DIR, ".."), path)),
 );
-const fixtureLessons = contentIndex.flatMap((module) => module.lessons);
+// contentIndex is the real content now, so the fixture is read directly.
+const fixtureLessons = arithmeticAdditionModule.lessons;
 
 describe("reasonSentence", () => {
   it.each(Object.keys(REASON_SENTENCES))("maps %s to a non-empty sentence", (code) => {
@@ -52,6 +56,22 @@ describe("reasonSentence", () => {
     for (const code of codes) {
       expect(Object.hasOwn(REASON_SENTENCES, code), `no sentence for reason_code "${code}"`).toBe(true);
     }
+  });
+
+  it("needs no sentence for a code whose criterion has an authored reason", () => {
+    const lesson = makeLesson({
+      steps: [
+        {
+          type: "answer",
+          prompt: "What is half of 10?",
+          criteria: [
+            { check: "equals", expected: 5, reason_code: "not_half", reason: "Split it into two equal groups." },
+            { check: "equals", expected: 5, reason_code: "not_quarter", reason: "   " },
+          ],
+        },
+      ],
+    });
+    expect(reasonCodes([lesson])).toEqual(["not_quarter"]);
   });
 
   it("falls back to a generic sentence for an unknown code, never the code itself", () => {

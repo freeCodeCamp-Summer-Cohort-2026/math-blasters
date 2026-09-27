@@ -1,6 +1,8 @@
 import { checkStep } from "./check";
 import type {
   AnswerCheck,
+  AnswerInputKind,
+  Criterion,
   Lesson,
   Module,
   PageLesson,
@@ -173,9 +175,9 @@ export function getModuleForLesson(lessonSlug: string): string | undefined {
 function toPageLesson(lesson: Lesson): PageLesson {
   const steps = lesson.steps.map((step) => {
     if (step.type === "answer") {
-      const { prompt, type } = step;
+      const { prompt, type, criteria } = step;
 
-      return {prompt, type};
+      return { prompt, type, input: answerInputKind(criteria) };
     }
 
     return step;
@@ -185,6 +187,24 @@ function toPageLesson(lesson: Lesson): PageLesson {
     ...lesson,
     steps,
   };
+}
+
+/** A text field for expressions, lists and word answers; a number field for everything else. */
+export function answerInputKind(criteria: Criterion[]): AnswerInputKind {
+  const needsText = criteria.some((criterion) => {
+    switch (criterion.check) {
+      case "equivalent":
+      case "set_equals":
+        return true;
+      case "equals":
+      case "equals_any":
+        return [criterion.expected].flat().some((value) => typeof value === "string");
+      default:
+        return false;
+    }
+  });
+
+  return needsText ? "text" : "number";
 }
 
 function toPageModule(module: Module): PageModule {

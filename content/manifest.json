@@ -10,9 +10,179 @@
           "title": "Adding Two Numbers"
         },
         {
+          "slug": "counting-on",
+          "kind": "tutorial",
+          "title": "Counting On"
+        },
+        {
+          "slug": "making-ten",
+          "kind": "tutorial",
+          "title": "Making Ten"
+        },
+        {
+          "slug": "adding-three-numbers",
+          "kind": "tutorial",
+          "title": "Adding Three Numbers"
+        },
+        {
+          "slug": "adding-two-digit-numbers",
+          "kind": "tutorial",
+          "title": "Adding Two-Digit Numbers"
+        },
+        {
           "slug": "marbles-in-total",
           "kind": "lab",
           "title": "Marbles in Total"
+        }
+      ]
+    },
+    {
+      "slug": "subtraction",
+      "title": "Subtraction",
+      "lessons": [
+        {
+          "slug": "taking-away",
+          "kind": "tutorial",
+          "title": "Taking Away"
+        },
+        {
+          "slug": "counting-back",
+          "kind": "tutorial",
+          "title": "Counting Back"
+        },
+        {
+          "slug": "finding-the-difference",
+          "kind": "tutorial",
+          "title": "Finding the Difference"
+        },
+        {
+          "slug": "estimating-differences",
+          "kind": "tutorial",
+          "title": "Estimating Differences"
+        },
+        {
+          "slug": "making-change",
+          "kind": "lab",
+          "title": "Making Change"
+        }
+      ]
+    },
+    {
+      "slug": "multiplication",
+      "title": "Multiplication",
+      "lessons": [
+        {
+          "slug": "equal-groups",
+          "kind": "tutorial",
+          "title": "Equal Groups"
+        },
+        {
+          "slug": "times-tables",
+          "kind": "tutorial",
+          "title": "Times Tables"
+        },
+        {
+          "slug": "arrays-and-order",
+          "kind": "tutorial",
+          "title": "Arrays and Order"
+        },
+        {
+          "slug": "factors",
+          "kind": "tutorial",
+          "title": "Factors"
+        },
+        {
+          "slug": "planting-a-garden",
+          "kind": "lab",
+          "title": "Planting a Garden"
+        }
+      ]
+    },
+    {
+      "slug": "division",
+      "title": "Division",
+      "lessons": [
+        {
+          "slug": "sharing-equally",
+          "kind": "tutorial",
+          "title": "Sharing Equally"
+        },
+        {
+          "slug": "division-and-multiplication",
+          "kind": "tutorial",
+          "title": "Division and Multiplication"
+        },
+        {
+          "slug": "remainders",
+          "kind": "tutorial",
+          "title": "Remainders"
+        },
+        {
+          "slug": "decimal-answers",
+          "kind": "tutorial",
+          "title": "Decimal Answers"
+        },
+        {
+          "slug": "packing-boxes",
+          "kind": "lab",
+          "title": "Packing Boxes"
+        }
+      ]
+    },
+    {
+      "slug": "fractions-basics",
+      "title": "Fractions Basics",
+      "lessons": [
+        {
+          "slug": "what-is-a-half",
+          "kind": "tutorial",
+          "title": "What Is a Half?"
+        },
+        {
+          "slug": "quarters",
+          "kind": "tutorial",
+          "title": "Quarters"
+        },
+        {
+          "slug": "half-as-an-expression",
+          "kind": "tutorial",
+          "title": "Half as an Expression"
+        },
+        {
+          "slug": "sharing-pizza",
+          "kind": "lab",
+          "title": "Sharing Pizza"
+        }
+      ]
+    },
+    {
+      "slug": "intro-to-algebra",
+      "title": "Intro to Algebra",
+      "lessons": [
+        {
+          "slug": "unknowns",
+          "kind": "tutorial",
+          "title": "Unknowns"
+        },
+        {
+          "slug": "writing-expressions",
+          "kind": "tutorial",
+          "title": "Writing Expressions"
+        },
+        {
+          "slug": "like-terms",
+          "kind": "tutorial",
+          "title": "Like Terms"
+        },
+        {
+          "slug": "evaluating-expressions",
+          "kind": "tutorial",
+          "title": "Evaluating Expressions"
+        },
+        {
+          "slug": "seating-rule",
+          "kind": "lab",
+          "title": "Seating Rule"
         }
       ]
     }
