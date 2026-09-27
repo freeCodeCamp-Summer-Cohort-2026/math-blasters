@@ -54,8 +54,8 @@ describe("LessonStepper Component", () => {
 
     const backBtn = screen.getByRole("button", { name: /back/i });
     expect(backBtn).toBeEnabled();
-    // Step 2 is an unsolved answer step, so Next is disabled with gate reason
-    expect(nextBtn).toBeDisabled();
+    // Step 2 is an unsolved answer step, so Next is gated with the reason
+    expect(nextBtn).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
     expect(nextBtn).toHaveAttribute("aria-label", "Next: An answer is needed first");
   });
@@ -150,9 +150,9 @@ describe("LessonStepper Component", () => {
     expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
   });
 
-  it("gives a revisited answer step a fresh submission state rather than carrying over a stuck one", async () => {
+  it("keeps a revisited not-yet answer step open to retry, with an empty input", async () => {
     const user = userEvent.setup();
-    render(<LessonStepper lesson={mockLesson} />);
+    render(<LessonStepper lesson={mockLesson} checker={() => ({ passed: false })} />);
 
     await user.click(screen.getByRole("button", { name: /next/i })); // step 2, answer
 
@@ -182,9 +182,37 @@ describe("LessonStepper Component", () => {
       await user.click(screen.getByRole("button", { name: /next/i })); // go to step 2 (answer)
 
       const nextBtn = screen.getByRole("button", { name: /an answer is needed first/i });
-      expect(nextBtn).toBeDisabled();
+      expect(nextBtn).toHaveAttribute("aria-disabled", "true");
       expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
       expect(nextBtn).toHaveAttribute("aria-label", "Next: An answer is needed first");
+
+      // Neither a click nor Enter moves past the unsolved step.
+      await user.click(nextBtn);
+      nextBtn.focus();
+      await user.keyboard("{Enter}");
+      expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toBeInTheDocument();
+    });
+
+    it("keeps the gated Next reachable by keyboard so its reason can be heard", async () => {
+      const user = userEvent.setup();
+      render(<LessonStepper lesson={mockLesson} />);
+
+      await user.click(screen.getByRole("button", { name: /next/i })); // step 2 (answer)
+
+      await user.tab(); // answer input
+      await user.tab(); // submit
+      await user.tab(); // back
+      await user.tab();
+      expect(screen.getByRole("button", { name: "Next: An answer is needed first" })).toHaveFocus();
+    });
+
+    it("hides the visible reason from assistive tech so it isn't read twice", async () => {
+      const user = userEvent.setup();
+      render(<LessonStepper lesson={mockLesson} />);
+
+      await user.click(screen.getByRole("button", { name: /next/i })); // step 2 (answer)
+
+      expect(screen.getByText("An answer is needed first")).toHaveAttribute("aria-hidden", "true");
     });
 
     it("unblocks Next once the answer step passes", async () => {
@@ -194,7 +222,7 @@ describe("LessonStepper Component", () => {
       await user.click(screen.getByRole("button", { name: /next/i })); // go to step 2 (answer)
 
       const nextBtn = screen.getByRole("button", { name: /next/i });
-      expect(nextBtn).toBeDisabled();
+      expect(nextBtn).toHaveAttribute("aria-disabled", "true");
       expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
 
       await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "2");
@@ -205,6 +233,7 @@ describe("LessonStepper Component", () => {
       });
       expect(screen.queryByText("An answer is needed first")).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^next$/i })).not.toHaveAttribute("aria-label");
+      expect(screen.getByRole("button", { name: /^next$/i })).not.toHaveAttribute("aria-disabled");
 
       // Verify it can advance to step 3 now
       await user.click(screen.getByRole("button", { name: /^next$/i }));
@@ -243,7 +272,7 @@ describe("LessonStepper Component", () => {
       await user.click(screen.getByRole("button", { name: /next/i })); // Step 2 (answer)
 
       const nextBtn = screen.getByRole("button", { name: /an answer is needed first/i });
-      expect(nextBtn).toBeDisabled();
+      expect(nextBtn).toHaveAttribute("aria-disabled", "true");
       expect(screen.getByText("An answer is needed first")).toBeInTheDocument();
       expect(nextBtn).toHaveAttribute("aria-label", "Next: An answer is needed first");
 

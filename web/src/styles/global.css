@@ -232,17 +232,23 @@ a.btn {
 }
 
 /* The press: button drops onto its own shadow. */
-.btn--primary:active:not(:disabled) {
+.btn--primary:active:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(4px);
   box-shadow: 0 0 0 0 var(--accent-strong);
 }
 
-.btn--primary:disabled {
+.btn--primary:disabled,
+.btn--primary[aria-disabled="true"] {
   background: var(--border-strong);
   /* Muted ink rather than white: on the grey fill, white all but disappears. */
   color: var(--text-muted);
   box-shadow: none;
   cursor: not-allowed;
+}
+
+/* An aria-disabled button stays focusable, so it keeps the focus ring the rule above removes. */
+.btn--primary[aria-disabled="true"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--sky-400);
 }
 
 .btn--sm {

@@ -36,7 +36,6 @@ export function LessonStepper({
   const isFirstStep = currentStepIndex === 0;
   const hasNextStep = currentStepIndex < totalSteps - 1;
   const isNextGated = hasNextStep && currentStep?.type === "answer" && currentStepState?.status !== "passed";
-  const isNextDisabled = !hasNextStep || isNextGated;
 
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const isInitialMount = useRef(true);
@@ -83,7 +82,7 @@ export function LessonStepper({
       </div>
 
       <div className={styles.stepContainer}>
-        {/* Keyed on the step index so each step gets a fresh Step instance: submission state must not leak between steps. */}
+        {/* Keyed on the step index so each step starts with an empty input; submission state lives in useLesson. */}
         {currentStep && (
           <Step
             key={currentStepIndex}
@@ -105,15 +104,18 @@ export function LessonStepper({
           </Button>
         )}
         <div className={styles.nextGroup}>
+          {/* Hidden from assistive tech: the button's name already carries the reason. */}
           {isNextGated && (
-            <span className={styles.gateReason}>
+            <span className={styles.gateReason} aria-hidden="true">
               An answer is needed first
             </span>
           )}
+          {/* Gated with aria-disabled, not disabled, so keyboard users can still reach it and hear why. */}
           <Button
             variant="primary"
-            onClick={handleNext}
-            disabled={isNextDisabled}
+            onClick={isNextGated ? undefined : handleNext}
+            disabled={!hasNextStep}
+            aria-disabled={isNextGated || undefined}
             aria-label={isNextGated ? "Next: An answer is needed first" : undefined}
           >
             Next
