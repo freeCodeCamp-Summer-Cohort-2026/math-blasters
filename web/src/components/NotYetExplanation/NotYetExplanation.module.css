@@ -1,0 +1,20 @@
+/* The "not yet" palette, never --coral or --danger: a wrong answer is not an error. */
+.explanation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--mango-500);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--text);
+}
+
+.entered,
+.reason {
+  margin: 0;
+}
+
+.entered strong {
+  overflow-wrap: anywhere;
+}

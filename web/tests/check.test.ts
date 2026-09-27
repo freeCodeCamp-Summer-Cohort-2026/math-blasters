@@ -597,6 +597,70 @@ describe("checkStep", () => {
   });
 });
 
+describe("authored reason", () => {
+  const reason = "Start at 5 and count on 6 more.";
+
+  it("rides along on a failure, never on a pass", () => {
+    const criterion: EqualsCriterion = { check: "equals", expected: 11, reason_code: "wrong_sum", reason };
+    expect(checkCriterion(criterion, "10")).toEqual({ passed: false, reason_code: "wrong_sum", reason });
+    expect(checkCriterion(criterion, "")).toEqual({ passed: false, reason_code: "wrong_sum", reason });
+    expect(checkCriterion(criterion, "11")).toEqual({ passed: true });
+  });
+
+  it("rides along on an equivalent failure", () => {
+    const criterion: EquivalentCriterion = { check: "equivalent", expected: "2x", reason_code: "not_equivalent", reason };
+    expect(checkCriterion(criterion, "3x")).toEqual({ passed: false, reason_code: "not_equivalent", reason });
+  });
+
+  it("comes from the first failing criterion in a step", () => {
+    const step: AnswerStep = {
+      type: "answer",
+      prompt: "q",
+      criteria: [
+        { check: "in_range", expected: { min: 0, max: 100 }, reason_code: "out_of_range" },
+        { check: "equals", expected: 11, reason_code: "wrong_sum", reason },
+      ],
+    };
+    expect(checkStep(step, "10")).toMatchObject({ passed: false, reason_code: "wrong_sum", reason });
+    expect(checkStep(step, "500")).not.toHaveProperty("reason");
+  });
+
+  it("is rejected by the parser when blank or not a string", () => {
+    expect(() =>
+      parseCriteria("- check: equals\n  expected: 1\n  reason_code: bad\n  reason: '  '", "t.md", 1),
+    ).toThrow(/Invalid reason/);
+    expect(() =>
+      parseCriteria("- check: equals\n  expected: 1\n  reason_code: bad\n  reason: 3", "t.md", 1),
+    ).toThrow(/Invalid reason/);
+  });
+
+  it.each([
+    ["equals", "expected: 48173", "The answer is 48173."],
+    ["equals, decimal at sentence end", "expected: 3.5", "It comes to 3.5."],
+    ["equals, string in another case", "expected: Blue", "Try blue."],
+    ["equivalent", "expected: 2*x", "It simplifies to 2*x."],
+    ["equals_any", "expected: [7, 9]", "Seven works, and so does 9."],
+    ["set_equals", "expected: [1, 2, 3]", "Remember 3 belongs in the set."],
+    ["approx", "expected: { value: 3.14, epsilon: 0.01 }", "Close to 3.14 will do."],
+  ])("is rejected by the parser when it gives away the answer (%s)", (check, expected, reason) => {
+    const kind = check.split(",")[0];
+    expect(() =>
+      parseCriteria(`- check: ${kind}\n  ${expected}\n  reason_code: r\n  reason: ${reason}`, "t.md", 1),
+    ).toThrow(/must not contain the expected value/);
+  });
+
+  it.each([
+    ["a number that only contains the answer", "expected: 5", "Count on from 15."],
+    ["a decimal that only starts with the answer", "expected: 3", "Try 3.5 first, then round."],
+    ["in_range, which has no single answer", "expected: { min: 1, max: 10 }", "Pick something between 1 and 10."],
+  ])("is accepted when it only resembles the answer (%s)", (_label, expected, reason) => {
+    const check = expected.includes("min") ? "in_range" : "equals";
+    expect(() =>
+      parseCriteria(`- check: ${check}\n  ${expected}\n  reason_code: r\n  reason: ${reason}`, "t.md", 1),
+    ).not.toThrow();
+  });
+});
+
 describe("Trust boundary: malformed expected rejected by parser", () => {
   it("asserts malformed expected shapes are rejected during parseCriteria", () => {
     // Malformed equals (array instead of number/string)

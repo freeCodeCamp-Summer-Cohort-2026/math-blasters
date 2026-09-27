@@ -13,6 +13,7 @@ export interface EqualsCriterion {
   check: "equals";
   expected: number | string;
   reason_code?: string;
+  reason?: string;
 }
 
 export interface ApproxCriterion {
@@ -22,6 +23,7 @@ export interface ApproxCriterion {
     epsilon: number;
   };
   reason_code?: string;
+  reason?: string;
 }
 
 export interface InRangeCriterion {
@@ -31,24 +33,28 @@ export interface InRangeCriterion {
     max: number;
   };
   reason_code?: string;
+  reason?: string;
 }
 
 export interface EqualsAnyCriterion {
   check: "equals_any";
   expected: (number | string)[];
   reason_code?: string;
+  reason?: string;
 }
 
 export interface SetEqualsCriterion {
   check: "set_equals";
   expected: (number | string)[];
   reason_code?: string;
+  reason?: string;
 }
 
 export interface EquivalentCriterion {
   check: "equivalent";
   expected: string;
   reason_code?: string;
+  reason?: string;
 }
 
 export type Criterion =
@@ -128,6 +134,8 @@ export interface Module {
 export interface CriterionResult {
   passed: boolean;
   reason_code?: string;
+  /** The criterion's author-written reason, on a failure that has one. */
+  reason?: string;
   error?: string;
 }
 
@@ -135,7 +143,8 @@ export interface StepResult {
   passed: boolean;
   results: CriterionResult[];
   reason_code?: string;
+  reason?: string;
 }
 
-/** What a page may learn from a check: pass or fail and the authored reason code, never the criterion. */
-export type AnswerCheck = Pick<StepResult, "passed" | "reason_code">;
+/** What a page may learn from a check: pass or fail and the authored reason code and reason, never the criterion. */
+export type AnswerCheck = Pick<StepResult, "passed" | "reason_code" | "reason">;

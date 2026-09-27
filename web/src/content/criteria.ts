@@ -11,6 +11,30 @@ type ParsedAnswerCriteria = {
   hints?: string[];
 };
 
+/** The answers a criterion accepts, as text; in_range has no single answer, so none. */
+function answersIn(criterion: Criterion): string[] {
+  switch (criterion.check) {
+    case "equals":
+    case "equivalent":
+      return [String(criterion.expected)];
+    case "equals_any":
+    case "set_equals":
+      return criterion.expected.map(String);
+    case "approx":
+      return [String(criterion.expected.value)];
+    case "in_range":
+      return [];
+  }
+}
+
+/** True when the text contains the answer as a whole token, so an answer of 5 doesn't match 15. */
+function mentions(text: string, answer: string): boolean {
+  const trimmed = answer.trim();
+  if (trimmed === "") return false;
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\w.])${escaped}(?!\\w|\\.\\d)`, "i").test(text);
+}
+
 export function parseCriteria(yamlSource: string, path: string, stepNumber: number): ParsedAnswerCriteria {
   let parsed = parse(yamlSource);
 
@@ -129,6 +153,16 @@ export function parseCriteria(yamlSource: string, path: string, stepNumber: numb
     if (criterion.reason_code === undefined || typeof criterion.reason_code !== "string" || criterion.reason_code.trim() === "") {
       throw new Error(
         `Invalid reason_code for criterion at ${path} step ${stepNumber} index ${index}: expected a non empty string, but got: ${typeof criterion.reason_code}`,
+      );
+    }
+    if (criterion.reason !== undefined && (typeof criterion.reason !== "string" || criterion.reason.trim() === "")) {
+      throw new Error(
+        `Invalid reason for criterion at ${path} step ${stepNumber} index ${index}: expected a non empty string, but got: ${typeof criterion.reason}`,
+      );
+    }
+    if (criterion.reason !== undefined && answersIn(criterion).some((answer) => mentions(criterion.reason, answer))) {
+      throw new Error(
+        `Invalid reason for criterion at ${path} step ${stepNumber} index ${index}: the reason must not contain the expected value.`,
       );
     }
   });
