@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export const FEEDBACKSTATES = [
     "idle",
     "checking",
@@ -10,10 +12,14 @@ export type FeedbackState = (typeof FEEDBACKSTATES)[number];
 
 export interface FeedbackProps {
     state: FeedbackState;
+    /** Extra detail under the title, such as the not-yet explanation. */
+    children?: ReactNode;
 }
 
 export type FeedbackContent = {
     title: string
+    /** The visible line under the title, unless the caller passes its own detail. */
+    detail: string
     announcement: string
 }
 

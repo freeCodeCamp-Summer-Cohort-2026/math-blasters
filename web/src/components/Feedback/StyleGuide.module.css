@@ -7,18 +7,26 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(1, minmax(12rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
 }
 
 .gridItem {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  gap: var(--space-2);
+}
+
+.gridItem h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: left;
 }
 
 .label {

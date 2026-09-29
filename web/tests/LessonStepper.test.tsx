@@ -1,9 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LessonStepper } from "../src/components/LessonStepper/LessonStepper";
-import type { PageLesson } from "../src/content/types";
+import { feedbackContent } from "../src/components/Feedback/content";
+import { checkStep } from "../src/content/check";
+import type { StepChecker } from "../src/content";
+import { REASON_SENTENCES } from "../src/content/reasons";
+import type { Lesson, PageLesson } from "../src/content/types";
 import { expectNoA11yViolations } from "./helpers/a11y";
 
 const mockLesson: PageLesson = {
@@ -97,9 +101,10 @@ describe("LessonStepper Component", () => {
     await user.click(screen.getByRole("button", { name: /next/i }));
 
     // The focused heading is what a screen reader announces, and it is
-    // announced once because nothing else repeats its text.
+    // announced once because nothing else repeats its text. The answer
+    // step's feedback region stays silent until something is submitted.
     expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
   it("sits the step heading below the lesson title in the heading order", () => {
@@ -337,6 +342,102 @@ describe("LessonStepper Component", () => {
 
     expect(screen.queryByRole("link", { name: /back/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back/i })).toBeDisabled();
+  });
+
+  describe("feedback", () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    // A distinctive expected value, so finding it anywhere in the DOM is unambiguous.
+    const EXPECTED = 48173;
+    const gradedLesson: Lesson = {
+      slug: "graded-lesson",
+      title: "Graded Lesson",
+      type: "tutorial",
+      steps: [
+        {
+          type: "answer",
+          prompt: "How many marbles are there?",
+          criteria: [{ check: "equals", expected: EXPECTED, reason_code: "wrong_total" }],
+        },
+        { type: "explain", content: "Well done." },
+      ],
+    };
+    // The real checker over this lesson's criteria, as checkAnswer does for a bundled lesson.
+    const realChecker: StepChecker = (_slug, index, submission) =>
+      checkStep(gradedLesson.steps[index], submission);
+
+    async function submit(answer: string) {
+      const user = userEvent.setup();
+      await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), answer);
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+    }
+
+    it("explains a wrong answer without the expected value appearing anywhere in the DOM", async () => {
+      render(<LessonStepper lesson={gradedLesson} checker={realChecker} />);
+
+      await submit("12");
+
+      const region = await screen.findByRole("region", { name: "not-yet feedback" });
+      expect(region).toHaveTextContent("You entered 12");
+      expect(region).toHaveTextContent(REASON_SENTENCES.wrong_total);
+      expect(screen.getByRole("status")).toHaveTextContent(REASON_SENTENCES.wrong_total);
+      expect(document.documentElement.outerHTML).not.toContain(String(EXPECTED));
+    });
+
+    it("shows the correct state and unlocks Next for a right answer", async () => {
+      render(<LessonStepper lesson={gradedLesson} checker={realChecker} />);
+
+      await submit(String(EXPECTED));
+
+      expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.correct.announcement);
+      expect(screen.getByRole("button", { name: /next/i })).not.toHaveAttribute("aria-disabled");
+    });
+
+    it("shows the error state when the checker breaks, and keeps Next gated", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const broken: StepChecker = () => {
+        throw new Error("boom");
+      };
+      render(<LessonStepper lesson={gradedLesson} checker={broken} />);
+
+      await submit("12");
+
+      expect(await screen.findByRole("region", { name: "error feedback" })).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.error.announcement);
+      expect(screen.getByRole("button", { name: /next/i })).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("still says what was entered after leaving a not-yet step and coming back", async () => {
+      const user = userEvent.setup();
+      const lesson: Lesson = {
+        ...gradedLesson,
+        steps: [{ type: "explain", content: "Intro" }, ...gradedLesson.steps],
+      };
+      const checker: StepChecker = (_slug, index, submission) => checkStep(lesson.steps[index], submission);
+      render(<LessonStepper lesson={lesson} checker={checker} />);
+      await user.click(screen.getByRole("button", { name: /next/i }));
+      await submit("12");
+      await screen.findByRole("region", { name: "not-yet feedback" });
+
+      await user.click(screen.getByRole("button", { name: /back/i }));
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      expect(screen.getByRole("region", { name: "not-yet feedback" })).toHaveTextContent("You entered 12");
+      expect(screen.getByRole("status")).toHaveTextContent("You entered 12.");
+      expect(screen.getByRole("spinbutton", { name: /your answer/i })).toHaveValue(null);
+    });
+
+    it("walks the live region through checking to the result", async () => {
+      render(<LessonStepper lesson={gradedLesson} checker={realChecker} />);
+      const status = screen.getByRole("status");
+      expect(status).toBeEmptyDOMElement();
+
+      await submit("12");
+
+      expect(status).toHaveTextContent(feedbackContent.checking.announcement);
+      await waitFor(() => expect(status).toHaveTextContent(feedbackContent["not-yet"].announcement));
+    });
   });
 
   it("has no accessibility violations across steps (axe check)", async () => {

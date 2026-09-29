@@ -1,18 +1,28 @@
+import type { StepState } from "../../content";
 import type { PageStep } from "../../content/types";
 import { AnswerStep, ExplainStep } from "../steps";
-import type { SubmissionStatus } from "../steps";
 
 export interface StepProps {
   step: PageStep;
-  status?: SubmissionStatus;
+  /** The step's state from useLesson; omitted, an answer step starts untried. */
+  state?: StepState;
   onSubmit?: (submission: string) => void;
 }
 
 /** Dispatches to the renderer for the step's kind. State is owned by useLesson and passed down. */
-export function Step({ step, status = "untried", onSubmit = () => {} }: StepProps) {
+export function Step({ step, state, onSubmit = () => {} }: StepProps) {
   if (step.type === "explain") {
     return <ExplainStep step={step} />;
   }
 
-  return <AnswerStep step={step} status={status} onSubmit={onSubmit} />;
+  return (
+    <AnswerStep
+      step={step}
+      status={state?.status}
+      entered={state?.entered}
+      reasonCode={state?.reason_code}
+      reason={state?.reason}
+      onSubmit={onSubmit}
+    />
+  );
 }

@@ -1,12 +1,8 @@
-/* The "not yet" palette, never --coral or --danger: a wrong answer is not an error. */
+/* Sits inside the not-yet feedback card, so it draws no box of its own. Never --coral or --danger. */
 .explanation {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  border-left: 4px solid var(--mango-500);
-  border-radius: var(--radius-sm);
-  background: var(--warning-soft);
+  gap: var(--space-2);
   color: var(--text);
 }
 
@@ -15,6 +11,21 @@
   margin: 0;
 }
 
+.entered {
+  color: var(--text-muted);
+}
+
+/* The learner's own answer, as a chip. */
 .entered strong {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-2);
+  border: 2px solid var(--mango-500);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }

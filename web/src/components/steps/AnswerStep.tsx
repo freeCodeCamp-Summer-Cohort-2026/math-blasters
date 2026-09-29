@@ -1,9 +1,14 @@
 import { useId, useState } from "react";
-import type { ReactNode } from "react";
 import type { PageAnswerStep, SubmissionStatus } from "../../content";
+import { reasonSentence } from "../../content/reasons";
 import { AnswerInput } from "../AnswerInput";
 import { Button } from "../Button";
+import { Feedback } from "../Feedback";
+import { feedbackContent } from "../Feedback/content";
+import type { FeedbackState } from "../Feedback/types";
+import { useFeedbackState } from "../Feedback/useFeedbackState";
 import { RenderMarkdown } from "../Markdown";
+import { NotYetExplanation } from "../NotYetExplanation";
 import styles from "./AnswerStep.module.css";
 
 /** The per-step submission state is owned by `useLesson`; re-exported so existing imports keep working. */
@@ -14,16 +19,29 @@ export interface AnswerStepProps {
   step: PageAnswerStep;
   /** Defaults to "untried" so the component is easy to render in isolation. */
   status?: SubmissionStatus;
+  /** From the step's not-yet state: what the learner submitted. */
+  entered?: string;
+  /** From the step's not-yet state; picks the explanation sentence. */
+  reasonCode?: string;
+  /** An author-written reason from the not-yet state; wins over the generic sentence. */
+  reason?: string;
   onSubmit: (value: string) => void;
-  /** The designed feedback states are a phase-3 item (MB-31/MB-13's `Feedback` component); this slot just renders whatever it's given. */
-  feedback?: ReactNode;
+}
+
+/** The live region's sentence for a state; the not-yet one also says what was entered and why. */
+function announcementFor(state: FeedbackState, entered: string, reasonCode?: string, reason?: string) {
+  const base = feedbackContent[state].announcement;
+  if (state !== "not-yet") return base;
+  const enteredSentence = entered.trim() ? ` You entered ${entered}.` : "";
+  return `${base}${enteredSentence} ${reasonSentence(reasonCode, reason)}`;
 }
 
 /** Renders an answer step's prompt and takes the answer; driven entirely by props, so the lab route can reuse it and the feedback states can be tested in isolation. */
-export function AnswerStep({ step, status = "untried", onSubmit, feedback }: AnswerStepProps) {
+export function AnswerStep({ step, status = "untried", entered = "", reasonCode, reason, onSubmit }: AnswerStepProps) {
   const [value, setValue] = useState("");
   const inputId = useId();
-  const isChecking = status === "checking";
+  const feedbackState = useFeedbackState(status);
+  const isChecking = status === "checking" || feedbackState === "checking";
 
   const handleSubmit = () => {
     if (!value.trim()) return;
@@ -54,11 +72,20 @@ export function AnswerStep({ step, status = "untried", onSubmit, feedback }: Ans
           Submit
         </Button>
       </div>
-      {feedback && (
-        <div className={styles.feedback} data-testid="answer-step-feedback">
-          {feedback}
+      {feedbackState && (
+        <div className={styles.feedback}>
+          {/* Keyed so each state change replays the entrance motion. */}
+          <Feedback key={feedbackState} state={feedbackState}>
+            {feedbackState === "not-yet" && (
+              <NotYetExplanation entered={entered} reasonCode={reasonCode} reason={reason} />
+            )}
+          </Feedback>
         </div>
       )}
+      {/* Always mounted, so screen readers hear each change rather than a region appearing. */}
+      <p className="sr-only" role="status">
+        {feedbackState ? announcementFor(feedbackState, entered, reasonCode, reason) : ""}
+      </p>
     </div>
   );
 }

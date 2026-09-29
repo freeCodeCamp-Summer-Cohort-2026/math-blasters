@@ -87,7 +87,7 @@ export function LessonStepper({
           <Step
             key={currentStepIndex}
             step={currentStep}
-            status={currentStepState?.status}
+            state={currentStepState}
             onSubmit={(value) => submit(currentStepIndex, value)}
           />
         )}
