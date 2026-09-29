@@ -7,10 +7,18 @@ const RETURN_TO_KEY = "mb:return-to";
 
 /** An in-app path worth returning to; anything else (other origins, `//host`, `/login`) is refused. */
 export function safeReturnPath(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return null;
-  if (value === "/login" || value.startsWith("/login?") || value.startsWith("/login#")) return null;
-  return value;
+  if (typeof value !== "string" || !value.startsWith("/")) return null;
+  // Parsed, not prefix-checked: the parser strips tabs and newlines, so "/\t/host" is "//host".
+  let url: URL;
+  try {
+    url = new URL(value, window.location.origin);
+  } catch {
+    return null;
+  }
+  if (url.origin !== window.location.origin) return null;
+  // Route matching ignores case and a trailing slash, so /LOGIN and /login/ are the login page too.
+  if (url.pathname.replace(/\/+$/, "").toLowerCase() === "/login") return null;
+  return url.pathname + url.search + url.hash;
 }
 
 /** Remembers where to land after sign-in, or forgets a stale one when `path` is null. */

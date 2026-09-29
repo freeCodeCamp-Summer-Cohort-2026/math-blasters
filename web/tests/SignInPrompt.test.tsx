@@ -259,7 +259,18 @@ describe("Returning after sign-in", () => {
     expect(sessionStorage.getItem("mb:return-to")).toBeNull();
   });
 
-  it.each(["//evil.example", "https://evil.example/", "/login"])(
+  it.each([
+    "//evil.example",
+    "https://evil.example/",
+    "/login",
+    // The URL parser strips tabs and newlines and reads a backslash as a slash, so these mean //evil.example.
+    "/\t/evil.example",
+    "/\n/evil.example",
+    "/\\evil.example",
+    // Route matching ignores case and a trailing slash.
+    "/LOGIN",
+    "/login/",
+  ])(
     "refuses to return to %s",
     (target) => {
       sessionStorage.setItem("mb:return-to", target);
