@@ -13,35 +13,44 @@ const FEEDBACK_FOR_STATUS: Record<SubmissionStatus, FeedbackState | null> = {
   error: "error",
 };
 
+/** The feedback state for a status as it stands, with no minimum hold. */
+export function feedbackStateFor(status: SubmissionStatus): FeedbackState | null {
+  return FEEDBACK_FOR_STATUS[status];
+}
+
 function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === "function"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** The feedback state to show for a step's status, or null before the first submission; holds "checking" for MIN_CHECKING_MS unless motion is reduced. */
-export function useFeedbackState(status: SubmissionStatus): FeedbackState | null {
+/** The feedback state to show for a step's status, or null before the first submission; holds "checking" for MIN_CHECKING_MS unless motion is reduced. A new `stepKey` starts fresh, never mid-hold from the last step. */
+export function useFeedbackState(status: SubmissionStatus, stepKey?: unknown): FeedbackState | null {
   const target = FEEDBACK_FOR_STATUS[status];
-  const [shown, setShown] = useState(target);
+  const [held, setHeld] = useState({ stepKey, shown: target });
   const checkingSince = useRef<number | null>(target === "checking" ? Date.now() : null);
+  const lastStepKey = useRef(stepKey);
 
   useEffect(() => {
+    const sameStep = lastStepKey.current === stepKey;
+    lastStepKey.current = stepKey;
     if (target === "checking") {
       checkingSince.current = Date.now();
-      setShown(target);
+      setHeld({ stepKey, shown: target });
       return;
     }
-    const since = checkingSince.current;
+    const since = sameStep ? checkingSince.current : null;
     checkingSince.current = null;
     const remaining = since === null || prefersReducedMotion()
       ? 0
       : MIN_CHECKING_MS - (Date.now() - since);
     if (remaining <= 0) {
-      setShown(target);
+      setHeld({ stepKey, shown: target });
       return;
     }
-    const timer = setTimeout(() => setShown(target), remaining);
+    const timer = setTimeout(() => setHeld({ stepKey, shown: target }), remaining);
     return () => clearTimeout(timer);
-  }, [target]);
+  }, [target, stepKey]);
 
-  return shown;
+  // Until the effect catches up, a new step shows its own state rather than the last step's.
+  return held.stepKey === stepKey ? held.shown : target;
 }

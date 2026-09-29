@@ -394,6 +394,24 @@ describe("LessonStepper Component", () => {
       expect(screen.getByRole("button", { name: /next/i })).not.toHaveAttribute("aria-disabled");
     });
 
+    it("keeps Next gated while checking is still held on screen after a right answer", async () => {
+      const checker = vi.fn(realChecker);
+      render(<LessonStepper lesson={gradedLesson} checker={checker} />);
+
+      await submit(String(EXPECTED));
+
+      // The answer has passed, but "checking" is still held on screen.
+      await waitFor(() => expect(checker.mock.results[0]?.value).toMatchObject({ passed: true }));
+      expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
+      const next = screen.getByRole("button", { name: /next/i });
+      expect(next).toHaveAttribute("aria-disabled", "true");
+      await userEvent.setup().click(next);
+      expect(screen.getByRole("heading", { name: /step 1 of 2/i })).toBeInTheDocument();
+
+      expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /next/i })).not.toHaveAttribute("aria-disabled");
+    });
+
     it("shows the error state when the checker breaks, and keeps Next gated", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       const broken: StepChecker = () => {

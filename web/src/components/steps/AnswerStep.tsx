@@ -6,7 +6,7 @@ import { Button } from "../Button";
 import { Feedback } from "../Feedback";
 import { feedbackContent } from "../Feedback/content";
 import type { FeedbackState } from "../Feedback/types";
-import { useFeedbackState } from "../Feedback/useFeedbackState";
+import { feedbackStateFor } from "../Feedback/useFeedbackState";
 import { RenderMarkdown } from "../Markdown";
 import { NotYetExplanation } from "../NotYetExplanation";
 import styles from "./AnswerStep.module.css";
@@ -25,6 +25,8 @@ export interface AnswerStepProps {
   reasonCode?: string;
   /** An author-written reason from the not-yet state; wins over the generic sentence. */
   reason?: string;
+  /** The feedback to show, held by the caller so its Next gate agrees; omitted, it follows `status` with no hold. */
+  feedbackState?: FeedbackState | null;
   onSubmit: (value: string) => void;
 }
 
@@ -37,10 +39,18 @@ function announcementFor(state: FeedbackState, entered: string, reasonCode?: str
 }
 
 /** Renders an answer step's prompt and takes the answer; driven entirely by props, so the lab route can reuse it and the feedback states can be tested in isolation. */
-export function AnswerStep({ step, status = "untried", entered = "", reasonCode, reason, onSubmit }: AnswerStepProps) {
+export function AnswerStep({
+  step,
+  status = "untried",
+  entered = "",
+  reasonCode,
+  reason,
+  feedbackState: heldFeedbackState,
+  onSubmit,
+}: AnswerStepProps) {
   const [value, setValue] = useState("");
   const inputId = useId();
-  const feedbackState = useFeedbackState(status);
+  const feedbackState = heldFeedbackState === undefined ? feedbackStateFor(status) : heldFeedbackState;
   const isChecking = status === "checking" || feedbackState === "checking";
 
   const handleSubmit = () => {

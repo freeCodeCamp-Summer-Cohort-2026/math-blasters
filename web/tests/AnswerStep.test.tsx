@@ -1,8 +1,7 @@
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { feedbackContent } from "../src/components/Feedback/content";
-import { MIN_CHECKING_MS } from "../src/components/Feedback/useFeedbackState";
 import { AnswerStep } from "../src/components/steps/AnswerStep";
 import type { PageAnswerStep } from "../src/content";
 import { REASON_SENTENCES } from "../src/content/reasons";
@@ -131,35 +130,12 @@ describe("AnswerStep", () => {
     expect(status).toHaveTextContent(feedbackContent.correct.announcement);
   });
 
-  describe("checking", () => {
-    beforeEach(() => vi.useFakeTimers());
-    afterEach(() => {
-      vi.useRealTimers();
-      vi.unstubAllGlobals();
-    });
+  it("shows the held feedback state it is given, and keeps the answer locked while that is checking", () => {
+    render(<AnswerStep step={step} status="passed" feedbackState="checking" onSubmit={vi.fn()} />);
 
-    it("holds checking on screen for a minimum time when the result lands at once", () => {
-      const { rerender } = render(<AnswerStep step={step} status="checking" onSubmit={vi.fn()} />);
-      expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.checking.announcement);
-
-      rerender(<AnswerStep step={step} status="passed" onSubmit={vi.fn()} />);
-      expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
-
-      act(() => vi.advanceTimersByTime(MIN_CHECKING_MS));
-      expect(screen.getByRole("region", { name: "correct feedback" })).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.correct.announcement);
-    });
-
-    it("drops the minimum under prefers-reduced-motion", () => {
-      vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
-      const { rerender } = render(<AnswerStep step={step} status="checking" onSubmit={vi.fn()} />);
-
-      rerender(<AnswerStep step={step} status="passed" onSubmit={vi.fn()} />);
-
-      expect(screen.getByRole("region", { name: "correct feedback" })).toBeInTheDocument();
-    });
+    expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.checking.announcement);
+    expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
   });
 
   it("has no accessibility violations", async () => {
