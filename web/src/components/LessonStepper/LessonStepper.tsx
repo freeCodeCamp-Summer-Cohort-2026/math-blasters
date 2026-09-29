@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useLesson } from "../../content";
 import type { PageLesson, StepChecker } from "../../content";
 import { Button } from "../Button";
+import { SignInPrompt } from "../SignInPrompt/SignInPrompt";
 import { Step } from "../Step";
 import styles from "./LessonStepper.module.css";
 
@@ -28,6 +29,7 @@ export function LessonStepper({
     previous: handleBack,
     steps: stepStates,
     submit,
+    lessonPassed,
   } = useLesson(lesson, checker);
 
   const totalSteps = lesson.steps.length;
@@ -92,6 +94,9 @@ export function LessonStepper({
           />
         )}
       </div>
+
+      {/* Signed out, a pass is where the invitation lands; it never blocks the controls below. */}
+      <SignInPrompt surface="lesson" show={lessonPassed} />
 
       <div className={styles.controls}>
         {isFirstStep && backHref ? (

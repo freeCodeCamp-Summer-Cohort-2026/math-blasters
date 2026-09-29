@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { Card } from "../components/Card";
 import { PageLayout } from "../components/PageLayout";
+import { SignInPrompt } from "../components/SignInPrompt/SignInPrompt";
 import { getModule } from "../content";
 import type { LessonType, PageLesson } from "../content";
 import { NotFoundPage } from "./NotFoundPage";
@@ -42,6 +43,7 @@ export function ModulePage() {
 
   return (
     <PageLayout className="module-page" heading={heading}>
+      <SignInPrompt surface="module" />
       {/* An ordered list: lesson order is meaning, not styling. */}
       <ol className="lesson-list">
         {module.lessons.map((lesson, index) => (

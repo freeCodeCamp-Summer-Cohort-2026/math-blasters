@@ -17,7 +17,7 @@
             document.documentElement.setAttribute('data-theme', t);
           }
 
-          // if theme is 'system' we are not setting any attribute for theme and let tokens.css handle it
+          // Nothing saved: no attribute, so tokens.css follows the OS preference.
         } catch (error) {
           console.log('local storage access blocked', error);
         }

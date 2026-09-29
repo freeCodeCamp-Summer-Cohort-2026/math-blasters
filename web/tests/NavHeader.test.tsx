@@ -39,7 +39,7 @@ describe("NavHeader", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /toggle theme/i }),
+      screen.getByRole("button", { name: /switch to (dark|light) theme/i }),
     ).toBeInTheDocument();
   });
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AccountMenu } from "../AccountMenu/AccountMenu";
 import { Skeleton } from "../Skeleton";
-import { ThemeToggle } from "../ThemeToggle";
+import { ThemeToggle } from "../ThemeToggle/ThemeToggle";
 import styles from "./NavHeader.module.css";
 
 export function NavHeader() {

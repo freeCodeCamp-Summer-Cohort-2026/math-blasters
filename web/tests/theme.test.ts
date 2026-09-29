@@ -1,24 +1,27 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { Theme } from "../src/types";
-import { applyTheme, nextTheme, readLocallyStoredTheme } from "../src/theme";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { applyTheme, currentTheme, nextTheme, readLocallyStoredTheme } from "../src/theme";
 
-describe("theme cycle and persistence check", () => {
+function mockSystemDark(dark: boolean) {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+        matches: dark && query.includes("dark"),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+    }));
+}
+
+describe("theme toggle and persistence check", () => {
     beforeEach(() => {
         localStorage.clear();
         document.documentElement.removeAttribute('data-theme');
     })
 
-    it("cycles from light to dark to system", () => {
-        const sequence: Theme[] = [];
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    })
 
-        let currentTheme: Theme = 'light';
-        for (let i = 0; i < 3; i++) {
-            const next = nextTheme(currentTheme);
-            sequence.push(next);
-            currentTheme = next;
-        }
-
-        expect(sequence).toEqual(['dark', 'system', 'light']);
+    it("toggles between light and dark only", () => {
+        expect(nextTheme('light')).toBe('dark');
+        expect(nextTheme('dark')).toBe('light');
     })
 
     it("applyTheme sets correct data-theme attribute and stores theme in localStorage", () => {
@@ -29,13 +32,9 @@ describe("theme cycle and persistence check", () => {
         applyTheme('dark');
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
         expect(localStorage.getItem('theme')).toBe('dark');
-
-        applyTheme('system');
-        expect(document.documentElement.getAttribute('data-theme')).toBeNull();
-        expect(localStorage.getItem('theme')).toBe('system');
     })
 
-    it("readLocallyStoredTheme returns the stored theme or defaults to system", () => {
+    it("readLocallyStoredTheme returns the stored theme", () => {
         applyTheme('light');
         expect(readLocallyStoredTheme()).toBe('light');
 
@@ -43,7 +42,22 @@ describe("theme cycle and persistence check", () => {
         expect(readLocallyStoredTheme()).toBe('dark');
     })
 
-    it("readLocallyStoredTheme defaults to system if theme is not found in localStorage", () => {
-        expect(readLocallyStoredTheme()).toBe('system');
+    it("readLocallyStoredTheme returns null when nothing, or an old 'system' value, is stored", () => {
+        expect(readLocallyStoredTheme()).toBeNull();
+
+        localStorage.setItem('theme', 'system');
+        expect(readLocallyStoredTheme()).toBeNull();
+    })
+
+    it("currentTheme falls back to the OS preference until a theme is saved", () => {
+        mockSystemDark(true);
+        expect(currentTheme()).toBe('dark');
+
+        applyTheme('light');
+        expect(currentTheme()).toBe('light');
+    })
+
+    it("currentTheme is light where matchMedia is unavailable", () => {
+        expect(currentTheme()).toBe('light');
     })
 })
