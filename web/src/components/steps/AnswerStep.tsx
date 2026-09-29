@@ -54,8 +54,10 @@ export function AnswerStep({
   const isChecking = status === "checking" || feedbackState === "checking";
 
   const handleSubmit = () => {
-    if (!value.trim()) return;
-    onSubmit(value);
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    // Trimmed once here, so the checker, the "You entered" chip and the announcement all see the same value.
+    onSubmit(trimmed);
   };
 
   return (

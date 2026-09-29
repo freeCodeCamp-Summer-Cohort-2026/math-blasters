@@ -38,6 +38,16 @@ describe("AnswerStep", () => {
     expect(onSubmit).toHaveBeenCalledWith("x/2");
   });
 
+  it("submits a text answer without the whitespace around it", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<AnswerStep step={{ type: "answer", prompt: "Half of $x$?", input: "text" }} onSubmit={onSubmit} />);
+
+    await user.type(screen.getByRole("textbox", { name: /your answer/i }), "  x/2  {Enter}");
+
+    expect(onSubmit).toHaveBeenCalledWith("x/2");
+  });
+
   it("accepts input and fires onSubmit on Enter", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
