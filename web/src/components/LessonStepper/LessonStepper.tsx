@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useLesson } from "../../content";
 import type { PageLesson, StepChecker } from "../../content";
 import { Button } from "../Button";
+import { useFeedbackState } from "../Feedback/useFeedbackState";
 import { SignInPrompt } from "../SignInPrompt/SignInPrompt";
 import { Step } from "../Step";
 import styles from "./LessonStepper.module.css";
@@ -37,7 +38,9 @@ export function LessonStepper({
   const currentStepState = stepStates[currentStepIndex];
   const isFirstStep = currentStepIndex === 0;
   const hasNextStep = currentStepIndex < totalSteps - 1;
-  const isNextGated = hasNextStep && currentStep?.type === "answer" && currentStepState?.status !== "passed";
+  // Held here, not in the step, so Next unlocks only once "Correct!" is actually showing.
+  const feedbackState = useFeedbackState(currentStepState?.status ?? "untried", currentStepIndex);
+  const isNextGated = hasNextStep && currentStep?.type === "answer" && feedbackState !== "correct";
 
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const isInitialMount = useRef(true);
@@ -89,14 +92,15 @@ export function LessonStepper({
           <Step
             key={currentStepIndex}
             step={currentStep}
-            status={currentStepState?.status}
+            state={currentStepState}
+            feedbackState={feedbackState}
             onSubmit={(value) => submit(currentStepIndex, value)}
           />
         )}
       </div>
 
-      {/* Signed out, a pass is where the invitation lands; it never blocks the controls below. */}
-      <SignInPrompt surface="lesson" show={lessonPassed} />
+      {/* Signed out, a pass is where the invitation lands, once "Correct!" is showing; it never blocks the controls below. */}
+      <SignInPrompt surface="lesson" show={lessonPassed && feedbackState !== "checking"} />
 
       <div className={styles.controls}>
         {isFirstStep && backHref ? (

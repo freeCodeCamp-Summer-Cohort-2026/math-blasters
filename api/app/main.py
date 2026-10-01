@@ -16,6 +16,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
@@ -46,19 +48,21 @@ def status_code_to_error_code(status_code: int) -> str:
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     # `exc.detail` is always a message the app deliberately chose to raise with --
     # unhandled exceptions never reach this handler, so there's nothing to mask here.
-    code = status_code_to_error_code(exc.status_code)
+    code = getattr(exc, "code", None) or status_code_to_error_code(exc.status_code)
     message = str(exc.detail)
+    details = getattr(exc, "details", None)
 
     envelope = ErrorEnvelope(
         error=ErrorDetail(
             code=code,
             message=message,
-            details=None,
+            details=details,
         )
     )
     return JSONResponse(
         status_code=exc.status_code,
         content=envelope.model_dump(),
+        headers=getattr(exc, "headers", None),
     )
 
 
@@ -158,6 +162,8 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
 
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
     app.include_router(auth.router, prefix="/api")
 
     return app

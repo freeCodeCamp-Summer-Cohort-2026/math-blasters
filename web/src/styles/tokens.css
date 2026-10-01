@@ -56,6 +56,14 @@
   --danger-soft: #fee2e2;
   --warning-soft: #fef3c7;
 
+  /* Solid badge fills, each with the glyph colour that reads on it. */
+  --success-fill: var(--mint-700);
+  --on-success-fill: #ffffff;
+  --warning-fill: var(--mango-500);
+  --on-warning-fill: #3b2604;
+  --danger-fill: var(--coral-700);
+  --on-danger-fill: #ffffff;
+
   /* Shape + depth. The chunky radii do most of the "toy" feel. */
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -110,7 +118,11 @@
     --success-soft: #0d3d2f;
     --danger: var(--coral-300);
     --danger-soft: #48181d;
-    --warning-soft: #46341058;
+    --warning-soft: #3a2b12;
+    --success-fill: var(--mint-300);
+    --on-success-fill: #0d3d2f;
+    --danger-fill: var(--coral-300);
+    --on-danger-fill: #48181d;
 
     --shadow-chunky: 0 4px 0 0 var(--violet-700);
     --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);
@@ -140,7 +152,11 @@
   --success-soft: #0d3d2f;
   --danger: var(--coral-300);
   --danger-soft: #48181d;
-  --warning-soft: #46341058;
+  --warning-soft: #3a2b12;
+  --success-fill: var(--mint-300);
+  --on-success-fill: #0d3d2f;
+  --danger-fill: var(--coral-300);
+  --on-danger-fill: #48181d;
 
   --shadow-chunky: 0 4px 0 0 var(--violet-700);
   --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);

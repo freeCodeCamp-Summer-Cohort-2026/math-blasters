@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
@@ -65,6 +66,18 @@ describe("LabView (/lessons/:slug for a lab)", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Nameless Lab" }),
     ).toBeInTheDocument();
+  });
+
+  it("renders feedback from the real checker for the lab's answer step", async () => {
+    const user = userEvent.setup();
+    const { container } = renderLab();
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "5{Enter}");
+
+    const region = await screen.findByRole("region", { name: "not-yet feedback" });
+    expect(region).toHaveTextContent("You entered 5");
+    await expectNoA11yViolations(container);
   });
 
   it("has no accessibility violations", async () => {

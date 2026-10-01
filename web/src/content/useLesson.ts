@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { checkAnswer } from "./index";
 import type { AnswerCheck, PageLesson } from "./types";
 
-export const SUBMISSION_STATUSES = ["untried", "checking", "passed", "not_yet"] as const;
+export const SUBMISSION_STATUSES = ["untried", "checking", "passed", "not_yet", "error"] as const;
 export type SubmissionStatus = (typeof SUBMISSION_STATUSES)[number];
 
 /** Checks by lesson slug and step index, sync or async; a test fake can be as small as `() => ({ passed: true })`. */
@@ -20,9 +20,11 @@ interface InFlightCheck {
   cancel: () => void;
 }
 
-/** What the UI sees for one step: its status and, after a failed check, the reason code and any authored reason. Never the criterion. */
+/** What the UI sees for one step: its status and, after a failed check, what was entered, the reason code and any authored reason. Never the criterion. */
 export interface StepState {
   status: SubmissionStatus;
+  /** The learner's own submission, kept so a revisited not-yet step can still say what was entered. */
+  entered?: string;
   reason_code?: string;
   reason?: string;
 }
@@ -37,7 +39,16 @@ interface LessonState {
 type LessonAction =
   | { type: "goTo"; index: number }
   | { type: "checking"; slug: string; index: number }
-  | { type: "checked"; slug: string; index: number; passed: boolean; reason_code?: string; reason?: string }
+  | {
+      type: "checked";
+      slug: string;
+      index: number;
+      passed: boolean;
+      entered: string;
+      reason_code?: string;
+      reason?: string;
+    }
+  | { type: "failed"; slug: string; index: number }
   | { type: "reset"; lesson: PageLesson };
 
 function initialState(lesson: PageLesson): LessonState {
@@ -56,27 +67,31 @@ function reducer(state: LessonState, action: LessonAction): LessonState {
       return index === state.currentStep ? state : { ...state, currentStep: index };
     }
     case "checking":
-    case "checked": {
+    case "checked":
+    case "failed": {
       // A result for another lesson is stale and never lands.
       if (action.slug !== state.slug) return state;
       const prev = state.steps[action.index];
       if (!prev) return state;
-      // A check starts only from untried or not_yet, so a passed step stays passed and lessonPassed never flips back.
+      // A check starts only from untried, not_yet or error, so a passed step stays passed and lessonPassed never flips back.
       if (action.type === "checking" && (prev.status === "passed" || prev.status === "checking")) {
         return state;
       }
       // A result lands only on the check that asked for it.
-      if (action.type === "checked" && prev.status !== "checking") return state;
+      if (action.type !== "checking" && prev.status !== "checking") return state;
       const next: StepState =
         action.type === "checking"
           ? { status: "checking" }
-          : action.passed
-            ? { status: "passed" }
-            : {
-                status: "not_yet",
-                reason_code: action.reason_code,
-                ...(action.reason !== undefined && { reason: action.reason }),
-              };
+          : action.type === "failed"
+            ? { status: "error" }
+            : action.passed
+              ? { status: "passed" }
+              : {
+                  status: "not_yet",
+                  entered: action.entered,
+                  reason_code: action.reason_code,
+                  ...(action.reason !== undefined && { reason: action.reason }),
+                };
       const steps = state.steps.slice();
       steps[action.index] = next;
       return { ...state, steps };
@@ -156,9 +171,9 @@ export function useLesson(lesson: PageLesson, checker: StepChecker = checkAnswer
         if (cancelled) return;
         pending.current.delete(key);
         if (!outcome || typeof outcome.passed !== "boolean") {
-          // A throw, a rejection or no result is a checker bug, not a wrong answer: log it, show a fail.
+          // A throw, a rejection or no result is a checker bug, not a wrong answer: log it, show an error.
           console.error(`useLesson: no check result for lesson "${slug}" step ${index}`, error);
-          dispatch({ type: "checked", slug, index, passed: false });
+          dispatch({ type: "failed", slug, index });
           return;
         }
         dispatch({
@@ -166,6 +181,7 @@ export function useLesson(lesson: PageLesson, checker: StepChecker = checkAnswer
           slug,
           index,
           passed: outcome.passed,
+          entered: String(submission),
           reason_code: outcome.reason_code,
           reason: outcome.reason,
         });

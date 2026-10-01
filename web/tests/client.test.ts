@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  API_BASE_URL,
   api,
   apiFetch,
   apiUrl,
@@ -58,13 +57,51 @@ describe("parseApiErrorMessage", () => {
 describe("apiFetch", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
-  it("resolves paths against VITE_API_URL, falling back to the compose default", () => {
-    expect(API_BASE_URL).toBe(
-      (import.meta.env.VITE_API_URL ?? "http://localhost:8000/api").replace(/\/+$/, ""),
+  it("uses a relative API path when VITE_API_URL is not configured", async () => {
+    vi.stubEnv("VITE_API_URL", undefined);
+    vi.resetModules();
+
+    const { API_BASE_URL, apiUrl } = await import("../src/api/client");
+
+    expect(API_BASE_URL).toBe("/api");
+    expect(apiUrl("/auth/me")).toBe("/api/auth/me");
+  });
+
+  it("uses a relative API path when VITE_API_URL is empty", async () => {
+    vi.stubEnv("VITE_API_URL", "");
+    vi.resetModules();
+
+    const { API_BASE_URL, apiUrl } = await import("../src/api/client");
+
+    expect(API_BASE_URL).toBe("/api");
+    expect(apiUrl("/auth/me")).toBe("/api/auth/me");
+  });
+
+  it("uses VITE_API_URL when it is configured", async () => {
+    vi.stubEnv("VITE_API_URL", "https://api.example.com/api");
+    vi.resetModules();
+
+    const { API_BASE_URL, apiUrl } = await import("../src/api/client");
+
+    expect(API_BASE_URL).toBe("https://api.example.com/api");
+    expect(apiUrl("/auth/me")).toBe(
+      "https://api.example.com/api/auth/me",
     );
-    expect(apiUrl("/auth/me")).toBe(`${API_BASE_URL}/auth/me`);
+  });
+
+  it("strips trailing slashes from VITE_API_URL", async () => {
+    vi.stubEnv("VITE_API_URL", "https://api.example.com/api///");
+    vi.resetModules();
+
+    const { API_BASE_URL, apiUrl } = await import("../src/api/client");
+
+    expect(API_BASE_URL).toBe("https://api.example.com/api");
+    expect(apiUrl("/auth/me")).toBe(
+      "https://api.example.com/api/auth/me",
+    );
   });
 
   it("sends credentials and no Content-Type on a bodiless GET", async () => {

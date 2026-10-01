@@ -1,98 +1,172 @@
 .feedback {
-  /*
-    Each state is defined here. each state assigns the correct token to the aliases used
-    by the shared layout below.
-  */
+  /* Each state below only reassigns these; the layout is shared. */
   --feedback-surface: var(--surface);
-  --feedback-border: var(--border);
-  --feedback-text: var(--text);
-  --feedback-icon: var(--text-muted);
+  --feedback-border: var(--border-strong);
+  --feedback-fill: var(--surface-sunken);
+  --feedback-glyph: var(--text-muted);
 
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 4rem;
-  padding: 1rem;
-  border: 1px solid var(--feedback-border);
-  border-radius: 1rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--feedback-border);
+  border-radius: var(--radius-lg);
   background: var(--feedback-surface);
-  color: var(--feedback-text);
+  box-shadow: 0 4px 0 0 var(--feedback-border);
+  color: var(--text);
+  text-align: left;
 
-  transition:
-    background-color var(--duration-base) ease,
-    border-color var(--duration-base) ease,
-    transform var(--duration-base) var(--ease-spring);
+  animation: feedback-enter var(--duration-base) var(--ease-out);
 }
 
-/*
-  Each state only changes the semantic values. The structural styles remain
-  shared
-*/
 .idle {
   --feedback-surface: var(--surface);
-  --feedback-border: var(--border);
-  --feedback-icon: var(--text-muted);
+  --feedback-border: var(--border-strong);
+  --feedback-fill: var(--surface-sunken);
+  --feedback-glyph: var(--text-muted);
 }
 
 .checking {
   --feedback-surface: var(--surface-sunken);
   --feedback-border: var(--accent);
-  --feedback-icon: var(--accent);
+  --feedback-fill: var(--accent-fill);
+  --feedback-glyph: var(--on-accent);
 }
 
 .correct {
   --feedback-surface: var(--success-soft);
   --feedback-border: var(--success);
-  --feedback-icon: var(--success);
+  --feedback-fill: var(--success-fill);
+  --feedback-glyph: var(--on-success-fill);
 }
 
+/* The learning palette, never --danger: a wrong answer is not an error. */
 .not-yet {
-  /*
-    This is deliberately the learning/warning palette rather than the error
-    palette. An incorrect practice answer should not feel like a system error.
-  */
   --feedback-surface: var(--warning-soft);
   --feedback-border: var(--mango-500);
-  --feedback-icon: var(--mango-500);
+  --feedback-fill: var(--warning-fill);
+  --feedback-glyph: var(--on-warning-fill);
 }
 
 .error {
   --feedback-surface: var(--danger-soft);
   --feedback-border: var(--danger);
-  --feedback-icon: var(--danger);
+  --feedback-fill: var(--danger-fill);
+  --feedback-glyph: var(--on-danger-fill);
 }
 
-.icon {
+.badge {
+  position: relative;
   display: grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
-  color: var(--feedback-icon);
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
+  background: var(--feedback-fill);
+  color: var(--feedback-glyph);
+  animation: badge-pop calc(var(--duration-base) * 1.6) var(--ease-spring);
 }
 
-.content {
+/* A ring that bursts out of the badge once, on a right answer. */
+.correct .badge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 var(--feedback-border);
+  animation: badge-burst calc(var(--duration-base) * 3) var(--ease-out) var(--duration-base) both;
+}
+
+.glyph {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.spinnerArc {
+  transform-origin: 12px 12px;
+  animation: spin calc(var(--duration-base) * 4) linear infinite;
+}
+
+.checkPath {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw calc(var(--duration-base) * 1.4) var(--ease-out) var(--duration-fast) forwards;
+}
+
+.retry {
+  animation: rewind calc(var(--duration-base) * 2.2) var(--ease-spring);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   min-width: 0;
+  padding-top: var(--space-1);
 }
 
 .title {
   margin: 0;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.3;
 }
 
-.announcement {
-  /*
-    Keep the announcement available to screen readers without adding duplicate
-    visible copy to the layout.
-  */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
+.detail {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+@keyframes feedback-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}
+
+@keyframes badge-pop {
+  from {
+    transform: scale(0.4);
+  }
+}
+
+@keyframes badge-burst {
+  to {
+    box-shadow: 0 0 0 var(--space-3) transparent;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rewind {
+  from {
+    transform: rotate(120deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback,
+  .badge,
+  .correct .badge::after,
+  .spinnerArc,
+  .retry {
+    animation: none;
+  }
+
+  /* No draw-on: the check is simply there. */
+  .checkPath {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }

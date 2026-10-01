@@ -9,7 +9,15 @@ export default defineConfig({
       "@content": fileURLToPath(new URL("../content", import.meta.url)),
     },
   },
-  server: { port: 5173, fs: { allow: [".", "../content"] } },
+  server: {
+    port: 5173,
+    fs: { allow: [".", "../content"] },
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

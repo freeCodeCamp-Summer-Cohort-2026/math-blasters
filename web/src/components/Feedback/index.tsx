@@ -7,7 +7,8 @@ function cx(...classNames: Array<string | undefined>) {
     return classNames.filter(Boolean).join(" ");
 }
 
-export const Feedback = ({ state }: FeedbackProps) => {
+/** Visual feedback only; the caller owns the live region so an announcement survives this remounting. */
+export const Feedback = ({ state, children }: FeedbackProps) => {
     const content = feedbackContent[state];
 
     return (
@@ -16,19 +17,13 @@ export const Feedback = ({ state }: FeedbackProps) => {
             aria-label={`${state} feedback`}
             data-state={state}
         >
-            <div
-                className={styles.icon}
-                aria-hidden={true}
-            >
+            <span className={styles.badge} aria-hidden={true}>
                 <FeedbackIcon state={state} />
-            </div>
-            <div
-                className={styles.content}
-            >
-                <h2 className={styles.title}>{content.title}</h2>
-                <p className={styles.announcement} role="status" aria-live="polite">
-                    {content.announcement}
-                </p>
+            </span>
+            <div className={styles.body}>
+                <p className={styles.title}>{content.title}</p>
+                {/* Callers pass `false` when they have nothing to add, so fall back on any empty value. */}
+                {children || <p className={styles.detail}>{content.detail}</p>}
             </div>
         </section>
     )

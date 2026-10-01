@@ -57,9 +57,9 @@ export function parseApiErrorMessage(raw: string, fallback: string): string {
   return trimmed || fallback;
 }
 
-// Same default as docker-compose, so a bare `npm run dev` still reaches the API.
+// Use a relative path when unset or empty so single-origin deployments need no configuration.
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ?? "http://localhost:8000/api"
+  import.meta.env.VITE_API_URL || "/api"
 ).replace(/\/+$/, "");
 
 /** Absolute URL for an API path such as "/auth/me". */

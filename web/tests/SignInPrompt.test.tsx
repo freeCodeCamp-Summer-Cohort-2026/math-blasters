@@ -160,6 +160,10 @@ describe("SignInPrompt at the lesson's completion moment", () => {
 
     await passLesson(user);
 
+    // Held back while "checking" is still on screen, so it never lands ahead of "Correct!".
+    expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
+    expect(live).toBeEmptyDOMElement();
+
     await waitFor(() => {
       expect(within(live).getByRole("region", { name: /lesson complete/i })).toBeInTheDocument();
     });
@@ -179,7 +183,10 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     await waitFor(() => {
       expect(screen.queryByText("Calculate 1 + 1")).toBeInTheDocument();
     });
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    // The answer step keeps its own live region; only the prompt's must be missing.
+    expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.queryByRole("region", { name: /lesson complete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /save your progress/i })).not.toBeInTheDocument();
   });
 

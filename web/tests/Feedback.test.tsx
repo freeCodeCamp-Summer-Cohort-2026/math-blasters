@@ -12,15 +12,32 @@ describe("Feedback component", () => {
         });
 
         expect(feedbackElement).toHaveAttribute("data-state", state);
-        
-        expect(
-            screen.getByRole("heading", {
-                name: feedbackContent[state].title,
-            }),
-        ).toBeInTheDocument();
+        expect(feedbackElement).toHaveTextContent(feedbackContent[state].title);
+    });
 
-        expect(screen.getByRole("status")).toHaveTextContent(
-            feedbackContent[state].announcement,
+    it("gives every state its own title, so none relies on colour alone", () => {
+        const titles = FEEDBACKSTATES.map((state) => feedbackContent[state].title);
+
+        expect(new Set(titles).size).toBe(FEEDBACKSTATES.length);
+    });
+
+    it("renders extra detail under the title", () => {
+        render(<Feedback state="not-yet"><p>More detail</p></Feedback>);
+
+        expect(screen.getByRole("region", { name: "not-yet feedback" })).toHaveTextContent("More detail");
+    });
+
+    it("shows the state's own line when the caller adds nothing", () => {
+        render(<Feedback state="correct">{false}</Feedback>);
+
+        expect(screen.getByRole("region", { name: "correct feedback" })).toHaveTextContent(
+            feedbackContent.correct.detail,
         );
+    });
+
+    it("leaves the live region to its caller", () => {
+        render(<Feedback state="correct" />);
+
+        expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 });

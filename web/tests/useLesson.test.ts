@@ -86,8 +86,18 @@ describe("useLesson", () => {
     submitAndFlush(result, 1, "right");
     submitAndFlush(result, 2, "wrong");
     expect(result.current.steps[1].status).toBe("passed");
-    expect(result.current.steps[2]).toEqual({ status: "not_yet", reason_code: "nope" });
+    expect(result.current.steps[2]).toEqual({ status: "not_yet", entered: "wrong", reason_code: "nope" });
     expect(result.current.lessonPassed).toBe(false);
+  });
+
+  it("keeps what was entered on a not-yet step, and drops it once the step is re-checked", () => {
+    const { result } = setup();
+    submitAndFlush(result, 1, "wrong");
+    expect(result.current.steps[1].entered).toBe("wrong");
+    act(() => result.current.submit(1, "right"));
+    expect(result.current.steps[1]).toEqual({ status: "checking" });
+    act(() => vi.runAllTimers());
+    expect(result.current.steps[1]).toEqual({ status: "passed" });
   });
 
   it("re-checks a failed step when it is submitted again", () => {
@@ -190,6 +200,7 @@ describe("useLesson", () => {
       submitAndFlush(result, 0, "10");
       expect(result.current.steps[0]).toEqual({
         status: "not_yet",
+        entered: "10",
         reason_code: "wrong_sum",
         reason: "Start at 5 and count on 6 more.",
       });
@@ -201,7 +212,7 @@ describe("useLesson", () => {
   it("exposes the reason_code but never the criterion", () => {
     const { result } = renderHook(() => useLesson(realLesson));
     submitAndFlush(result, 1, "3");
-    expect(result.current.steps[1]).toEqual({ status: "not_yet", reason_code: "wrong_total" });
+    expect(result.current.steps[1]).toEqual({ status: "not_yet", entered: "3", reason_code: "wrong_total" });
     const exposed = JSON.stringify(result.current);
     expect(exposed).not.toContain("expected");
     expect(exposed).not.toContain("criteria");
@@ -214,25 +225,25 @@ describe("useLesson", () => {
     expect(checker).toHaveBeenCalledWith(twoAnswerLesson.slug, 2, "right");
   });
 
-  it("treats a throwing checker as a fail rather than leaving the step checking, and logs it", () => {
+  it("treats a throwing checker as an error rather than leaving the step checking, and logs it", () => {
     const logged = silenceConsoleError();
     const { result } = setup(twoAnswerLesson, () => {
       throw new Error("boom");
     });
     submitAndFlush(result, 1, "right");
-    expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+    expect(result.current.steps[1]).toEqual({ status: "error" });
     expect(logged).toHaveBeenCalledWith(
       expect.stringContaining(`"${twoAnswerLesson.slug}" step 1`),
       new Error("boom"),
     );
   });
 
-  it("treats a checker with no result as a fail, logs it, and lets the step be submitted again", () => {
+  it("treats a checker with no result as an error, logs it, and lets the step be submitted again", () => {
     const logged = silenceConsoleError();
     let calls = 0;
     const { result } = setup(twoAnswerLesson, () => (++calls === 1 ? undefined : { passed: true }));
     submitAndFlush(result, 1, "right");
-    expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+    expect(result.current.steps[1]).toEqual({ status: "error" });
     expect(logged).toHaveBeenCalledTimes(1);
 
     submitAndFlush(result, 1, "right");
@@ -247,18 +258,18 @@ describe("useLesson", () => {
     expect(logged).not.toHaveBeenCalled();
   });
 
-  it("fails and logs a lesson the real checker can't find", () => {
+  it("errors and logs a lesson the real checker can't find", () => {
     const logged = silenceConsoleError();
     const { result } = renderHook(() => useLesson(makeLesson({ slug: "not-in-the-index" })));
     submitAndFlush(result, 1, "2");
-    expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+    expect(result.current.steps[1]).toEqual({ status: "error" });
     expect(logged).toHaveBeenCalledTimes(1);
   });
 
   it("defaults to the real checker, working from a page lesson with no criteria", () => {
     const { result } = renderHook(() => useLesson(realLesson));
     submitAndFlush(result, 1, "3");
-    expect(result.current.steps[1]).toEqual({ status: "not_yet", reason_code: "wrong_total" });
+    expect(result.current.steps[1]).toEqual({ status: "not_yet", entered: "3", reason_code: "wrong_total" });
     submitAndFlush(result, 1, "7");
     expect(result.current.lessonPassed).toBe(true);
   });
@@ -373,7 +384,7 @@ describe("useLesson", () => {
       expect(result.current.steps[1].status).toBe("checking");
 
       await act(async () => calls[0].resolve({ passed: false, reason_code: "nope" }));
-      expect(result.current.steps[1]).toEqual({ status: "not_yet", reason_code: "nope" });
+      expect(result.current.steps[1]).toEqual({ status: "not_yet", entered: "right", reason_code: "nope" });
     });
 
     it("passes the lesson from async results", async () => {
@@ -385,23 +396,23 @@ describe("useLesson", () => {
       expect(result.current.lessonPassed).toBe(true);
     });
 
-    it("treats a rejected check as a fail, and logs it", async () => {
+    it("treats a rejected check as an error, and logs it", async () => {
       const logged = silenceConsoleError();
       const { checker, calls } = deferredChecker();
       const { result } = setup(twoAnswerLesson, checker);
       submitAndFlush(result, 1, "right");
       await act(async () => calls[0].reject(new Error("mathjs failed to load")));
-      expect(result.current.steps[1].status).toBe("not_yet");
+      expect(result.current.steps[1].status).toBe("error");
       expect(logged).toHaveBeenCalledWith(expect.any(String), new Error("mathjs failed to load"));
     });
 
-    it("treats an async check with no result as a fail, and lets the step be submitted again", async () => {
+    it("treats an async check with no result as an error, and lets the step be submitted again", async () => {
       const logged = silenceConsoleError();
       const { checker, calls } = deferredChecker();
       const { result } = setup(twoAnswerLesson, checker);
       submitAndFlush(result, 1, "right");
       await act(async () => calls[0].resolve(undefined));
-      expect(result.current.steps[1]).toEqual({ status: "not_yet" });
+      expect(result.current.steps[1]).toEqual({ status: "error" });
       expect(logged).toHaveBeenCalledTimes(1);
 
       submitAndFlush(result, 1, "right");

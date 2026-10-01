@@ -1,4 +1,5 @@
 import { Feedback } from "."
+import { NotYetExplanation } from "../NotYetExplanation"
 import { FEEDBACKSTATES } from "./types"
 import styles from "./StyleGuide.module.css"
 
@@ -10,7 +11,9 @@ export const FeedbackStyleGuide = () => {
                 {FEEDBACKSTATES.map((state) => (
                     <div key={state} className={styles.gridItem}>
                         <h3>{state}</h3>
-                        <Feedback state={state} />
+                        <Feedback state={state}>
+                            {state === "not-yet" && <NotYetExplanation entered="12" reasonCode="wrong_total" />}
+                        </Feedback>
                     </div>
                 ))}
             </div>
