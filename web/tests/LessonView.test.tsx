@@ -45,6 +45,20 @@ describe("LessonView Route (/lessons/:slug)", () => {
     expect(screen.getByText(/adding two numbers/i)).toBeInTheDocument();
   });
 
+  it("renders feedback from the real checker for a tutorial's answer step", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
+        <SettledAppRoutes />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "7{Enter}");
+
+    expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
+  });
+
   it("renders the not-found route for an unknown lesson slug", () => {
     render(
       <MemoryRouter initialEntries={["/lessons/non-existent-lesson"]}>

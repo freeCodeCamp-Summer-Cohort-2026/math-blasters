@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Card } from "../components/Card";
 import { CompletedMark } from "../components/CompletedMark";
 import { PageLayout } from "../components/PageLayout";
+import { SignInPrompt } from "../components/SignInPrompt/SignInPrompt";
 import { Skeleton } from "../components/Skeleton";
 import { getModule } from "../content";
 import type { LessonType, PageLesson } from "../content";
@@ -46,6 +47,7 @@ export function ModulePage() {
 
   return (
     <PageLayout className="module-page" heading={heading}>
+      <SignInPrompt surface="module" />
       {/* An ordered list: lesson order is meaning, not styling. */}
       <ol className="lesson-list">
         {module.lessons.map((lesson, index) => (

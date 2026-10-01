@@ -2,19 +2,26 @@ import { Theme } from "./types";
 
 const STORAGE_KEY = 'theme';
 
-const ORDER: Theme[] = ['light', 'dark', 'system'];
+const DARK_QUERY = '(prefers-color-scheme: dark)';
 
-export const readLocallyStoredTheme = (): Theme => {
+/** The learner's saved choice, or null if they haven't picked one (older 'system' values count as none). */
+export const readLocallyStoredTheme = (): Theme | null => {
     try {
         const storedValue = localStorage.getItem(STORAGE_KEY);
 
-        return storedValue == ORDER[0] || storedValue == ORDER[1] ? storedValue : ORDER[2];
+        return storedValue === 'light' || storedValue === 'dark' ? storedValue : null;
     } catch (error) {
         console.log('local storage access blocked', error);
-        // default to system
-        return ORDER[2];
+        return null;
     }
 }
+
+/** The OS preference; light where matchMedia is unavailable. */
+export const systemTheme = (): Theme =>
+    typeof window !== 'undefined' && window.matchMedia?.(DARK_QUERY).matches ? 'dark' : 'light';
+
+/** What the page shows now: the saved choice, else the OS preference. */
+export const currentTheme = (): Theme => readLocallyStoredTheme() ?? systemTheme();
 
 const setThemeLocally = (theme: Theme): void => {
     try {
@@ -24,26 +31,20 @@ const setThemeLocally = (theme: Theme): void => {
     }
 }
 
+/** Pins the page to `theme` and remembers it; index.html re-applies it before first paint. */
 export const applyTheme = (theme: Theme): void => {
-    /**
-     * If theme is 'system', we remove data-theme attribute from document element, which allows system preference to take over. 
-     * If theme is 'light' or 'dark', we set data-theme attribute accordingly to apply correct styles based on theme.
-     */
-    if (theme === 'system') {
-        document.documentElement.removeAttribute('data-theme');
-    } else {
-        document.documentElement.setAttribute('data-theme', theme);
-    }
-    
-    // regardless of whether theme is system or not, we want to store the user's preference locally
+    document.documentElement.setAttribute('data-theme', theme);
     setThemeLocally(theme);
 }
 
+export const nextTheme = (theme: Theme): Theme => (theme === 'light' ? 'dark' : 'light');
 
-export const nextTheme = (currentTheme: Theme): Theme => {
-    const currentIndex = ORDER.indexOf(currentTheme);
-    const nextIndex = (currentIndex + 1) % ORDER.length;
-    const nextTheme = ORDER[nextIndex];
+/** Calls `onChange` when the OS preference flips; returns the unsubscribe. */
+export const watchSystemTheme = (onChange: (theme: Theme) => void): (() => void) => {
+    const query = typeof window !== 'undefined' ? window.matchMedia?.(DARK_QUERY) : undefined;
+    if (!query) return () => {};
 
-    return nextTheme;
+    const listener = (event: MediaQueryListEvent) => onChange(event.matches ? 'dark' : 'light');
+    query.addEventListener('change', listener);
+    return () => query.removeEventListener('change', listener);
 }

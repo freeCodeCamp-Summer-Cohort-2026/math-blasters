@@ -1,25 +1,36 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { api } from "../src/api/client";
 import { SettledAppRoutes } from "./helpers/app";
 import { getModule } from "../src/content";
 import { expectNoA11yViolations } from "./helpers/a11y";
+import type { Account } from "../src/types";
 
 // The real module, not the fixture: the fixture holds only some of its lessons.
 const module = getModule("arithmetic-addition")!;
 const modulePath = `/modules/${module.slug}`;
 
-function renderAt(path: string) {
+function renderAt(path: string, account: Account | null = null) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <SettledAppRoutes />
+      <SettledAppRoutes account={account} />
     </MemoryRouter>,
   );
 }
 
 describe("ModulePage", () => {
+  // Signed in, the page asks for progress; stubbed so no test reaches the network.
+  beforeEach(() => {
+    vi.spyOn(api, "getProgress").mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders the module's title, description and lesson count", () => {
     renderAt(modulePath);
 
@@ -102,12 +113,19 @@ describe("ModulePage", () => {
     expect(back).toHaveAttribute("href", "/");
 
     await user.click(back);
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    // The homepage has a list of its own now, so check for its heading instead.
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Modules" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /all modules/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the lesson links keyboard reachable in document order", async () => {
     const user = userEvent.setup();
-    renderAt(modulePath);
+    // Signed in, so the sign-in prompt (covered in SignInPrompt.test.tsx) isn't in the tab order.
+    renderAt(modulePath, { id: "usr_1", displayName: "Sam" });
 
     const lessonLinks = screen
       .getAllByRole("heading", { level: 3 })

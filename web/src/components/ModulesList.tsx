@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { getModules } from "../content";
+import type { PageModule } from "../content";
 import { useProgress } from "../context/ProgressContext";
 import { Card } from "./Card";
 import { CompletedMark } from "./CompletedMark";
 import { Skeleton } from "./Skeleton";
 
+// Laid out like the module page's lesson list, so both lists read the same.
 export const ModulesList = () => {
   const modules = getModules();
   const { completedSlugs, loading: progressLoading } = useProgress();
@@ -15,32 +17,19 @@ export const ModulesList = () => {
   };
 
   return modules?.length ? (
-    modules.map((module) => {
-      const progress = progressText(module.lessons);
-      return (
-        <Link
-          key={module.slug}
-          to={`/modules/${encodeURIComponent(module.slug)}`}
-          className="module-card-link"
-          // Card labels itself with its title, so the progress is added to the link's name here.
-          aria-label={progress ? `${module.title}, ${progress}` : undefined}
-        >
-          <Card title={module.title} titleLevel="h2" className="module-card">
-            <p className="module-card-description">
-              {module.description || "No description provided"}
-            </p>
-            <span className="module-card-lessons">
-              {module.lessons.length} lessons
-            </span>
-            {progressLoading ? (
-              <Skeleton variant="text" width="6rem" label="Loading progress" />
-            ) : (
-              progress && <CompletedMark>{progress}</CompletedMark>
-            )}
-          </Card>
-        </Link>
-      );
-    })
+    // An ordered list: modules are authored in order, like lessons.
+    <ol className="module-list">
+      {modules.map((module, index) => (
+        <li key={module.slug}>
+          <ModuleCard
+            module={module}
+            position={index + 1}
+            progress={progressText(module.lessons)}
+            progressLoading={progressLoading}
+          />
+        </li>
+      ))}
+    </ol>
   ) : (
     <Card title="No modules found." titleLevel="h2" className="empty-state">
       <a
@@ -52,3 +41,48 @@ export const ModulesList = () => {
     </Card>
   );
 };
+
+interface ModuleCardProps {
+  module: PageModule;
+  position: number;
+  progress: string | null;
+  progressLoading: boolean;
+}
+
+function ModuleCard({ module, position, progress, progressLoading }: ModuleCardProps) {
+  const lessonCount = module.lessons.length;
+
+  return (
+    // The whole card is one link, as on the module page.
+    <Link
+      to={`/modules/${encodeURIComponent(module.slug)}`}
+      className="module-card-link"
+      // Card labels itself with its title, so the progress is added to the link's name here.
+      aria-label={progress ? `${module.title}, ${progress}` : undefined}
+    >
+      <Card
+        title={module.title}
+        titleLevel="h2"
+        titleVariant="heading"
+        className="module-card"
+      >
+        <span className="module-card__position" aria-hidden="true">
+          {position}
+        </span>
+        {module.description && (
+          <p className="module-card__description">{module.description}</p>
+        )}
+        <div className="module-card__marks">
+          <span className="module-card__count">
+            {lessonCount} {lessonCount === 1 ? "lesson" : "lessons"}
+          </span>
+          {progressLoading ? (
+            <Skeleton variant="text" width="6rem" label="Loading progress" />
+          ) : (
+            progress && <CompletedMark>{progress}</CompletedMark>
+          )}
+        </div>
+      </Card>
+    </Link>
+  );
+}

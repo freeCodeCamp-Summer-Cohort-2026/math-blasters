@@ -38,6 +38,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const accountRef = useRef(accountId);
   accountRef.current = accountId;
   const posting = useRef(new Set<string>());
+  // Lessons passed before auth settled, posted once it is known who is signed in.
+  const held = useRef(new Set<string>());
 
   useEffect(() => {
     setCompletedSlugs([]);
@@ -67,6 +69,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   const recordCompletion = useCallback(
     (slug: string) => {
+      if (authLoading) {
+        held.current.add(slug);
+        return;
+      }
       if (!accountId) return;
       if (completedRef.current.includes(slug) || posting.current.has(slug)) return;
       posting.current.add(slug);
@@ -81,8 +87,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         .catch((err) => console.warn("ProgressProvider: failed to record completion", err))
         .finally(() => posting.current.delete(slug));
     },
-    [accountId],
+    [accountId, authLoading],
   );
+
+  // Signed out, the held lessons are dropped: recordCompletion is a no-op without an account.
+  useEffect(() => {
+    if (authLoading) return;
+    const slugs = [...held.current];
+    held.current.clear();
+    slugs.forEach(recordCompletion);
+  }, [authLoading, recordCompletion]);
 
   const value = useMemo(
     () => ({ completedSlugs, loading, recordCompletion }),

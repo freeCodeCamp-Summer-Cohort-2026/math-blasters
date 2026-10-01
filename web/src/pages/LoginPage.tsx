@@ -1,4 +1,6 @@
+import { useLocation } from "react-router-dom";
 import { apiUrl } from "../api/client";
+import { rememberReturnTo, safeReturnPath } from "../auth/returnTo";
 import { Card } from "../components/Card";
 import styles from "./LoginPage.module.css";
 
@@ -9,6 +11,10 @@ const PROVIDERS = [
 ];
 
 export function LoginPage() {
+  // Set by a sign-in prompt; the provider round trip loses router state, so it is stashed on click.
+  const location = useLocation();
+  const from = safeReturnPath((location.state as { from?: unknown } | null)?.from);
+
   return (
     <div className={styles.container}>
       <Card
@@ -28,6 +34,7 @@ export function LoginPage() {
               key={id}
               href={apiUrl(`/auth/${id}/start`)}
               className="btn btn--secondary btn--lg"
+              onClick={() => rememberReturnTo(from)}
             >
               {label}
             </a>

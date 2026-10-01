@@ -1,9 +1,12 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { AppRoutes } from "../src/App";
 import { api } from "../src/api/client";
+import { AuthProvider } from "../src/context/AuthContext";
+import { ProgressProvider } from "../src/context/ProgressContext";
 import type { Account } from "../src/types";
 import { SettledAppRoutes } from "./helpers/app";
 import { expectNoA11yViolations } from "./helpers/a11y";
@@ -29,6 +32,32 @@ async function passAddingTwoNumbers() {
   await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "7");
   await user.click(screen.getByRole("button", { name: /submit/i }));
   return user;
+}
+
+// Passes the lesson while /auth/me is still pending, then settles auth with `settleWith`.
+async function passBeforeAuthSettles(settleWith: Account | null) {
+  let resolveMe: (value: Account | null) => void = () => {};
+  vi.spyOn(api.auth, "getMe").mockReturnValue(new Promise((resolve) => (resolveMe = resolve)));
+  vi.spyOn(api, "getProgress").mockResolvedValue([]);
+  const postCompletion = vi.spyOn(api, "postCompletion").mockResolvedValue({
+    lessonSlug: "adding-two-numbers",
+    completedAt: "2026-09-30T12:00:00Z",
+  });
+  render(
+    <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
+      <AuthProvider>
+        <ProgressProvider>
+          <AppRoutes />
+        </ProgressProvider>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+
+  await passAddingTwoNumbers();
+  await screen.findByText("Correct!");
+  expect(postCompletion).not.toHaveBeenCalled();
+  await act(async () => resolveMe(settleWith));
+  return postCompletion;
 }
 
 describe("progress", () => {
@@ -62,6 +91,14 @@ describe("progress", () => {
     renderAt(modulePath);
 
     expect(screen.getAllByText("Loading progress").length).toBeGreaterThan(0);
+  });
+
+  it.each(["/", modulePath])("has no accessibility violations while progress loads at %s", async (path) => {
+    vi.spyOn(api, "getProgress").mockReturnValue(new Promise(() => {}));
+    const { container } = renderAt(path);
+
+    expect(screen.getAllByText("Loading progress").length).toBeGreaterThan(0);
+    await expectNoA11yViolations(container);
   });
 
   it("degrades to no ticks, never a broken page, when progress fails", async () => {
@@ -108,6 +145,38 @@ describe("progress", () => {
       "Tutorial: Adding Two Numbers, completed",
     );
     expect(postCompletion).toHaveBeenCalledTimes(1);
+  });
+
+  it("posts a lab's own slug when the lab passes", async () => {
+    vi.spyOn(api, "getProgress").mockResolvedValue([]);
+    const postCompletion = vi.spyOn(api, "postCompletion").mockResolvedValue({
+      lessonSlug: "marbles-in-total",
+      completedAt: "2026-09-30T12:00:00Z",
+    });
+    renderAt("/lessons/marbles-in-total");
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "11");
+    await user.click(screen.getByRole("button", { name: /submit/i }));
+
+    await waitFor(() => expect(postCompletion).toHaveBeenCalledWith("marbles-in-total"));
+    expect(postCompletion).toHaveBeenCalledTimes(1);
+  });
+
+  it("posts once when a lesson passed before auth settles turns out signed in", async () => {
+    const postCompletion = await passBeforeAuthSettles(account);
+
+    await waitFor(() => expect(postCompletion).toHaveBeenCalledTimes(1));
+    expect(postCompletion).toHaveBeenCalledWith("adding-two-numbers");
+  });
+
+  it("posts nothing when a lesson passed before auth settles turns out signed out", async () => {
+    const postCompletion = await passBeforeAuthSettles(null);
+
+    // The signed-out invitation shows only once auth has settled.
+    expect(await screen.findByRole("link", { name: "Sign in to save your progress" })).toBeInTheDocument();
+    expect(postCompletion).not.toHaveBeenCalled();
   });
 
   it("leaves the learner in the lesson with no error when the post fails", async () => {

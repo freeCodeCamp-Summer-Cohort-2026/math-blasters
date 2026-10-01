@@ -1,8 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { feedbackContent } from "../src/components/Feedback/content";
 import { AnswerStep } from "../src/components/steps/AnswerStep";
+import type { PageAnswerStep } from "../src/content";
+import { REASON_SENTENCES } from "../src/content/reasons";
 import { expectNoA11yViolations } from "./helpers/a11y";
+
+const step: PageAnswerStep = { type: "answer", prompt: "What is 2 + 2?" };
 
 describe("AnswerStep", () => {
   it("renders the step's prompt through the markdown renderer", () => {
@@ -29,6 +34,16 @@ describe("AnswerStep", () => {
     render(<AnswerStep step={{ type: "answer", prompt: "Half of $x$?", input: "text" }} onSubmit={onSubmit} />);
 
     await user.type(screen.getByRole("textbox", { name: /your answer/i }), "x/2{Enter}");
+
+    expect(onSubmit).toHaveBeenCalledWith("x/2");
+  });
+
+  it("submits a text answer without the whitespace around it", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<AnswerStep step={{ type: "answer", prompt: "Half of $x$?", input: "text" }} onSubmit={onSubmit} />);
+
+    await user.type(screen.getByRole("textbox", { name: /your answer/i }), "  x/2  {Enter}");
 
     expect(onSubmit).toHaveBeenCalledWith("x/2");
   });
@@ -67,20 +82,70 @@ describe("AnswerStep", () => {
     expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
   });
 
-  it("renders the feedback slot exactly as given, and omits it when absent", () => {
-    const { rerender } = render(
-      <AnswerStep step={{ type: "answer", prompt: "What is 2 + 2?" }} onSubmit={vi.fn()} />,
-    );
-    expect(screen.queryByTestId("answer-step-feedback")).not.toBeInTheDocument();
+  it("shows no feedback before the first submission, with a silent live region", () => {
+    render(<AnswerStep step={step} onSubmit={vi.fn()} />);
 
-    rerender(
-      <AnswerStep
-        step={{ type: "answer", prompt: "What is 2 + 2?" }}
-        onSubmit={vi.fn()}
-        feedback={<p>Not quite - try again.</p>}
-      />,
+    expect(screen.queryByRole("region", { name: /feedback/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("renders the correct state and announces it as a sentence", () => {
+    render(<AnswerStep step={step} status="passed" onSubmit={vi.fn()} />);
+
+    expect(screen.getByRole("region", { name: "correct feedback" })).toHaveTextContent(
+      feedbackContent.correct.title,
     );
-    expect(screen.getByTestId("answer-step-feedback")).toHaveTextContent("Not quite - try again.");
+    expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.correct.announcement);
+  });
+
+  it("renders the not-yet state with what was entered and why", () => {
+    render(<AnswerStep step={step} status="not_yet" entered="12" reasonCode="wrong_total" onSubmit={vi.fn()} />);
+
+    const region = screen.getByRole("region", { name: "not-yet feedback" });
+    expect(region).toHaveTextContent(feedbackContent["not-yet"].title);
+    expect(region).toHaveTextContent("You entered 12");
+    expect(region).toHaveTextContent(REASON_SENTENCES.wrong_total);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      `Not yet. Have another go. You entered 12. ${REASON_SENTENCES.wrong_total}`,
+    );
+  });
+
+  it("prefers an authored reason in the not-yet state", () => {
+    const authored = "Count the red marbles, then count on the blue ones.";
+    render(<AnswerStep step={step} status="not_yet" reasonCode="wrong_total" reason={authored} onSubmit={vi.fn()} />);
+
+    expect(screen.getByRole("region", { name: "not-yet feedback" })).toHaveTextContent(authored);
+    expect(screen.getByRole("status")).toHaveTextContent(authored);
+  });
+
+  it("renders the error state and announces it, leaving the answer open to resubmit", () => {
+    render(<AnswerStep step={step} status="error" onSubmit={vi.fn()} />);
+
+    expect(screen.getByRole("region", { name: "error feedback" })).toHaveTextContent(
+      feedbackContent.error.title,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.error.announcement);
+    expect(screen.getByRole("button", { name: /submit/i })).toBeEnabled();
+  });
+
+  it("updates the live region as the state changes", () => {
+    const { rerender } = render(<AnswerStep step={step} status="error" onSubmit={vi.fn()} />);
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent(feedbackContent.error.announcement);
+
+    rerender(<AnswerStep step={step} status="passed" onSubmit={vi.fn()} />);
+
+    // Same element, new sentence: a region that stays mounted is what gets announced.
+    expect(screen.getByRole("status")).toBe(status);
+    expect(status).toHaveTextContent(feedbackContent.correct.announcement);
+  });
+
+  it("shows the held feedback state it is given, and keeps the answer locked while that is checking", () => {
+    render(<AnswerStep step={step} status="passed" feedbackState="checking" onSubmit={vi.fn()} />);
+
+    expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.checking.announcement);
+    expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
   });
 
   it("has no accessibility violations", async () => {

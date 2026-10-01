@@ -482,8 +482,10 @@ a.btn {
 
 /* --------------------------------------------------------- module page --- */
 
-/* Nested in the root layout's shell, so it carries no page padding of its own. */
-.module-page.page-layout {
+/* Nested in the root layout's shell, so it carries no page padding of its own.
+   The homepage's module list shares this page's look. */
+.module-page.page-layout,
+.modules-page.page-layout {
   max-width: none;
   padding: 0;
 }
@@ -507,7 +509,8 @@ a.btn {
   text-decoration: underline;
 }
 
-.module-page__title {
+.module-page__title,
+.modules-page__title {
   font-size: clamp(1.5rem, 4vw, 2.1rem);
   font-weight: 800;
 }
@@ -517,9 +520,10 @@ a.btn {
   align-self: stretch;
 }
 
-/* --- the lesson list --- */
+/* --- the lesson list, and the homepage's module list --- */
 
-.lesson-list {
+.lesson-list,
+.module-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -528,20 +532,23 @@ a.btn {
   gap: var(--space-4);
 }
 
-.lesson-card-link {
+.lesson-card-link,
+.module-card-link {
   display: block;
   text-decoration: none;
   color: inherit;
   border-radius: var(--radius-lg);
 }
 
-.lesson-card-link:focus-visible {
+.lesson-card-link:focus-visible,
+.module-card-link:focus-visible {
   outline: 3px solid var(--sky-400);
   outline-offset: 3px;
 }
 
 /* The base .card is a centred column; a lesson row reads left-to-right. */
-.lesson-card.card {
+.lesson-card.card,
+.module-card.card {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
@@ -557,19 +564,22 @@ a.btn {
     border-color var(--duration-fast) ease;
 }
 
-.lesson-card-link:hover .lesson-card.card {
+.lesson-card-link:hover .lesson-card.card,
+.module-card-link:hover .module-card.card {
   transform: translateY(-2px);
   border-color: var(--border-strong);
   box-shadow: var(--shadow-lg);
 }
 
 /* Type scale comes from titleVariant="heading"; only the placement is local. */
-.lesson-card .card-title {
+.lesson-card .card-title,
+.module-card .card-title {
   grid-area: title;
   margin: 0;
 }
 
-.lesson-card__position {
+.lesson-card__position,
+.module-card__position {
   grid-area: position;
   display: flex;
   align-items: center;
@@ -585,17 +595,28 @@ a.btn {
   font-size: 0.875rem;
 }
 
-.lesson-card__description {
+.lesson-card__description,
+.module-card__description {
   grid-area: body;
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
-.lesson-card__marks {
+.lesson-card__marks,
+.module-card__marks {
   grid-area: marks;
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* The module list's lesson count sits where a lesson's badge does. */
+.module-card__count {
+  display: flex;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* --- the tutorial / lab badge --- */
@@ -650,7 +671,8 @@ a.btn {
 }
 
 @media (max-width: 30rem) {
-  .lesson-card.card {
+  .lesson-card.card,
+  .module-card.card {
     grid-template-columns: auto 1fr;
     grid-template-areas:
       "position title"
@@ -658,59 +680,10 @@ a.btn {
       "marks    marks";
   }
 
-  .lesson-card__marks {
+  .lesson-card__marks,
+  .module-card__marks {
     justify-content: flex-start;
   }
-}
-
-/* --- modules list --- */
-.module-card-link {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  background-color: var(--surface);
-  text-align: center;
-  width: 100%;
-  text-decoration: none;
-  color: var(--text);
-  transition: all 0.2s ease-in-out;
-}
-
-.module-card-link:hover {
-  background-color: var(--surface-sunken);
-  border-color: var(--accent);
-  color: var(--accent);
-  border-radius: var(--radius-md);
-}
-
-.module-card-link:focus {
-  outline: 3px solid var(--sky-400);
-  outline-offset: 2px;
-  border-radius: var(--radius-md);
-}
-
-.module-card {
-  display: flex;
-  gap: var(--space-4);
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: end;
-  width: 100%;
-}
-
-.module-card-description {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text);
-  width: calc(70% - 1rem);
-  text-align: left;
-}
-
-.module-card-lessons {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 400;
 }
 
 .empty-state {

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { useReturnAfterSignIn } from "../auth/returnTo";
 import { NavHeader } from "./NavHeader/NavHeader";
 import { PageLayout } from "./PageLayout";
 
@@ -12,6 +13,7 @@ export function Layout() {
   const location = useLocation();
   const mainRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
+  useReturnAfterSignIn();
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -40,8 +42,8 @@ export function Layout() {
         Learn math by <em>doing</em> it.
       </p>
       <p className="hero__subtitle">
-        Base template. Nothing here is the real product yet -- pick up an
-        issue and build it.
+        Short, hands-on lessons that build real understanding, one step at a
+        time. Try each idea yourself and see why it works.
       </p>
     </div>
   );

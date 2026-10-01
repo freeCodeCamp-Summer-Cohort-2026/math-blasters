@@ -1,0 +1,69 @@
+/* An invitation, not an error: accent tones only, never --coral or --danger. */
+.prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* Page surfaces sit above a list; the lesson stepper spaces its own children. */
+.spaced {
+  margin-bottom: var(--space-5);
+}
+
+.glyph {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.text {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.body {
+  margin: var(--space-1) 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dismiss {
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color var(--duration-fast) ease;
+}
+
+.dismiss:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.dismiss:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--sky-400);
+}

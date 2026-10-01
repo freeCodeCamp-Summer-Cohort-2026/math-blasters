@@ -110,6 +110,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 export DATABASE_URL="postgresql+psycopg://<user>:<password>@localhost:5432/mathblasters"
 export COOKIE_SECURE=false   # local HTTP; see below
+export ENV=development       # allows the dev AUTH_SECRET_KEY; unset means production
 alembic upgrade head
 uvicorn app.main:app --reload
 
