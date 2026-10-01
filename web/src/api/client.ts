@@ -113,7 +113,34 @@ function toAccount(raw: unknown): Account | null {
   };
 }
 
+/** Wire shape of `POST /api/completions` (MB-29). */
+interface CompletionResponse {
+  lesson_slug: string;
+  completed_at: string;
+}
+
+export interface Completion {
+  lessonSlug: string;
+  completedAt: string;
+}
+
 export const api = {
+  /** Completed lesson slugs for the signed-in account; rejects on failure so the caller picks the degraded state. */
+  async getProgress(): Promise<string[]> {
+    const body = await apiFetch<unknown>("/progress");
+    if (!Array.isArray(body) || !body.every((slug) => typeof slug === "string")) {
+      throw new Error("api.getProgress: expected an array of lesson slugs");
+    }
+    return body;
+  },
+  /** Records a passed lesson; a repeat returns the original row. */
+  async postCompletion(slug: string): Promise<Completion> {
+    const body = await apiFetch<CompletionResponse>("/completions", {
+      method: "POST",
+      body: JSON.stringify({ lesson_slug: slug }),
+    });
+    return { lessonSlug: body.lesson_slug, completedAt: body.completed_at };
+  },
   auth: {
     async getMe(): Promise<Account | null> {
       try {

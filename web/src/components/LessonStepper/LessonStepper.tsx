@@ -14,6 +14,8 @@ export interface LessonStepperProps {
   headingLevel?: "h2" | "h3";
   /** Optional custom checker for dependency injection (defaults to checkAnswer). */
   checker?: StepChecker;
+  /** Called once when the lesson becomes passed, not per step or per render. */
+  onPassed?: () => void;
 }
 
 export function LessonStepper({
@@ -21,6 +23,7 @@ export function LessonStepper({
   backHref,
   headingLevel = "h3",
   checker,
+  onPassed,
 }: LessonStepperProps) {
   const {
     currentStep: currentStepIndex,
@@ -28,6 +31,7 @@ export function LessonStepper({
     previous: handleBack,
     steps: stepStates,
     submit,
+    lessonPassed,
   } = useLesson(lesson, checker);
 
   const totalSteps = lesson.steps.length;
@@ -36,6 +40,13 @@ export function LessonStepper({
   const isFirstStep = currentStepIndex === 0;
   const hasNextStep = currentStepIndex < totalSteps - 1;
   const isNextGated = hasNextStep && currentStep?.type === "answer" && currentStepState?.status !== "passed";
+
+  // Read through a ref so a new callback identity never re-fires it.
+  const onPassedRef = useRef(onPassed);
+  onPassedRef.current = onPassed;
+  useEffect(() => {
+    if (lessonPassed) onPassedRef.current?.();
+  }, [lessonPassed]);
 
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const isInitialMount = useRef(true);

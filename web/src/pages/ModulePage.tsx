@@ -1,13 +1,16 @@
 import { Link, useParams } from "react-router-dom";
 
 import { Card } from "../components/Card";
+import { CompletedMark } from "../components/CompletedMark";
 import { PageLayout } from "../components/PageLayout";
+import { Skeleton } from "../components/Skeleton";
 import { getModule } from "../content";
 import type { LessonType, PageLesson } from "../content";
+import { useProgress } from "../context/ProgressContext";
 import { NotFoundPage } from "./NotFoundPage";
 
 // The route between the module list and the lesson player.
-// Content ships in the bundle, so there is no loading state and no error state.
+// Content ships in the bundle; only progress comes over the network, so only the ticks load.
 
 const LESSON_TYPE_LABEL: Record<LessonType, string> = {
   tutorial: "Tutorial",
@@ -17,6 +20,7 @@ const LESSON_TYPE_LABEL: Record<LessonType, string> = {
 export function ModulePage() {
   const { slug } = useParams<{ slug: string }>();
   const module = slug ? getModule(slug) : undefined;
+  const { completedSlugs, loading: progressLoading } = useProgress();
 
   if (!module) {
     return <NotFoundPage />;
@@ -46,7 +50,12 @@ export function ModulePage() {
       <ol className="lesson-list">
         {module.lessons.map((lesson, index) => (
           <li key={lesson.slug}>
-            <LessonCard lesson={lesson} position={index + 1} />
+            <LessonCard
+              lesson={lesson}
+              position={index + 1}
+              completed={completedSlugs.includes(lesson.slug)}
+              progressLoading={progressLoading}
+            />
           </li>
         ))}
       </ol>
@@ -57,13 +66,14 @@ export function ModulePage() {
 interface LessonCardProps {
   lesson: PageLesson;
   position: number;
+  completed: boolean;
+  progressLoading: boolean;
 }
 
-// Week 3 adds two things here, both absent for now and both due in the link's name.
-// A per-lesson completion tick goes in `.lesson-card__marks`.
-// Labs gain a locked state, from `lesson.requires` and a `completedSlugs` prop.
-function LessonCard({ lesson, position }: LessonCardProps) {
+// Labs gain a locked state here in week 3, from `lesson.requires` and a `completedSlugs` prop.
+function LessonCard({ lesson, position, completed, progressLoading }: LessonCardProps) {
   const typeLabel = LESSON_TYPE_LABEL[lesson.type];
+  const name = `${typeLabel}: ${lesson.title}${completed ? ", completed" : ""}`;
 
   // Card labels itself with its title, which would drop the type from the link name.
   return (
@@ -71,7 +81,7 @@ function LessonCard({ lesson, position }: LessonCardProps) {
     <Link
       to={`/lessons/${encodeURIComponent(lesson.slug)}`}
       className="lesson-card-link"
-      aria-label={`${typeLabel}: ${lesson.title}`}
+      aria-label={name}
     >
       <Card
         title={lesson.title}
@@ -91,6 +101,11 @@ function LessonCard({ lesson, position }: LessonCardProps) {
             <TypeGlyph type={lesson.type} />
             {typeLabel}
           </span>
+          {progressLoading ? (
+            <Skeleton variant="text" width="6rem" label="Loading progress" />
+          ) : (
+            completed && <CompletedMark />
+          )}
         </div>
       </Card>
     </Link>

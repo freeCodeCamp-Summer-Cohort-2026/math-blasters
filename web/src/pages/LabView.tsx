@@ -3,7 +3,7 @@ import { Card } from "../components/Card";
 import { LessonStepper } from "../components/LessonStepper";
 
 // The lab variant of the lesson player: the outcome is the task, so it leads.
-export function LabView({ lab }: { lab: PageLesson }) {
+export function LabView({ lab, onPassed }: { lab: PageLesson; onPassed?: () => void }) {
   return (
     <Card
       as="section"
@@ -18,7 +18,7 @@ export function LabView({ lab }: { lab: PageLesson }) {
         <p className="lab-view__description">{lab.description}</p>
       )}
 
-      <LessonStepper lesson={lab} headingLevel="h2" />
+      <LessonStepper lesson={lab} headingLevel="h2" onPassed={onPassed} />
     </Card>
   );
 }

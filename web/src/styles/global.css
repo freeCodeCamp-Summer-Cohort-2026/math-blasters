@@ -633,6 +633,22 @@ a.btn {
   border-style: dashed;
 }
 
+/* --- the completion mark: text and a check, never colour alone --- */
+
+.completed-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--success);
+}
+
+.completed-mark__glyph {
+  flex: none;
+}
+
 @media (max-width: 30rem) {
   .lesson-card.card {
     grid-template-columns: auto 1fr;

@@ -270,3 +270,72 @@ describe("api.auth", () => {
     });
   });
 });
+
+describe("progress", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("getProgress reads GET /progress with credentials and returns the slugs", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => ["slug-a", "slug-b"],
+    } as Response);
+
+    await expect(api.getProgress()).resolves.toEqual(["slug-a", "slug-b"]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      apiUrl("/progress"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("getProgress rejects on a body that is not an array of slugs", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ slugs: [] }),
+    } as Response);
+
+    await expect(api.getProgress()).rejects.toThrow();
+  });
+
+  it("getProgress rejects when the request fails", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("offline"));
+
+    await expect(api.getProgress()).rejects.toThrow("offline");
+  });
+
+  it("postCompletion posts only the slug, with credentials", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        lesson_slug: "slug-a",
+        completed_at: "2026-09-30T12:00:00Z",
+      }),
+    } as Response);
+
+    await expect(api.postCompletion("slug-a")).resolves.toEqual({
+      lessonSlug: "slug-a",
+      completedAt: "2026-09-30T12:00:00Z",
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      apiUrl("/completions"),
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ lesson_slug: "slug-a" }),
+      }),
+    );
+  });
+
+  it("postCompletion rejects on a 401", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+      text: async () => "",
+    } as Response);
+
+    await expect(api.postCompletion("slug-a")).rejects.toMatchObject({ status: 401 });
+  });
+});

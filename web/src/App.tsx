@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
+import { ProgressProvider } from "./context/ProgressContext";
 import { Layout } from "./components/Layout";
 import { Homepage } from "./pages/Homepage";
 import { LoginPage } from "./pages/LoginPage";
@@ -11,7 +12,7 @@ import FeedbackStyleGuideView from "./pages/FeedbackStyleGuideView";
 import MarkdownStyleGuideView from "./pages/MarkdownStyleGuideView";
 
 /**
- * Route declaration for the app. Expects an AuthProvider above it.
+ * Route declaration for the app. Expects an AuthProvider and a ProgressProvider above it.
  */
 
 export function AppRoutes() {
@@ -34,7 +35,9 @@ export function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ProgressProvider>
+          <AppRoutes />
+        </ProgressProvider>
       </AuthProvider>
     </BrowserRouter>
   );

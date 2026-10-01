@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { Card } from "../components/Card";
 import { LessonStepper } from "../components/LessonStepper";
 import { getLesson, getModuleForLesson } from "../content";
+import { useProgress } from "../context/ProgressContext";
 import { NotFoundPage } from "./NotFoundPage";
 import { LabView } from "./LabView";
 
@@ -13,13 +14,16 @@ import { LabView } from "./LabView";
 export function LessonView() {
   const { slug } = useParams<{ slug: string }>();
   const lesson = slug ? getLesson(slug) : undefined;
+  const { recordCompletion } = useProgress();
 
   if (!lesson) {
     return <NotFoundPage />;
   }
 
+  const handlePassed = () => recordCompletion(lesson.slug);
+
   if (lesson.type === "lab") {
-    return <LabView lab={lesson} />;
+    return <LabView lab={lesson} onPassed={handlePassed} />;
   }
 
   const moduleSlug = getModuleForLesson(lesson.slug);
@@ -27,7 +31,7 @@ export function LessonView() {
 
   return (
     <Card as="section" title={lesson.title} titleVariant="heading">
-      <LessonStepper lesson={lesson} backHref={backHref} />
+      <LessonStepper lesson={lesson} backHref={backHref} onPassed={handlePassed} />
     </Card>
   );
 }
