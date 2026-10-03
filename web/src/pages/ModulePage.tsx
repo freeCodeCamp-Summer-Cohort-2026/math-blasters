@@ -6,7 +6,7 @@ import { PageLayout } from "../components/PageLayout";
 import { SignInPrompt } from "../components/SignInPrompt/SignInPrompt";
 import { Skeleton } from "../components/Skeleton";
 import { getModule } from "../content";
-import type { LessonType, PageLesson } from "../content";
+import type { LessonType, PageLesson, lockReason } from "../content";
 import { useProgress } from "../context/ProgressContext";
 import { NotFoundPage } from "./NotFoundPage";
 
@@ -17,6 +17,9 @@ const LESSON_TYPE_LABEL: Record<LessonType, string> = {
   tutorial: "Tutorial",
   lab: "Lab",
 };
+
+// The shape the content index's `lockReason` returns, so it is never declared twice.
+type LockReason = ReturnType<typeof lockReason>;
 
 export function ModulePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -57,6 +60,8 @@ export function ModulePage() {
               position={index + 1}
               completed={completedSlugs.includes(lesson.slug)}
               progressLoading={progressLoading}
+              // #119 computes this from progress; until then every lab renders unlocked.
+              lockReason={null}
             />
           </li>
         ))}
@@ -70,12 +75,66 @@ interface LessonCardProps {
   position: number;
   completed: boolean;
   progressLoading: boolean;
+  lockReason: LockReason;
 }
 
-// Labs gain a locked state here in week 3, from `lesson.requires` and a `completedSlugs` prop.
-function LessonCard({ lesson, position, completed, progressLoading }: LessonCardProps) {
+// Locked when lockReason is set; this renders it, #119 decides it.
+export function LessonCard({
+  lesson,
+  position,
+  completed,
+  progressLoading,
+  lockReason,
+}: LessonCardProps) {
   const typeLabel = LESSON_TYPE_LABEL[lesson.type];
-  const name = `${typeLabel}: ${lesson.title}${completed ? ", completed" : ""}`;
+  const name = `${typeLabel}: ${lesson.title}${completed ? ", completed" : ""}${lockReason ? ", locked" : ""}`;
+
+  const card = (
+    <Card
+      title={lesson.title}
+      titleLevel="h3"
+      titleVariant="heading"
+      className={`lesson-card lesson-card--${lesson.type}${lockReason ? " lesson-card--locked" : ""}`}
+    >
+      <span className="lesson-card__position" aria-hidden="true">
+        {position}
+      </span>
+      {lesson.description && (
+        <p className="lesson-card__description">{lesson.description}</p>
+      )}
+      <div className="lesson-card__marks">
+        {/* The type is carried by its own text, not by the badge colour. */}
+        <span className={`lesson-badge lesson-badge--${lesson.type}`}>
+          <TypeGlyph type={lesson.type} />
+          {typeLabel}
+        </span>
+        {lockReason && <LockedMark />}
+        {progressLoading ? (
+          <Skeleton variant="text" width="6rem" label="Loading progress" />
+        ) : (
+          completed && <CompletedMark />
+        )}
+      </div>
+      {lockReason && (
+        <p className="lesson-card__lock-reason">
+          Finish{" "}
+          <Link to={`/lessons/${encodeURIComponent(lockReason.tutorialSlug)}`}>
+            {lockReason.title}
+          </Link>{" "}
+          first.
+        </p>
+      )}
+    </Card>
+  );
+
+  // Not a link and not focusable: the only way on is the reason's link to the tutorial.
+  if (lockReason) {
+    return (
+      <div className="lesson-card-locked" role="group" aria-label={name}>
+        {card}
+      </div>
+    );
+  }
 
   // Card labels itself with its title, which would drop the type from the link name.
   return (
@@ -85,32 +144,33 @@ function LessonCard({ lesson, position, completed, progressLoading }: LessonCard
       className="lesson-card-link"
       aria-label={name}
     >
-      <Card
-        title={lesson.title}
-        titleLevel="h3"
-        titleVariant="heading"
-        className={`lesson-card lesson-card--${lesson.type}`}
-      >
-        <span className="lesson-card__position" aria-hidden="true">
-          {position}
-        </span>
-        {lesson.description && (
-          <p className="lesson-card__description">{lesson.description}</p>
-        )}
-        <div className="lesson-card__marks">
-          {/* The type is carried by its own text, not by the badge colour. */}
-          <span className={`lesson-badge lesson-badge--${lesson.type}`}>
-            <TypeGlyph type={lesson.type} />
-            {typeLabel}
-          </span>
-          {progressLoading ? (
-            <Skeleton variant="text" width="6rem" label="Loading progress" />
-          ) : (
-            completed && <CompletedMark />
-          )}
-        </div>
-      </Card>
+      {card}
     </Link>
+  );
+}
+
+// Text plus a padlock, so the locked state never rests on colour alone.
+function LockedMark() {
+  return (
+    <span className="locked-mark">
+      <svg
+        className="locked-mark__glyph"
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
+        <rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor" />
+      </svg>
+      Locked
+    </span>
   );
 }
 

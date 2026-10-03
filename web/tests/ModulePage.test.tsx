@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../src/api/client";
 import { SettledAppRoutes } from "./helpers/app";
 import { getModule } from "../src/content";
+import { LessonCard } from "../src/pages/ModulePage";
 import { expectNoA11yViolations } from "./helpers/a11y";
 import type { Account } from "../src/types";
 
@@ -158,6 +159,118 @@ describe("ModulePage", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: module.title }),
     ).toBeInTheDocument();
+    await expectNoA11yViolations(container);
+  });
+});
+
+describe("LessonCard lock state", () => {
+  const lab = module.lessons.find((lesson) => lesson.slug === "marbles-in-total")!;
+  // Driven from a fixture: #119 computes the real value from progress.
+  const lockReasonFixture = {
+    tutorialSlug: "adding-two-numbers",
+    title: "Adding Two Numbers",
+  };
+
+  function renderCard(
+    lockReason: { tutorialSlug: string; title: string } | null,
+    completed = false,
+  ) {
+    return render(
+      <MemoryRouter>
+        <ol className="lesson-list">
+          <li>
+            <LessonCard
+              lesson={lab}
+              position={6}
+              completed={completed}
+              progressLoading={false}
+              lockReason={lockReason}
+            />
+          </li>
+        </ol>
+      </MemoryRouter>,
+    );
+  }
+
+  it("renders a locked lab as a named group with a visible lock, not a link", () => {
+    renderCard(lockReasonFixture);
+
+    const group = screen.getByRole("group", {
+      name: "Lab: Marbles in Total, locked",
+    });
+    expect(
+      within(group).getByRole("heading", { level: 3, name: "Marbles in Total" }),
+    ).toBeInTheDocument();
+    expect(within(group).getByText("Locked")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /marbles in total/i }),
+    ).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="/lessons/marbles-in-total"]')).toBeNull();
+  });
+
+  it("names the tutorial from the reason and links to it", () => {
+    renderCard(lockReasonFixture);
+
+    const link = screen.getByRole("link", { name: "Adding Two Numbers" });
+    expect(link).toHaveAttribute("href", "/lessons/adding-two-numbers");
+    expect(link.closest("p")).toHaveTextContent("Finish Adding Two Numbers first.");
+    expect(within(screen.getByRole("listitem")).getAllByRole("link")).toHaveLength(1);
+  });
+
+  it("renders whatever tutorial the prop names, without working it out itself", () => {
+    renderCard({ tutorialSlug: "counting-on", title: "Counting On" });
+
+    const link = screen.getByRole("link", { name: "Counting On" });
+    expect(link).toHaveAttribute("href", "/lessons/counting-on");
+    expect(link.closest("p")).toHaveTextContent("Finish Counting On first.");
+    expect(screen.queryByText("Adding Two Numbers")).not.toBeInTheDocument();
+  });
+
+  it("keeps the locked card out of the tab order; only the reason's link takes focus", async () => {
+    const user = userEvent.setup();
+    renderCard(lockReasonFixture);
+
+    const group = screen.getByRole("group", { name: /locked/i });
+    expect(group).not.toHaveAttribute("tabindex");
+    expect(group).not.toHaveAttribute("aria-disabled");
+
+    await user.tab();
+    expect(screen.getByRole("link", { name: "Adding Two Numbers" })).toHaveFocus();
+
+    await user.tab();
+    expect(document.body).toHaveFocus();
+  });
+
+  it("renders an unlocked lab as one link to the lab, with no lock", () => {
+    renderCard(null);
+
+    const link = screen.getByRole("link", { name: "Lab: Marbles in Total" });
+    expect(link).toHaveAttribute("href", "/lessons/marbles-in-total");
+    expect(screen.queryByText("Locked")).not.toBeInTheDocument();
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Finish/)).not.toBeInTheDocument();
+  });
+
+  it("keeps completion in the name of a locked lab", () => {
+    renderCard(lockReasonFixture, true);
+
+    expect(
+      screen.getByRole("group", {
+        name: "Lab: Marbles in Total, completed, locked",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Completed")).toBeInTheDocument();
+  });
+
+  it("has no accessibility violations locked", async () => {
+    const { container } = renderCard(lockReasonFixture);
+
+    await expectNoA11yViolations(container);
+  });
+
+  it("has no accessibility violations unlocked", async () => {
+    const { container } = renderCard(null);
+
     await expectNoA11yViolations(container);
   });
 });
