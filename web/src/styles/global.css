@@ -670,6 +670,56 @@ a.btn {
   flex: none;
 }
 
+/* --- a locked lab: text, padlock, dashed outline and no link, never colour alone --- */
+
+.lesson-card-locked {
+  display: block;
+  border-radius: var(--radius-lg);
+}
+
+.lesson-card--locked.card {
+  grid-template-areas:
+    "position title  marks"
+    "position body   body"
+    "position reason reason";
+  background: var(--surface-sunken);
+  border-style: dashed;
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+.lesson-card__lock-reason {
+  grid-area: reason;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.lesson-card__lock-reason a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.lesson-card__lock-reason a:focus-visible {
+  outline: 3px solid var(--sky-400);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.locked-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.locked-mark__glyph {
+  flex: none;
+}
+
 @media (max-width: 30rem) {
   .lesson-card.card,
   .module-card.card {
@@ -677,6 +727,14 @@ a.btn {
     grid-template-areas:
       "position title"
       "body     body"
+      "marks    marks";
+  }
+
+  .lesson-card--locked.card {
+    grid-template-areas:
+      "position title"
+      "body     body"
+      "reason   reason"
       "marks    marks";
   }
 
