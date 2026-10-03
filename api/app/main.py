@@ -24,6 +24,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.config import get_settings
+from app.providers import get_provider, register
+from app.providers.github import GithubProvider
+from app.providers.google import GoogleProvider
 from app.routers import auth, health
 from app.schemas import ErrorDetail, ErrorEnvelope
 
@@ -116,6 +119,20 @@ def configure_request_logger(level_name: str) -> None:
         logger.addHandler(handler)
 
 
+def _register_providers(settings) -> None:
+    base = settings.api_base_url.rstrip("/")
+    candidates = [
+        ("github", GithubProvider, settings.github_client_id, settings.github_client_secret),
+        ("google", GoogleProvider, settings.google_client_id, settings.google_client_secret),
+    ]
+    for name, cls, client_id, client_secret in candidates:
+        if not (client_id and client_secret):
+            continue
+        if get_provider(name) is not None:
+            continue
+        register(cls(client_id, client_secret, f"{base}/api/auth/{name}/callback"))
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         start_time = time.perf_counter()
@@ -159,6 +176,8 @@ def create_app() -> FastAPI:
         version="0.1.0",
         description="Base template. The real API is still to be designed -- see the open issues.",
     )
+
+    _register_providers(settings)
 
     app.add_middleware(
         CORSMiddleware,

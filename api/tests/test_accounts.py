@@ -2,6 +2,7 @@
 
 import secrets
 import uuid
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from fastapi import APIRouter, Request, Response
@@ -11,6 +12,8 @@ from app.accounts import resolve_account
 from app.db import SessionDep
 from app.learner import LEARNER_COOKIE_NAME, sign_in_learner
 from app.models import Account, Learner, OAuthIdentity
+from app.providers import register
+from tests.fake_provider import FakeProvider
 
 
 def row_count(session, model):
@@ -71,6 +74,21 @@ def sign_in(client, session):
         return account, previous_token, response.cookies[LEARNER_COOKIE_NAME]
 
     return sign_in_as
+
+
+@pytest.fixture(autouse=True)
+def clean_registry(monkeypatch):
+    """Ensure each test runs with a clean provider registry.
+
+    This satisfies the teardown constraint by resetting global tracking states.
+    """
+    monkeypatch.setattr("app.providers._registry", {})
+
+
+@pytest.fixture
+def fake_provider(clean_registry):
+    register(FakeProvider())
+    yield
 
 
 def test_first_sign_in_creates_exactly_one_account_and_identity(
@@ -281,4 +299,29 @@ def test_sign_in_rotates_token_and_old_token_no_longer_resolves(
     assert client.get("/api/auth/me").json()["email"] == "ada@example.com"
     client.cookies.clear()
     client.cookies.set(LEARNER_COOKIE_NAME, old_token)
+    assert client.get("/api/auth/me").json() is None
+
+
+def test_sign_in_and_out(client, fake_provider):
+    assert client.get("/api/auth/me").json() is None
+    old_cookie = client.cookies.get(LEARNER_COOKIE_NAME)
+
+    r = client.get("/api/auth/fake/start", follow_redirects=False)
+    state = parse_qs(urlparse(r.headers["location"]).query)["state"][0]
+
+    r = client.get(
+        "/api/auth/fake/callback",
+        params={"code": "any", "state": state},
+        follow_redirects=False,
+    )
+    assert r.status_code == 307
+    assert "error" not in r.headers["location"]
+
+    me = client.get("/api/auth/me").json()
+    assert me["email"] == "user@example.com"
+    assert me["display_name"] == "Fake User"
+    assert me["providers"] == ["fake"]
+    assert client.cookies.get(LEARNER_COOKIE_NAME) != old_cookie
+
+    assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").json() is None

@@ -8,12 +8,10 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from app.providers import (
-    OAuthProvider,
-    ProviderProfile,
-    get_provider,
-    register,
-)
+import app.providers as providers
+from app.config import get_settings
+from app.main import create_app
+from app.providers import OAuthProvider, ProviderProfile, get_provider, register
 from tests.fake_provider import FakeProvider
 
 API_DIR = Path(__file__).resolve().parent.parent
@@ -21,8 +19,20 @@ API_DIR = Path(__file__).resolve().parent.parent
 
 @pytest.fixture(autouse=True)
 def clean_registry(monkeypatch):
-    """Give each test its own empty registry."""
     monkeypatch.setattr("app.providers._registry", {})
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+def set_env(monkeypatch, **values):
+    for key in (
+        "github_client_id",
+        "github_client_secret",
+        "google_client_id",
+        "google_client_secret",
+    ):
+        monkeypatch.setenv(key.upper(), values.get(key, ""))
 
 
 def test_fake_provider_satisfies_oauth_provider_protocol():
@@ -102,3 +112,40 @@ def test_get_unknown_provider_returns_none():
     fake = FakeProvider()
     register(fake)
     assert get_provider("nonexistent") is None
+
+
+def test_nothing_set_registers_nothing(monkeypatch):
+    set_env(monkeypatch)
+    create_app()
+    assert providers._registry == {}
+
+
+def test_id_without_secret_registers_nothing(monkeypatch):
+    set_env(monkeypatch, github_client_id="id", google_client_id="id")
+    create_app()
+    assert providers._registry == {}
+
+
+def test_github_id_and_secret_registers_only_github(monkeypatch):
+    set_env(monkeypatch, github_client_id="id", github_client_secret="secret")
+    create_app()
+    assert set(providers._registry) == {"github"}
+
+
+def test_google_id_and_secret_registers_only_google(monkeypatch):
+    set_env(monkeypatch, google_client_id="id", google_client_secret="secret")
+    create_app()
+    assert set(providers._registry) == {"google"}
+
+
+def test_create_app_twice_does_not_raise(monkeypatch):
+    set_env(
+        monkeypatch,
+        github_client_id="id",
+        github_client_secret="secret",
+        google_client_id="id",
+        google_client_secret="secret",
+    )
+    create_app()
+    create_app()
+    assert set(providers._registry) == {"github", "google"}

@@ -28,13 +28,20 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
 from itsdangerous import BadData, URLSafeTimedSerializer
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app.accounts import resolve_account
 from app.auth import OptionalCurrentAccountDep
 from app.config import Settings, get_settings
 from app.db import SessionDep
 from app.exceptions import APIException
-from app.learner import LEARNER_COOKIE_NAME, LEARNER_TOKEN_PATTERN, issue_learner_identity
-from app.models import Learner, OAuthIdentity
+from app.learner import (
+    LEARNER_COOKIE_NAME,
+    LEARNER_TOKEN_PATTERN,
+    issue_learner_identity,
+    sign_in_learner,
+)
+from app.models import Account, Learner, OAuthIdentity
 from app.providers import ProviderProfile, get_provider
 from app.schemas import AccountMeGetResponse
 
@@ -71,14 +78,18 @@ def logout(request: Request, response: Response, session: SessionDep) -> None:
     issue_learner_identity(session, response)
 
 
-# Profile hook stub; wire issue #117 points this to resolve_account from #85.
-def on_profile(profile: ProviderProfile) -> None:
-    logger.warning(
-        "OAuth on_profile hook stub called for provider '%s' (account_id=%s); "
-        "session creation pending wire issue #117",
-        profile.provider,
-        profile.provider_account_id,
+def on_profile(profile: ProviderProfile, session: Session) -> Account:
+    account = resolve_account(
+        session=session,
+        provider=profile.provider,
+        provider_account_id=profile.provider_account_id,
+        email=profile.email,
+        email_verified=profile.email_verified,
+        display_name=profile.display_name,
+        avatar_url=profile.avatar_url,
     )
+
+    return account
 
 
 def generate_pkce_pair() -> tuple[str, str]:
@@ -255,6 +266,7 @@ def oauth_callback(
     error: str | None = None,
     error_description: str | None = None,
     settings: Annotated[Settings, Depends(get_settings)] = None,
+    session: SessionDep = None,
 ):
     provider_instance = get_provider(provider)
     if provider_instance is None:
@@ -339,9 +351,11 @@ def oauth_callback(
 
     # A browser navigation should land back in the app, not on a JSON error page.
     try:
-        on_profile(profile)
+        account = on_profile(profile, session)
+        response = _redirect_clearing_cookie(target, settings)
+        sign_in_learner(session, request, response, account)
     except Exception:
         logger.exception("Error processing authenticated profile in on_profile hook")
         return _redirect_clearing_cookie(target, settings, error="internal_error")
 
-    return _redirect_clearing_cookie(target, settings)
+    return response

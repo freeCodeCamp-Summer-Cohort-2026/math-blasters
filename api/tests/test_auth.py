@@ -3,10 +3,8 @@ from urllib.parse import parse_qs, urlsplit
 
 import httpx2
 import pytest
-from fastapi.testclient import TestClient
 
 from app.config import get_settings
-from app.main import create_app
 from app.providers import ProviderProfile, register
 from app.routers.auth import (
     on_profile,
@@ -30,12 +28,6 @@ class ExchangeTrackingFake(FakeProvider):
 def clean_registry(monkeypatch):
     """Ensure each test runs with a clean provider registry."""
     monkeypatch.setattr("app.providers._registry", {})
-
-
-@pytest.fixture
-def client():
-    app = create_app()
-    return TestClient(app)
 
 
 def test_start_unknown_provider_returns_404(client):
@@ -316,11 +308,15 @@ def test_callback_expired_state_cookie_returns_400_validation_error(client, monk
 
 
 def test_callback_happy_path_exchanges_code_calls_hook_and_redirects(client, monkeypatch):
-    fake = FakeProvider(name="fake")
-    register(fake)
+    register(FakeProvider(name="fake"))
 
     captured_profiles: list[ProviderProfile] = []
-    monkeypatch.setattr("app.routers.auth.on_profile", lambda p: captured_profiles.append(p))
+
+    def recording_hook(profile, session):
+        captured_profiles.append(profile)
+        return on_profile(profile, session)
+
+    monkeypatch.setattr("app.routers.auth.on_profile", recording_hook)
 
     # 1. Start flow to get cookie and state
     start_resp = client.get("/api/auth/fake/start?next=/dashboard", follow_redirects=False)
@@ -767,7 +763,7 @@ def test_callback_hook_failure_redirects_with_internal_error(client, monkeypatch
     fake = FakeProvider(name="fake")
     register(fake)
 
-    def failing_hook(profile):
+    def failing_hook(profile, session):
         raise RuntimeError("Database write failure during account creation")
 
     monkeypatch.setattr("app.routers.auth.on_profile", failing_hook)
@@ -795,7 +791,7 @@ def test_callback_hook_failure_redirects_with_internal_error(client, monkeypatch
     assert 'oauth_flow=""' in cookie_header or "oauth_flow=;" in cookie_header
 
 
-def test_on_profile_stub_callable():
+def test_on_profile_stub_callable_is_now_resolved(session):
     profile = ProviderProfile(
         provider="github",
         provider_account_id="123",
@@ -804,7 +800,12 @@ def test_on_profile_stub_callable():
         display_name="A",
         avatar_url=None,
     )
-    assert on_profile(profile) is None
+    account = on_profile(profile, session)
+    assert account.id is not None
+    assert account.email == "a@b.com"
+
+    # Same identity resolves to the same account
+    assert on_profile(profile, session).id == account.id
 
 
 def test_verify_state_cookie_logs_debug_on_decode_error(caplog):
