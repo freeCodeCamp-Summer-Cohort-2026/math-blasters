@@ -39,6 +39,7 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      CONTENT_MANIFEST_PATH: /content/manifest.json
     ports:
       - "8000:8000"
     depends_on:
@@ -46,6 +47,7 @@ services:
         condition: service_healthy
     volumes:
       - ./api:/code
+      - ./content:/content:ro
     # Apply migrations before serving, so a fresh clone gets a working schema
     # from `docker compose up` alone -- and so the migrations are exercised
     # on every start rather than drifting from the models.
