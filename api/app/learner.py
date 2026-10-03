@@ -1,8 +1,10 @@
+import hashlib
 import re
 import secrets
 from typing import Annotated
 
 from fastapi import Depends, Request, Response
+from slowapi.util import get_remote_address
 from sqlalchemy import select
 
 from app.config import get_settings
@@ -11,8 +13,11 @@ from app.models import Account, Learner
 
 LEARNER_COOKIE_NAME = "learner_token"
 LEARNER_TOKEN_BYTES = 32
-# Junk cookies never reach the database, so they get a fresh identity.
 LEARNER_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{43}$")
+
+
+def is_valid_learner_token(token: str) -> bool:
+    return bool(LEARNER_TOKEN_PATTERN.fullmatch(token))
 
 
 def set_learner_cookie(response: Response, token: str) -> None:
@@ -65,3 +70,10 @@ def get_current_learner(request: Request, response: Response, session: SessionDe
 
 
 LearnerDep = Annotated[Learner, Depends(get_current_learner)]
+
+
+def learner_rate_key(request: Request) -> str:
+    token = request.cookies.get(LEARNER_COOKIE_NAME)
+    if not token or not is_valid_learner_token(token):
+        return get_remote_address(request)
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
