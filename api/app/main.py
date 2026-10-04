@@ -18,12 +18,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from app.config import get_settings
+from app.learner import learner_rate_key
 from app.routers import auth, health
 from app.schemas import ErrorDetail, ErrorEnvelope
 
@@ -178,7 +178,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
 
-    limiter = Limiter(key_func=get_remote_address)
+    limiter = Limiter(key_func=learner_rate_key)
     app.state.limiter = limiter
     app.include_router(auth.router, prefix="/api")
 

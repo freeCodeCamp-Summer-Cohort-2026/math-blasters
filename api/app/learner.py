@@ -1,8 +1,10 @@
+import hashlib
 import re
 import secrets
 from typing import Annotated
 
 from fastapi import Depends, Request, Response
+from slowapi.util import get_remote_address
 from sqlalchemy import select
 
 from app.config import get_settings
@@ -65,3 +67,10 @@ def get_current_learner(request: Request, response: Response, session: SessionDe
 
 
 LearnerDep = Annotated[Learner, Depends(get_current_learner)]
+
+
+def learner_rate_key(request: Request) -> str:
+    token = request.cookies.get(LEARNER_COOKIE_NAME)
+    if not token or not LEARNER_TOKEN_PATTERN.fullmatch(token):
+        return get_remote_address(request)
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
