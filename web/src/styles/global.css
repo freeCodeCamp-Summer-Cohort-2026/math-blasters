@@ -680,8 +680,8 @@ a.btn {
 .lesson-card--locked.card {
   grid-template-areas:
     "position title  marks"
-    "position body   body"
-    "position reason reason";
+    "position body   marks"
+    "position reason marks";
   background: var(--surface-sunken);
   border-style: dashed;
   border-color: var(--border-strong);
@@ -720,6 +720,11 @@ a.btn {
   flex: none;
 }
 
+.lesson-card--locked .lesson-card__marks {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 @media (max-width: 30rem) {
   .lesson-card.card,
   .module-card.card {
@@ -741,6 +746,10 @@ a.btn {
   .lesson-card__marks,
   .module-card__marks {
     justify-content: flex-start;
+  }
+
+  .lesson-card--locked .lesson-card__marks {
+    align-items: flex-start;
   }
 }
 
