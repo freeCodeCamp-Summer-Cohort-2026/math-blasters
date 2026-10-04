@@ -246,6 +246,7 @@ describe("LessonCard lock state", () => {
 
     const link = screen.getByRole("link", { name: "Lab: Marbles in Total" });
     expect(link).toHaveAttribute("href", "/lessons/marbles-in-total");
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(1);
     expect(screen.queryByText("Locked")).not.toBeInTheDocument();
     expect(screen.queryByRole("group")).not.toBeInTheDocument();
     expect(screen.queryByText(/^Finish/)).not.toBeInTheDocument();
