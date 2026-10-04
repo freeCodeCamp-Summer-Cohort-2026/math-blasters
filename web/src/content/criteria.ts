@@ -27,12 +27,30 @@ function answersIn(criterion: Criterion): string[] {
   }
 }
 
+const NUMBER = /^-?(\d+(\.\d+)?|\.\d+)$/;
+const NUMBER_TOKENS = /(?<![\w.])(-?)(\d+(?:\.\d+)?|\.\d+)(?!\w|\.\d)/g;
+
 /** True when the text contains the answer as a whole token, so an answer of 5 doesn't match 15. */
+function mentionsIn(text: string, answer: string): boolean {
+  // Numbers compare by value, so 3.50 and .5 count as 3.5 and 0.5; an unsigned answer also matches its negative.
+  if (NUMBER.test(answer)) {
+    const value = Number(answer);
+    return [...text.matchAll(NUMBER_TOKENS)].some(
+      ([, sign, digits]) => Number(sign + digits) === value || Number(digits) === value,
+    );
+  }
+  // Anything else matches with optional whitespace between characters, so x / 2 counts as x/2.
+  const pattern = [...answer.replace(/\s+/g, "")]
+    .map((char) => char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("\\s*");
+  return new RegExp(`(?<![\\w.])${pattern}(?!\\w|\\.\\d)`, "i").test(text);
+}
+
+/** Also checks the text with markdown emphasis and code marks removed, so **1**1 counts as 11. */
 function mentions(text: string, answer: string): boolean {
   const trimmed = answer.trim();
   if (trimmed === "") return false;
-  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?<![\\w.])${escaped}(?!\\w|\\.\\d)`, "i").test(text);
+  return mentionsIn(text, trimmed) || mentionsIn(text.replace(/[*_`~]/g, ""), trimmed);
 }
 
 export function parseCriteria(yamlSource: string, path: string, stepNumber: number): ParsedAnswerCriteria {
@@ -166,6 +184,11 @@ export function parseCriteria(yamlSource: string, path: string, stepNumber: numb
       );
     }
   });
+
+  const statement = checking;
+  if (statement !== undefined && parsed.flatMap(answersIn).some((answer) => mentions(statement, answer))) {
+    throw new Error(`${path}: the "checking" field must not contain the expected value, at step ${stepNumber}.`);
+  }
 
   return {
     criteria: parsed,

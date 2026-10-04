@@ -50,8 +50,11 @@ export function AnswerStep({
 }: AnswerStepProps) {
   const [value, setValue] = useState("");
   const inputId = useId();
+  const checkingId = `${inputId}-checking`;
   const feedbackState = heldFeedbackState === undefined ? feedbackStateFor(status) : heldFeedbackState;
   const isChecking = status === "checking" || feedbackState === "checking";
+  // Shown with the not-yet feedback, so it explains the goal at the moment the answer missed it.
+  const checkingStatement = feedbackState === "not-yet" ? step.checking : undefined;
 
   const handleSubmit = () => {
     const trimmed = value.trim();
@@ -73,6 +76,7 @@ export function AnswerStep({
           onReset={() => setValue("")}
           disabled={isChecking}
           kind={step.input}
+          describedBy={checkingStatement ? checkingId : undefined}
         />
         <Button
           variant="ghost"
@@ -89,7 +93,16 @@ export function AnswerStep({
           {/* Keyed so each state change replays the entrance motion. */}
           <Feedback key={feedbackState} state={feedbackState}>
             {feedbackState === "not-yet" && (
-              <NotYetExplanation entered={entered} reasonCode={reasonCode} reason={reason} />
+              <>
+                <NotYetExplanation entered={entered} reasonCode={reasonCode} reason={reason} />
+                {/* Author prose only, never built from criteria. */}
+                {checkingStatement && (
+                  <div id={checkingId} className={styles.checking}>
+                    <p className={styles.checkingLabel}>Checking</p>
+                    <RenderMarkdown content={checkingStatement} />
+                  </div>
+                )}
+              </>
             )}
           </Feedback>
         </div>

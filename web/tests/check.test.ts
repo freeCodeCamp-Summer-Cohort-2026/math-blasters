@@ -642,6 +642,8 @@ describe("authored reason", () => {
     ["equals_any", "expected: [7, 9]", "Seven works, and so does 9."],
     ["set_equals", "expected: [1, 2, 3]", "Remember 3 belongs in the set."],
     ["approx", "expected: { value: 3.14, epsilon: 0.01 }", "Close to 3.14 will do."],
+    ["equals, trailing zero", "expected: 3.5", "It comes to 3.50."],
+    ["equivalent, spaced out", "expected: 2*x", "It simplifies to 2 * x."],
   ])("is rejected by the parser when it gives away the answer (%s)", (check, expected, reason) => {
     const kind = check.split(",")[0];
     expect(() =>
@@ -658,6 +660,36 @@ describe("authored reason", () => {
     expect(() =>
       parseCriteria(`- check: ${check}\n  ${expected}\n  reason_code: r\n  reason: ${reason}`, "t.md", 1),
     ).not.toThrow();
+  });
+});
+
+describe("checking statement", () => {
+  const withChecking = (checking: string, criterion: string) =>
+    `checking: ${checking}\ncriteria:\n  - ${criterion.replace(/\n/g, "\n    ")}\n    reason_code: r`;
+
+  it.each([
+    ["equals", "check: equals\nexpected: 48173", "your answer is 48173"],
+    ["equals, decimal", "check: equals\nexpected: 3.5", "the share each friend gets, 3.5"],
+    ["equals_any", "check: equals_any\nexpected: [7, 9]", "a number like 9"],
+    ["approx", "check: approx\nexpected: { value: 3.14, epsilon: 0.01 }", "pi to two places, 3.14"],
+    ["equals, trailing zero", "check: equals\nexpected: 3.5", "the share each friend gets, 3.50"],
+    ["equals, no leading zero", "check: equals\nexpected: 0.5", "half, written .5"],
+    ["equivalent, spaced out", "check: equivalent\nexpected: x/2", "an expression like x / 2"],
+    ["equals, split by markdown", "check: equals\nexpected: 11", "the total, **1**1"],
+  ])("is rejected by the parser when it gives away the answer (%s)", (_label, criterion, checking) => {
+    expect(() => parseCriteria(withChecking(checking, criterion), "t.md", 1)).toThrow(
+      /"checking" field must not contain the expected value/,
+    );
+  });
+
+  it.each([
+    ["a number that only contains the answer", "check: equals\nexpected: 5", "the count after 15"],
+    ["in_range, which has no single answer", "check: in_range\nexpected: { min: 1, max: 10 }", "a number from 1 to 10"],
+    ["prose with no number", "check: equals\nexpected: 11", "the total number of marbles"],
+    ["a different decimal", "check: equals\nexpected: 0.5", "more than .25 of the cake"],
+    ["a different expression", "check: equivalent\nexpected: x/2", "an expression like x / 4"],
+  ])("is accepted when it only resembles the answer (%s)", (_label, criterion, checking) => {
+    expect(parseCriteria(withChecking(checking, criterion), "t.md", 1).checking).toBe(checking);
   });
 });
 

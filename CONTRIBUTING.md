@@ -85,7 +85,7 @@ number such as the coefficient.
 
 An answer step's criteria block may also include two optional fields, `checking` and `hints`:
 
-- `checking` — a plain-language sentence describing what the step is checking. Not shown to learners yet; this is a schema slot for later UI.
+- `checking` — a plain-language sentence describing what the step is checking. It is shown to learners in the not-yet feedback after a wrong answer, so it must not give away the answer; the parser rejects a `checking` that contains the expected value.
 - `hints` — an ordered list of sentences to offer a learner who is stuck, in the order they'd be shown.
 
 ```

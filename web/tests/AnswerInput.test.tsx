@@ -126,4 +126,38 @@ describe('AnswerInput', () => {
         expect(input).toHaveAttribute("aria-describedby", "answer-error");
     });
 
+    it("is described by the extra text it is given", () => {
+        render(
+            <AnswerInput
+                id="answer"
+                label="How many?"
+                value=""
+                onChange={vi.fn()}
+                onSubmit={vi.fn()}
+                onReset={vi.fn()}
+                describedBy="answer-checking"
+            />
+        );
+
+        expect(screen.getByLabelText("How many?")).toHaveAttribute("aria-describedby", "answer-checking");
+    });
+
+    it("keeps the error first when it is also invalid", () => {
+        render(
+            <AnswerInput
+                id="answer"
+                label="How many?"
+                value="42"
+                onChange={vi.fn()}
+                onSubmit={vi.fn()}
+                onReset={vi.fn()}
+                invalid
+                errorId="answer-error"
+                describedBy="answer-checking"
+            />
+        );
+
+        expect(screen.getByLabelText("How many?")).toHaveAttribute("aria-describedby", "answer-error answer-checking");
+    });
+
 });

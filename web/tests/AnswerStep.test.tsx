@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { feedbackContent } from "../src/components/Feedback/content";
@@ -146,6 +146,70 @@ describe("AnswerStep", () => {
     expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.checking.announcement);
     expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
+  });
+
+  describe("checking statement", () => {
+    const checking = "the total number of marbles in the jar";
+    const checked: PageAnswerStep = { type: "answer", prompt: "How many marbles?", checking };
+
+    const notYet = (
+      <AnswerStep step={checked} status="not_yet" entered="10" reasonCode="wrong_total" onSubmit={vi.fn()} />
+    );
+
+    it.each(["untried", "checking", "passed", "error"] as const)("is hidden while the step is %s", (status) => {
+      render(<AnswerStep step={checked} status={status} onSubmit={vi.fn()} />);
+
+      expect(screen.queryByText(checking)).not.toBeInTheDocument();
+      expect(screen.getByRole("spinbutton", { name: /your answer/i })).not.toHaveAttribute("aria-describedby");
+    });
+
+    it("shows the statement inside the not-yet feedback", () => {
+      render(notYet);
+
+      const region = within(screen.getByRole("region", { name: "not-yet feedback" }));
+      expect(region.getByText("Checking")).toBeInTheDocument();
+      expect(region.getByText(checking)).toBeInTheDocument();
+    });
+
+    it("follows the held feedback, so it waits while checking is still on screen", () => {
+      render(<AnswerStep step={checked} status="not_yet" feedbackState="checking" onSubmit={vi.fn()} />);
+
+      expect(screen.queryByText(checking)).not.toBeInTheDocument();
+    });
+
+    it("renders nothing for a step without one", () => {
+      const { container } = render(<AnswerStep step={step} status="not_yet" onSubmit={vi.fn()} />);
+
+      expect(screen.queryByText("Checking")).not.toBeInTheDocument();
+      expect(container.querySelectorAll("article")).toHaveLength(1);
+      expect(screen.getByRole("spinbutton", { name: /your answer/i })).not.toHaveAttribute("aria-describedby");
+    });
+
+    it("is the input's accessible description", () => {
+      render(notYet);
+
+      const input = screen.getByRole("spinbutton", { name: /your answer/i });
+      const statement = screen.getByText(checking).closest("[id]");
+      expect(statement).not.toBeNull();
+      expect(input).toHaveAttribute("aria-describedby", statement!.id);
+      expect(input).toHaveAccessibleDescription(`Checking ${checking}`);
+    });
+
+    it("renders only the authored prose", () => {
+      render(notYet);
+
+      const statement = screen.getByText(checking).closest("[id]");
+      expect(statement).toHaveTextContent(new RegExp(`^Checking${checking}$`));
+    });
+
+    it("has no accessibility violations before and after a not-yet result", async () => {
+      const { container, rerender } = render(<AnswerStep step={checked} onSubmit={vi.fn()} />);
+      await expectNoA11yViolations(container);
+
+      rerender(notYet);
+      expect(screen.getByText(checking)).toBeInTheDocument();
+      await expectNoA11yViolations(container);
+    });
   });
 
   it("has no accessibility violations", async () => {

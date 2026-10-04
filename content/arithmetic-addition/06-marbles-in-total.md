@@ -15,7 +15,9 @@ You have a jar with 5 blue marbles and 6 red marbles. Combine them to find the t
 How many marbles do you have in total?
 
 ```yaml
-- check: equals
-  expected: 11
-  reason_code: wrong_total
+checking: the total number of marbles in the jar
+criteria:
+  - check: equals
+    expected: 11
+    reason_code: wrong_total
 ```

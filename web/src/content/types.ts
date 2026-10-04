@@ -94,6 +94,8 @@ export type AnswerInputKind = "number" | "text";
 export interface PageAnswerStep {
   type: "answer";
   prompt: string;
+  /** Author-written prose saying what the step checks; never built from criteria. */
+  checking?: string;
   /** Which field the page shows; absent means a number field. */
   input?: AnswerInputKind;
 }

@@ -12,6 +12,8 @@ type AnswerInputProps = {
     disabled?: boolean;
     invalid?: boolean;
     errorId?: string;
+    /** Id of extra text the field should be described by, such as the checking statement. */
+    describedBy?: string;
     /** "text" for expressions and lists, which a number field can't hold. */
     kind?: AnswerInputKind;
 };
@@ -27,9 +29,11 @@ export const AnswerInput = ({
     invalid,
     disabled,
     errorId,
+    describedBy,
     kind = "number"
 }: AnswerInputProps) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const descriptionIds = [invalid ? errorId ?? `${id}-error` : undefined, describedBy].filter(Boolean).join(" ");
 
     useEffect(() => {
         const input = inputRef.current;
@@ -76,7 +80,7 @@ export const AnswerInput = ({
                 placeholder={placeholder}
                 disabled={disabled}
                 aria-invalid={invalid}
-                aria-describedby={invalid ? `${errorId ?? `${id}-error`}` : undefined}
+                aria-describedby={descriptionIds || undefined}
                 className={`answer-field__input`}
             />
         </label>

@@ -483,6 +483,18 @@ describe("answerInputKind", () => {
 
     expect(step).toEqual({ type: "answer", prompt: "What is $3 + 4$?", input: "number" });
   });
+
+  it("gives a page step its authored checking statement and still no criteria", () => {
+    const lesson = getLesson("marbles-in-total");
+
+    expect(lesson?.steps[1]).toEqual({
+      type: "answer",
+      prompt: "How many marbles do you have in total?",
+      input: "number",
+      checking: "the total number of marbles in the jar",
+    });
+    expectNoCriteria(lesson);
+  });
 });
 
 describe("checkAnswer", () => {

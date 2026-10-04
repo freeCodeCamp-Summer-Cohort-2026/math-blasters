@@ -176,9 +176,14 @@ export function getModuleForLesson(lessonSlug: string): string | undefined {
 function toPageLesson(lesson: Lesson): PageLesson {
   const steps = lesson.steps.map((step) => {
     if (step.type === "answer") {
-      const { prompt, type, criteria } = step;
+      const { prompt, type, criteria, checking } = step;
 
-      return { prompt, type, input: answerInputKind(criteria) };
+      return {
+        prompt,
+        type,
+        input: answerInputKind(criteria),
+        ...(checking !== undefined && { checking }),
+      };
     }
 
     return step;

@@ -91,6 +91,7 @@ export const arithmeticAdditionModule: Module = {
               reason_code: "wrong_total",
             },
           ],
+          checking: "the total number of marbles in the jar",
         },
       ],
     },
