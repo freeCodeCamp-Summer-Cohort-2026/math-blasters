@@ -21,6 +21,9 @@ const mockLesson: PageLesson = {
   ],
 };
 
+// The step's own live region; the completion moment's region follows it in the DOM.
+const stepStatus = () => screen.getAllByRole("status")[0];
+
 describe("LessonStepper Component", () => {
   it("renders the first step initially with Back disabled and Next enabled", () => {
     render(<LessonStepper lesson={mockLesson} />);
@@ -96,7 +99,7 @@ describe("LessonStepper Component", () => {
 
     // Focus is not stolen on first paint.
     expect(screen.getByRole("heading", { name: /step 1 of 3/i })).not.toHaveFocus();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    for (const region of screen.getAllByRole("status")) expect(region).toBeEmptyDOMElement();
 
     await user.click(screen.getByRole("button", { name: /next/i }));
 
@@ -104,7 +107,7 @@ describe("LessonStepper Component", () => {
     // announced once because nothing else repeats its text. The answer
     // step's feedback region stays silent until something is submitted.
     expect(screen.getByRole("heading", { name: /step 2 of 3/i })).toHaveFocus();
-    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    for (const region of screen.getAllByRole("status")) expect(region).toBeEmptyDOMElement();
   });
 
   it("sits the step heading below the lesson title in the heading order", () => {
@@ -380,7 +383,7 @@ describe("LessonStepper Component", () => {
       const region = await screen.findByRole("region", { name: "not-yet feedback" });
       expect(region).toHaveTextContent("You entered 12");
       expect(region).toHaveTextContent(REASON_SENTENCES.wrong_total);
-      expect(screen.getByRole("status")).toHaveTextContent(REASON_SENTENCES.wrong_total);
+      expect(stepStatus()).toHaveTextContent(REASON_SENTENCES.wrong_total);
       expect(document.documentElement.outerHTML).not.toContain(String(EXPECTED));
     });
 
@@ -390,7 +393,7 @@ describe("LessonStepper Component", () => {
       await submit(String(EXPECTED));
 
       expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.correct.announcement);
+      expect(stepStatus()).toHaveTextContent(feedbackContent.correct.announcement);
       expect(screen.getByRole("button", { name: /next/i })).not.toHaveAttribute("aria-disabled");
     });
 
@@ -422,7 +425,7 @@ describe("LessonStepper Component", () => {
       await submit("12");
 
       expect(await screen.findByRole("region", { name: "error feedback" })).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(feedbackContent.error.announcement);
+      expect(stepStatus()).toHaveTextContent(feedbackContent.error.announcement);
       expect(screen.getByRole("button", { name: /next/i })).toHaveAttribute("aria-disabled", "true");
     });
 
@@ -442,13 +445,13 @@ describe("LessonStepper Component", () => {
       await user.click(screen.getByRole("button", { name: /next/i }));
 
       expect(screen.getByRole("region", { name: "not-yet feedback" })).toHaveTextContent("You entered 12");
-      expect(screen.getByRole("status")).toHaveTextContent("You entered 12.");
+      expect(stepStatus()).toHaveTextContent("You entered 12.");
       expect(screen.getByRole("spinbutton", { name: /your answer/i })).toHaveValue(null);
     });
 
     it("walks the live region through checking to the result", async () => {
       render(<LessonStepper lesson={gradedLesson} checker={realChecker} />);
-      const status = screen.getByRole("status");
+      const status = stepStatus();
       expect(status).toBeEmptyDOMElement();
 
       await submit("12");
@@ -498,5 +501,149 @@ describe("LessonStepper Component", () => {
     );
     await user.click(screen.getByRole("button", { name: /back/i }));
     expect(onPassed).toHaveBeenCalledTimes(1);
+  });
+
+  describe("a blank submit (Issue #144)", () => {
+    it("shows and announces the prompt, never calls the checker, and leaves the step untried", async () => {
+      const user = userEvent.setup();
+      const checker = vi.fn<StepChecker>(() => ({ passed: true }));
+      render(<LessonStepper lesson={mockLesson} checker={checker} />);
+      await user.click(screen.getByRole("button", { name: /next/i }));
+
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      expect(stepStatus()).toHaveTextContent("An answer is needed first.");
+      expect(screen.getByRole("spinbutton", { name: /your answer/i })).toHaveAccessibleDescription(
+        /^An answer is needed first/,
+      );
+      expect(checker).not.toHaveBeenCalled();
+      // Still untried: only the neutral prompt card, no result state, Next still gated.
+      expect(screen.getAllByRole("region", { name: /feedback/i })).toHaveLength(1);
+      expect(screen.getByRole("region", { name: "idle feedback" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /next/i })).toHaveAttribute("aria-disabled", "true");
+    });
+  });
+
+  describe("the completion moment (Issue #144)", () => {
+    const twoAnswerLesson: PageLesson = {
+      ...mockLesson,
+      steps: [
+        { type: "explain", content: "Introduction to adding" },
+        { type: "answer", prompt: "Calculate 1 + 1" },
+        { type: "answer", prompt: "Calculate 2 + 2" },
+      ],
+    };
+    const continueTo = {
+      href: "/lessons/counting-on",
+      label: "Next lesson",
+      accessibleName: "Next lesson: Counting On",
+    };
+    const completeStatus = () => screen.getAllByRole("status").at(-1)!;
+
+    async function answer(user: ReturnType<typeof userEvent.setup>, value: string) {
+      await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), value);
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+    }
+
+    function renderLesson(checker: StepChecker) {
+      return render(
+        <MemoryRouter>
+          <LessonStepper lesson={twoAnswerLesson} checker={checker} continueTo={continueTo} />
+        </MemoryRouter>,
+      );
+    }
+
+    async function passAll(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(screen.getByRole("button", { name: /next/i }));
+      await answer(user, "2");
+      await user.click(await screen.findByRole("button", { name: /^next$/i }));
+      await answer(user, "4");
+    }
+
+    it("swaps the last step's Next for the continue link when the last answer step passes, and not before", async () => {
+      const user = userEvent.setup();
+      // Step 2 passes on "2"; step 3 passes only on "4".
+      const checker: StepChecker = (_slug, index, submission) => ({
+        passed: submission === (index === 1 ? "2" : "4"),
+      });
+      renderLesson(checker);
+
+      await user.click(screen.getByRole("button", { name: /next/i }));
+      await answer(user, "2");
+      await screen.findByRole("region", { name: "correct feedback" });
+      // One answer step passed, one to go.
+      expect(screen.queryByRole("link", { name: /next lesson/i })).not.toBeInTheDocument();
+      expect(completeStatus()).toBeEmptyDOMElement();
+
+      await user.click(screen.getByRole("button", { name: /^next$/i }));
+      await answer(user, "5");
+      await screen.findByRole("region", { name: "not-yet feedback" });
+      // #58's rule until then: the last step's Next is disabled.
+      expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+      expect(screen.queryByRole("link", { name: /next lesson/i })).not.toBeInTheDocument();
+
+      await user.clear(screen.getByRole("spinbutton", { name: /your answer/i }));
+      await answer(user, "4");
+
+      const link = await screen.findByRole("link", { name: "Next lesson: Counting On" });
+      expect(link).toHaveTextContent(/^Next lesson$/);
+      expect(link).toHaveAttribute("href", "/lessons/counting-on");
+      expect(screen.queryByRole("button", { name: /next/i })).not.toBeInTheDocument();
+      expect(completeStatus()).toHaveTextContent("Lesson complete. Nice work!");
+    });
+
+    it("is held back while checking is still on screen", async () => {
+      const user = userEvent.setup();
+      renderLesson(() => ({ passed: true }));
+
+      await passAll(user);
+
+      expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /next lesson/i })).not.toBeInTheDocument();
+      expect(completeStatus()).toBeEmptyDOMElement();
+      expect(await screen.findByRole("link", { name: /next lesson/i })).toBeInTheDocument();
+    });
+
+    it("keeps plain Next on earlier steps once the lesson has passed", async () => {
+      const user = userEvent.setup();
+      renderLesson(() => ({ passed: true }));
+      await passAll(user);
+      await screen.findByRole("link", { name: /next lesson/i });
+
+      await user.click(screen.getByRole("button", { name: /back/i }));
+
+      expect(screen.getByRole("button", { name: /^next$/i })).toBeEnabled();
+      expect(screen.queryByRole("link", { name: /next lesson/i })).not.toBeInTheDocument();
+    });
+
+    it("puts the continue link in the keyboard order", async () => {
+      const user = userEvent.setup();
+      renderLesson(() => ({ passed: true }));
+      await passAll(user);
+      const link = await screen.findByRole("link", { name: /next lesson/i });
+
+      screen.getByRole("button", { name: /back/i }).focus();
+      await user.tab();
+
+      expect(link).toHaveFocus();
+    });
+
+    it("keeps the last step's Next disabled when no continue target is given", async () => {
+      const user = userEvent.setup();
+      render(<LessonStepper lesson={twoAnswerLesson} checker={() => ({ passed: true })} />);
+      await passAll(user);
+
+      await waitFor(() => expect(completeStatus()).toHaveTextContent("Lesson complete."));
+      expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+    });
+
+    it("has no accessibility violations once complete", async () => {
+      const user = userEvent.setup();
+      const { container } = renderLesson(() => ({ passed: true }));
+      await passAll(user);
+      await screen.findByRole("link", { name: /next lesson/i });
+
+      await expectNoA11yViolations(container);
+    });
   });
 });

@@ -157,10 +157,11 @@ describe("SignInPrompt on the module list and module page", () => {
 });
 
 describe("SignInPrompt at the lesson's completion moment", () => {
-  it("appears in a live region when the lesson passes signed out, without blocking the lesson", async () => {
+  it("lands at the completion moment when the lesson passes signed out, without blocking the lesson", async () => {
     const user = userEvent.setup();
     renderLesson(authValue({}));
 
+    // The completion moment owns the announcement; the prompt adds no live region of its own.
     const live = screen.getByRole("status");
     expect(live).toBeEmptyDOMElement();
 
@@ -168,13 +169,14 @@ describe("SignInPrompt at the lesson's completion moment", () => {
 
     // Held back while "checking" is still on screen, so it never lands ahead of "Correct!".
     expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
-    expect(live).toBeEmptyDOMElement();
+    expect(screen.queryByRole("region", { name: PROMPT_NAME })).not.toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(within(live).getByRole("region", { name: /lesson complete/i })).toBeInTheDocument();
-    });
-    expect(within(live).getByText(/isn't saved yet/i)).toBeInTheDocument();
-    expect(within(live).getByRole("link", { name: /save your progress/i })).toHaveAttribute("href", "/login");
+    const prompt = await screen.findByRole("region", { name: PROMPT_NAME });
+    expect(within(prompt).getByText(/isn't saved yet/i)).toBeInTheDocument();
+    expect(within(prompt).getByRole("link", { name: /save your progress/i })).toHaveAttribute("href", "/login");
+    // Not announced a second time: the completion moment's one sentence is the only announcement.
+    expect(prompt.closest("[role=status]")).toBeNull();
+    expect(live).toHaveTextContent("Lesson complete. Nice work!");
     // Not a modal: nothing is trapped and the stepper's own controls stay usable.
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back/i })).toBeEnabled();
@@ -189,10 +191,10 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     await waitFor(() => {
       expect(screen.queryByText("Calculate 1 + 1")).toBeInTheDocument();
     });
-    // The answer step keeps its own live region; only the prompt's must be missing.
+    // The lesson still completes; only the invitation is missing.
     expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
-    expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.queryByRole("region", { name: /lesson complete/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("status").at(-1)).toHaveTextContent("Lesson complete. Nice work!");
+    expect(screen.queryByRole("region", { name: PROMPT_NAME })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /save your progress/i })).not.toBeInTheDocument();
   });
 
@@ -210,7 +212,7 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     const { container } = renderLesson(authValue({}));
 
     await passLesson(user);
-    await screen.findByRole("region", { name: /lesson complete/i });
+    await screen.findByRole("region", { name: PROMPT_NAME });
     await expectNoA11yViolations(container);
   });
 });

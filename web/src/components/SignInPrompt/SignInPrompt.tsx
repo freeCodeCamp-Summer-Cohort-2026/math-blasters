@@ -8,8 +8,6 @@ export type SignInPromptSurface = "modules" | "module" | "lesson";
 
 export interface SignInPromptProps {
   surface: SignInPromptSurface;
-  /** Lesson surface only: renders an empty live region until the lesson passes, so the invitation is announced when it lands. */
-  show?: boolean;
 }
 
 const COPY: Record<SignInPromptSurface, { title: string; body: string }> = {
@@ -22,7 +20,7 @@ const COPY: Record<SignInPromptSurface, { title: string; body: string }> = {
     body: "Sign in and we'll keep track of the lessons you finish here.",
   },
   lesson: {
-    title: "Lesson complete, nice work!",
+    title: "Progress isn't saved while you're signed out",
     body: "You're signed out, so this one isn't saved yet. Sign in to keep track of it.",
   },
 };
@@ -38,7 +36,7 @@ function readDismissed(surface: SignInPromptSurface): boolean {
 }
 
 /** A quiet invitation to sign in; never a failure, never shown signed in or while auth is loading. */
-export function SignInPrompt({ surface, show = true }: SignInPromptProps) {
+export function SignInPrompt({ surface }: SignInPromptProps) {
   // Read directly so a stepper rendered without an AuthProvider simply shows nothing.
   const auth = useContext(AuthContext);
   const [dismissed, setDismissed] = useState(() => readDismissed(surface));
@@ -56,9 +54,8 @@ export function SignInPrompt({ surface, show = true }: SignInPromptProps) {
     document.getElementById("main-content")?.focus();
   };
 
-  const prompt = show && <PromptCard surface={surface} onDismiss={dismiss} />;
-
-  return surface === "lesson" ? <div role="status">{prompt}</div> : prompt;
+  // On the lesson surface it sits inside LessonComplete, which owns the announcement.
+  return <PromptCard surface={surface} onDismiss={dismiss} />;
 }
 
 // Split out so the router is only needed once there is something to link from.

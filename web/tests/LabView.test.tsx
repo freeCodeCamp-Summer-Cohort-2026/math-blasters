@@ -80,6 +80,37 @@ describe("LabView (/lessons/:slug for a lab)", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("links Back on the first step to the lab's module, as a tutorial's does", async () => {
+    const user = userEvent.setup();
+    renderLab();
+
+    const backLink = screen.getByRole("link", { name: /back to module/i });
+    expect(backLink).toHaveAttribute("href", "/modules/arithmetic-addition");
+
+    await user.click(backLink);
+
+    expect(
+      await screen.findByRole("heading", { name: /arithmetic addition/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("leads back to its module once the lab, the module's last item, passes", async () => {
+    const user = userEvent.setup();
+    const { container } = renderLab();
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "11{Enter}");
+
+    const link = await screen.findByRole("link", { name: "Back to Arithmetic Addition" });
+    expect(link).toHaveAttribute("href", "/modules/arithmetic-addition");
+    await expectNoA11yViolations(container);
+
+    await user.click(link);
+    expect(
+      await screen.findByRole("heading", { name: /arithmetic addition/i }),
+    ).toBeInTheDocument();
+  });
+
   it("has no accessibility violations", async () => {
     const { container } = renderLab();
 

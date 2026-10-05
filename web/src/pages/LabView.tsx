@@ -1,9 +1,20 @@
 import type { PageLesson } from "../content";
 import { Card } from "../components/Card";
 import { LessonStepper } from "../components/LessonStepper";
+import type { ContinueTarget } from "../components/LessonStepper";
 
 // The lab variant of the lesson player: the outcome is the task, so it leads.
-export function LabView({ lab, onPassed }: { lab: PageLesson; onPassed?: () => void }) {
+export function LabView({
+  lab,
+  backHref,
+  continueTo,
+  onPassed,
+}: {
+  lab: PageLesson;
+  backHref?: string;
+  continueTo?: ContinueTarget;
+  onPassed?: () => void;
+}) {
   return (
     <Card
       as="section"
@@ -18,7 +29,13 @@ export function LabView({ lab, onPassed }: { lab: PageLesson; onPassed?: () => v
         <p className="lab-view__description">{lab.description}</p>
       )}
 
-      <LessonStepper lesson={lab} headingLevel="h2" onPassed={onPassed} />
+      <LessonStepper
+        lesson={lab}
+        headingLevel="h2"
+        backHref={backHref}
+        continueTo={continueTo}
+        onPassed={onPassed}
+      />
     </Card>
   );
 }

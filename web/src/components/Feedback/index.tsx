@@ -8,7 +8,7 @@ function cx(...classNames: Array<string | undefined>) {
 }
 
 /** Visual feedback only; the caller owns the live region so an announcement survives this remounting. */
-export const Feedback = ({ state, children }: FeedbackProps) => {
+export const Feedback = ({ state, title, children }: FeedbackProps) => {
     const content = feedbackContent[state];
 
     return (
@@ -21,7 +21,7 @@ export const Feedback = ({ state, children }: FeedbackProps) => {
                 <FeedbackIcon state={state} />
             </span>
             <div className={styles.body}>
-                <p className={styles.title}>{content.title}</p>
+                <p className={styles.title}>{title ?? content.title}</p>
                 {/* Callers pass `false` when they have nothing to add, so fall back on any empty value. */}
                 {children || <p className={styles.detail}>{content.detail}</p>}
             </div>

@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { feedbackContent } from "../src/components/Feedback/content";
 import { AnswerStep } from "../src/components/steps/AnswerStep";
@@ -67,6 +68,100 @@ describe("AnswerStep", () => {
     await user.click(screen.getByRole("button", { name: /submit/i }));
 
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  describe("a blank submit (Issue #144)", () => {
+    it("says an answer is needed, beside the input and in the live region", async () => {
+      const user = userEvent.setup();
+      render(<AnswerStep step={step} onSubmit={vi.fn()} />);
+
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      const input = screen.getByRole("spinbutton", { name: /your answer/i });
+      const card = screen.getByRole("region", { name: "idle feedback" });
+      expect(card).toHaveTextContent("An answer is needed first");
+      expect(card).toHaveTextContent(feedbackContent.idle.detail);
+      expect(input).toHaveAccessibleDescription(/^An answer is needed first/);
+      // A prompt, not a result: nothing marks the field invalid.
+      expect(input).not.toHaveAttribute("aria-invalid");
+      expect(screen.getByRole("status")).toHaveTextContent("An answer is needed first.");
+    });
+
+    it("treats a whitespace-only answer as blank and never submits it", async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<AnswerStep step={{ ...step, input: "text" }} onSubmit={onSubmit} />);
+
+      await user.type(screen.getByRole("textbox", { name: /your answer/i }), "   {Enter}");
+
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(screen.getByRole("status")).toHaveTextContent("An answer is needed first.");
+    });
+
+    it("shows the neutral idle card, never a result state", async () => {
+      const user = userEvent.setup();
+      render(<AnswerStep step={step} onSubmit={vi.fn()} />);
+
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      expect(screen.getAllByRole("region", { name: /feedback/i })).toHaveLength(1);
+      expect(screen.getByRole("region", { name: /feedback/i })).toHaveAttribute("data-state", "idle");
+    });
+
+    it("takes the place of a not-yet card until the learner types, then gives it back", async () => {
+      const user = userEvent.setup();
+      render(
+        <AnswerStep
+          step={{ ...step, checking: "the sum of the two numbers" }}
+          status="not_yet"
+          entered="5"
+          reasonCode="wrong_total"
+          onSubmit={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole("region", { name: "not-yet feedback" })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      const input = screen.getByRole("spinbutton", { name: /your answer/i });
+      expect(screen.queryByRole("region", { name: "not-yet feedback" })).not.toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "idle feedback" })).toHaveTextContent("An answer is needed first");
+      // Described only by what is on screen, not the hidden checking statement.
+      expect(input).toHaveAccessibleDescription(/^An answer is needed first/);
+
+      await user.type(input, "6");
+
+      expect(screen.queryByRole("region", { name: "idle feedback" })).not.toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "not-yet feedback" })).toHaveTextContent("You entered 5");
+    });
+
+    it("clears the message once the learner types", async () => {
+      const user = userEvent.setup();
+      render(<AnswerStep step={step} onSubmit={vi.fn()} />);
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "4");
+
+      expect(screen.queryByText("An answer is needed first")).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: /feedback/i })).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    });
+
+    it("keeps the idle card out of the not-yet palette and --danger", () => {
+      const css = readFileSync("src/components/Feedback/Feedback.module.css", "utf8");
+      const idleRule = css.match(/\.idle\s*{[^}]*}/)?.[0];
+      expect(idleRule).toBeDefined();
+      expect(idleRule).not.toMatch(/--danger|--coral|--warning|--mango/);
+    });
+
+    it("has no accessibility violations while shown", async () => {
+      const user = userEvent.setup();
+      const { container } = render(<AnswerStep step={step} onSubmit={vi.fn()} />);
+
+      await user.click(screen.getByRole("button", { name: /submit/i }));
+
+      await expectNoA11yViolations(container);
+    });
   });
 
   it("disables input and submit while checking", () => {

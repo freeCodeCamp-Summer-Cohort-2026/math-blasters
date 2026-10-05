@@ -4,14 +4,25 @@ import { useLesson } from "../../content";
 import type { PageLesson, StepChecker } from "../../content";
 import { Button } from "../Button";
 import { useFeedbackState } from "../Feedback/useFeedbackState";
+import { LessonComplete } from "../LessonComplete";
 import { SignInPrompt } from "../SignInPrompt/SignInPrompt";
 import { Step } from "../Step";
 import styles from "./LessonStepper.module.css";
+
+/** Where the last step leads once the lesson passes: the next lesson, or back to the module. */
+export interface ContinueTarget {
+  href: string;
+  label: string;
+  /** Fuller name for assistive tech, starting with `label`, such as "Next lesson: Counting On". */
+  accessibleName?: string;
+}
 
 export interface LessonStepperProps {
   lesson: PageLesson;
   /** Where "Back" goes once there's no previous step to step back to: the module page this lesson opened from. Omitted, Back stays disabled on the first step. */
   backHref?: string;
+  /** Replaces the last step's Next once the lesson passes; omitted, Next stays disabled there. */
+  continueTo?: ContinueTarget;
   // h3 under a tutorial's h2 title, h2 under a lab's h1 outcome.
   headingLevel?: "h2" | "h3";
   /** Optional custom checker for dependency injection (defaults to checkAnswer). */
@@ -23,6 +34,7 @@ export interface LessonStepperProps {
 export function LessonStepper({
   lesson,
   backHref,
+  continueTo,
   headingLevel = "h3",
   checker,
   onPassed,
@@ -44,6 +56,9 @@ export function LessonStepper({
   // Held here, not in the step, so Next unlocks only once "Correct!" is actually showing.
   const feedbackState = useFeedbackState(currentStepState?.status ?? "untried", currentStepIndex);
   const isNextGated = hasNextStep && currentStep?.type === "answer" && feedbackState !== "correct";
+  // Held until "Correct!" is showing, so the ending never lands ahead of it.
+  const isComplete = lessonPassed && feedbackState !== "checking";
+  const continueLink = !hasNextStep && isComplete ? continueTo : undefined;
 
   // Read through a ref so a new callback identity never re-fires it.
   const onPassedRef = useRef(onPassed);
@@ -109,8 +124,10 @@ export function LessonStepper({
         )}
       </div>
 
-      {/* Signed out, a pass is where the invitation lands, once "Correct!" is showing; it never blocks the controls below. */}
-      <SignInPrompt surface="lesson" show={lessonPassed && feedbackState !== "checking"} />
+      {/* Signed out, the completion moment carries the sign-in invitation; it never blocks the controls below. */}
+      <LessonComplete show={isComplete}>
+        <SignInPrompt surface="lesson" />
+      </LessonComplete>
 
       <div className={styles.controls}>
         {isFirstStep && backHref ? (
@@ -123,22 +140,34 @@ export function LessonStepper({
           </Button>
         )}
         <div className={styles.nextGroup}>
-          {/* Hidden from assistive tech: the button's name already carries the reason. */}
-          {isNextGated && (
-            <span className={styles.gateReason} aria-hidden="true">
-              An answer is needed first
-            </span>
+          {continueLink ? (
+            <Link
+              to={continueLink.href}
+              className="btn btn--primary btn--md"
+              aria-label={continueLink.accessibleName}
+            >
+              {continueLink.label}
+            </Link>
+          ) : (
+            <>
+              {/* Hidden from assistive tech: the button's name already carries the reason. */}
+              {isNextGated && (
+                <span className={styles.gateReason} aria-hidden="true">
+                  An answer is needed first
+                </span>
+              )}
+              {/* Gated with aria-disabled, not disabled, so keyboard users can still reach it and hear why. */}
+              <Button
+                variant="primary"
+                onClick={isNextGated ? undefined : handleNext}
+                disabled={!hasNextStep}
+                aria-disabled={isNextGated || undefined}
+                aria-label={isNextGated ? "Next: An answer is needed first" : undefined}
+              >
+                Next
+              </Button>
+            </>
           )}
-          {/* Gated with aria-disabled, not disabled, so keyboard users can still reach it and hear why. */}
-          <Button
-            variant="primary"
-            onClick={isNextGated ? undefined : handleNext}
-            disabled={!hasNextStep}
-            aria-disabled={isNextGated || undefined}
-            aria-label={isNextGated ? "Next: An answer is needed first" : undefined}
-          >
-            Next
-          </Button>
         </div>
       </div>
     </div>

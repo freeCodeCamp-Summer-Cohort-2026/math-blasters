@@ -49,8 +49,11 @@ export function AnswerStep({
   onSubmit,
 }: AnswerStepProps) {
   const [value, setValue] = useState("");
+  // A blank submit is a prompt, not an attempt: it never reaches the checker.
+  const [isBlank, setIsBlank] = useState(false);
   const inputId = useId();
   const checkingId = `${inputId}-checking`;
+  const blankId = `${inputId}-blank`;
   const feedbackState = heldFeedbackState === undefined ? feedbackStateFor(status) : heldFeedbackState;
   const isChecking = status === "checking" || feedbackState === "checking";
   // Shown with the not-yet feedback, so it explains the goal at the moment the answer missed it.
@@ -58,7 +61,10 @@ export function AnswerStep({
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setIsBlank(true);
+      return;
+    }
     // Trimmed once here, so the checker, the "You entered" chip and the announcement all see the same value.
     onSubmit(trimmed);
   };
@@ -71,12 +77,15 @@ export function AnswerStep({
           id={inputId}
           label="Your answer"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setIsBlank(false);
+          }}
           onSubmit={handleSubmit}
           onReset={() => setValue("")}
           disabled={isChecking}
           kind={step.input}
-          describedBy={checkingStatement ? checkingId : undefined}
+          describedBy={isBlank ? blankId : checkingStatement ? checkingId : undefined}
         />
         <Button
           variant="ghost"
@@ -88,7 +97,12 @@ export function AnswerStep({
           Submit
         </Button>
       </div>
-      {feedbackState && (
+      {isBlank ? (
+        // Takes the result's place until the learner types; idle, so never the not-yet palette or --danger.
+        <div id={blankId} className={styles.feedback}>
+          <Feedback key="blank" state="idle" title="An answer is needed first" />
+        </div>
+      ) : feedbackState && (
         <div className={styles.feedback}>
           {/* Keyed so each state change replays the entrance motion. */}
           <Feedback key={feedbackState} state={feedbackState}>
@@ -109,7 +123,11 @@ export function AnswerStep({
       )}
       {/* Always mounted, so screen readers hear each change rather than a region appearing. */}
       <p className="sr-only" role="status">
-        {feedbackState ? announcementFor(feedbackState, entered, reasonCode, reason) : ""}
+        {isBlank
+          ? "An answer is needed first."
+          : feedbackState
+            ? announcementFor(feedbackState, entered, reasonCode, reason)
+            : ""}
       </p>
     </div>
   );

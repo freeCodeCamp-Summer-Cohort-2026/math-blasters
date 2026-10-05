@@ -12,6 +12,8 @@ export type FeedbackState = (typeof FEEDBACKSTATES)[number];
 
 export interface FeedbackProps {
     state: FeedbackState;
+    /** Replaces the state's own title, such as the blank-submit prompt in the idle state. */
+    title?: string;
     /** Extra detail under the title, such as the not-yet explanation. */
     children?: ReactNode;
 }

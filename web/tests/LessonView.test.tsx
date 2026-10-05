@@ -59,6 +59,43 @@ describe("LessonView Route (/lessons/:slug)", () => {
     expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
   });
 
+  it("leads a passed tutorial on to the next lesson in its module", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/lessons/adding-two-numbers"]}>
+        <SettledAppRoutes />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "7{Enter}");
+
+    const link = await screen.findByRole("link", { name: "Next lesson: Counting On" });
+    expect(link).toHaveAttribute("href", "/lessons/counting-on");
+    await user.click(link);
+
+    expect(await screen.findByRole("heading", { name: "Counting On" })).toBeInTheDocument();
+    // The new lesson starts from its first step, not the old lesson's progress.
+    expect(screen.getByRole("heading", { name: /step 1 of/i })).toBeInTheDocument();
+  });
+
+  it("leads the module's last tutorial on to its lab", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/lessons/adding-two-digit-numbers"]}>
+        <SettledAppRoutes />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "57{Enter}");
+    await user.click(await screen.findByRole("button", { name: /^next$/i }));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /your answer/i }), "83{Enter}");
+
+    const link = await screen.findByRole("link", { name: "On to the lab: Marbles in Total" });
+    expect(link).toHaveAttribute("href", "/lessons/marbles-in-total");
+  });
+
   it("renders the not-found route for an unknown lesson slug", () => {
     render(
       <MemoryRouter initialEntries={["/lessons/non-existent-lesson"]}>
