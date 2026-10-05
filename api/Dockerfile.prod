@@ -1,0 +1,25 @@
+# Production API image. Built from the repo root so the content manifest can be baked in.
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /code
+
+COPY api/pyproject.toml ./
+# Runtime dependencies only; pytest and ruff stay out of the image.
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
+
+COPY api/ ./
+COPY content/manifest.json /content/manifest.json
+
+RUN useradd --create-home --uid 1000 app
+USER app
+
+ENV CONTENT_MANIFEST_PATH=/content/manifest.json
+
+EXPOSE 8000
+
+# Migrate before serving; a single process keeps the in-memory rate limiter consistent.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log"]

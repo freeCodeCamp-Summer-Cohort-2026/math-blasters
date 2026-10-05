@@ -1,0 +1,15 @@
+# Applies to the repo-root build context used by the *.prod Dockerfiles.
+.git
+.github
+.claude
+.venv
+.env
+*.md
+docs
+api/build
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.tsbuildinfo

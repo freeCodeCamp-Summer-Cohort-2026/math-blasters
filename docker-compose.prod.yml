@@ -1,0 +1,66 @@
+# Production stack for Coolify. Only `web` gets a domain; nginx proxies /api to `api`.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mathblasters}
+      # Only applied when the volume is first initialised.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${POSTGRES_DB:-mathblasters}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mathblasters} -d ${POSTGRES_DB:-mathblasters}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile.prod
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-mathblasters}:${POSTGRES_PASSWORD:?}@db:5432/${POSTGRES_DB:-mathblasters}
+      ENV: production
+      COOKIE_SECURE: "true"
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:?}
+      # Single origin: the public site URL is also the API base, redirect target and CORS origin.
+      API_BASE_URL: ${PUBLIC_URL:?}
+      ALLOWED_POST_LOGIN_REDIRECTS: ${PUBLIC_URL:?}
+      CORS_ORIGINS: ${PUBLIC_URL:?}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      COMPLETIONS_RATE_LIMIT: ${COMPLETIONS_RATE_LIMIT:-20/minute}
+      # Trust X-Forwarded-For from nginx on the private Docker network.
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile.prod
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  db_data:
