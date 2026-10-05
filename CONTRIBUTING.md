@@ -71,6 +71,10 @@ If you work in Docker, the same checks run as `docker compose exec api ...` and
 [Testing, linting and type checking](./README.md#testing-linting-and-type-checking)
 in the README.
 
+### CI Pipeline Secrets
+
+API CI job requires no repository secrets for authentication. All third-party provider calls are completely stubbed out in our test suite. Because no automated test job ever makes an actual network call to authenticate with GitHub or Google, entire test pipeline runs successfully out-of-the-box without requiring live credentials.
+
 ## Adding a lesson
 
 A lesson is a markdown file, not a database row — no migration, no seeder.
