@@ -79,6 +79,9 @@ def test_signed_in_account_completion_round_trip(client, session):
     # Repeating a completion is idempotent and doesn't duplicate
     repeat_resp = client.post("/api/completions", json={"lesson_slug": first_slug})
     assert repeat_resp.status_code == 200
+    assert repeat_resp.json()["lesson_slug"] == first_slug
+    assert isinstance(repeat_resp.json()["completed_at"], str)
+    assert repeat_resp.json()["completed_at"] == post_resp.json()["completed_at"]
     assert client.get("/api/progress").json() == [first_slug, second_slug]
 
     # Signed-out client gets empty progress
