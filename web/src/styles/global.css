@@ -119,7 +119,7 @@ code {
 }
 
 :focus-visible {
-  outline: 3px solid var(--sky-400);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -162,8 +162,8 @@ code {
 
 .hero__title em {
   font-style: normal;
-  background: var(--mango-300);
-  color: #1f1a3d;
+  background: var(--highlight-fill);
+  color: var(--on-highlight-fill);
   padding: 0.02em 0.16em;
   border-radius: var(--radius-sm);
   display: inline-block;
@@ -199,7 +199,7 @@ a.btn {
 
 .btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--sky-400);
+  box-shadow: 0 0 0 3px var(--focus-ring);
   border-radius: var(--radius-pill);
 }
 
@@ -248,7 +248,7 @@ a.btn {
 
 /* An aria-disabled button stays focusable, so it keeps the focus ring the rule above removes. */
 .btn--primary[aria-disabled="true"]:focus-visible {
-  box-shadow: 0 0 0 3px var(--sky-400);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .btn--sm {
@@ -303,7 +303,7 @@ a.btn {
   padding: var(--space-3);
   color: var(--text);
   background: var(--surface-sunken);
-  border: 3px solid var(--border-strong);
+  border: 3px solid var(--input-border);
   border-radius: var(--radius-md);
   transition: border-color var(--duration-fast) ease;
   /* Hide spinners: they invite clicking to the answer. */
@@ -542,7 +542,7 @@ a.btn {
 
 .lesson-card-link:focus-visible,
 .module-card-link:focus-visible {
-  outline: 3px solid var(--sky-400);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -701,7 +701,7 @@ a.btn {
 }
 
 .lesson-card__lock-reason a:focus-visible {
-  outline: 3px solid var(--sky-400);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }

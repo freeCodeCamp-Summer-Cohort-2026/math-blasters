@@ -18,6 +18,7 @@
 
   --mango-300: #fcd34d;
   --mango-500: #f59e0b;
+  --mango-700: #b45309;
 
   --mint-300: #6ee7b7;
   --mint-500: #10b981;
@@ -28,6 +29,7 @@
   --coral-700: #b91c1c;
 
   --sky-400: #38bdf8;
+  --sky-700: #0369a1;
 
   /* Surfaces + text (light). Redefined wholesale for dark below. */
   --bg: #f6f4ff;
@@ -55,6 +57,14 @@
   --danger: var(--coral-700);
   --danger-soft: #fee2e2;
   --warning-soft: #fef3c7;
+  /* Not-yet borders; mango-500 is under 3:1 on warning-soft in light. */
+  --warning: var(--mango-700);
+
+  /* Focus rings, input outlines and the hero highlight. tests/contrast.test.ts checks each. */
+  --focus-ring: var(--sky-700);
+  --input-border: #7d74a8;
+  --highlight-fill: var(--mango-300);
+  --on-highlight-fill: #1f1a3d;
 
   /* Solid badge fills, each with the glyph colour that reads on it. */
   --success-fill: var(--mint-700);
@@ -119,10 +129,14 @@
     --danger: var(--coral-300);
     --danger-soft: #48181d;
     --warning-soft: #3a2b12;
+    --warning: var(--mango-500);
     --success-fill: var(--mint-300);
     --on-success-fill: #0d3d2f;
     --danger-fill: var(--coral-300);
     --on-danger-fill: #48181d;
+
+    --focus-ring: var(--sky-400);
+    --input-border: #7a72ad;
 
     --shadow-chunky: 0 4px 0 0 var(--violet-700);
     --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);
@@ -153,10 +167,14 @@
   --danger: var(--coral-300);
   --danger-soft: #48181d;
   --warning-soft: #3a2b12;
+  --warning: var(--mango-500);
   --success-fill: var(--mint-300);
   --on-success-fill: #0d3d2f;
   --danger-fill: var(--coral-300);
   --on-danger-fill: #48181d;
+
+  --focus-ring: var(--sky-400);
+  --input-border: #7a72ad;
 
   --shadow-chunky: 0 4px 0 0 var(--violet-700);
   --shadow-chunky-sm: 0 3px 0 0 var(--border-strong);

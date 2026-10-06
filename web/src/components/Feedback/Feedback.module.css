@@ -44,7 +44,7 @@
 /* The learning palette, never --danger: a wrong answer is not an error. */
 .not-yet {
   --feedback-surface: var(--warning-soft);
-  --feedback-border: var(--mango-500);
+  --feedback-border: var(--warning);
   --feedback-fill: var(--warning-fill);
   --feedback-glyph: var(--on-warning-fill);
 }

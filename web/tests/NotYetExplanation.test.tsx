@@ -71,7 +71,7 @@ describe("NotYetExplanation", () => {
       "utf-8",
     );
 
-    expect(css).toContain("var(--mango-500)");
+    expect(css).toContain("var(--warning)");
     expect(css).toContain("var(--warning-soft)");
     expect(css).not.toMatch(/var\(--(coral|danger)/);
   });
