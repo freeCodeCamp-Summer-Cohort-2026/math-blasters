@@ -20,7 +20,7 @@
   display: inline-block;
   margin-left: var(--space-1);
   padding: 0 var(--space-2);
-  border: 2px solid var(--mango-500);
+  border: 2px solid var(--warning);
   border-radius: var(--radius-sm);
   background: var(--warning-soft);
   color: var(--text);

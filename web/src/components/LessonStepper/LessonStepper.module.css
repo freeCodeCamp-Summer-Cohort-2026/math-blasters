@@ -24,7 +24,7 @@
 /* Focused programmatically on every step change, so :focus rather than
    :focus-visible - the latter does not match when Next was clicked. */
 .heading:focus {
-  outline: 3px solid var(--sky-400);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
