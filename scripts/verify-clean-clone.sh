@@ -21,7 +21,7 @@ fi
 echo "=========================================================="
 echo "Phase 1: Build compose stack from scratch and launch db & api"
 echo "=========================================================="
-docker compose up -d --build db api
+docker compose up -d --build --wait db api
 
 echo "=========================================================="
 echo "Phase 2: Wait for /api/health and verify Alembic migrations"
@@ -34,6 +34,13 @@ while ! curl --fail --silent --show-error --connect-timeout 2 --max-time 2 "$API
     if [ "$attempt" -ge "$max_attempts" ]; then
         echo "ERROR: Timed out waiting for API health endpoint ($max_attempts attempts)." >&2
         docker compose ps >&2
+        docker compose logs api >&2
+        exit 1
+    fi
+    if ! docker compose ps --status running -q api | grep -q .; then
+        echo "ERROR: API container exited or crashed before becoming healthy." >&2
+        docker compose ps >&2
+        docker compose logs api >&2
         exit 1
     fi
     sleep 1
@@ -108,7 +115,7 @@ fi
 echo "Selected lesson slug from content/manifest.json: $LESSON_SLUG"
 
 echo "Seeding ephemeral learner in compose database..."
-RAW_TOKEN_OUTPUT=$(docker compose exec -T api python -W ignore -c '
+if ! RAW_TOKEN_OUTPUT=$(docker compose exec -T api python -W ignore -c '
 import secrets
 from app.db import SessionLocal
 from app.models import Account, Learner
@@ -120,7 +127,11 @@ with SessionLocal() as session:
     session.add_all([account, learner])
     session.commit()
 print(f"TOKEN:{token}")
-')
+'); then
+    echo "ERROR: Learner seeding script failed." >&2
+    echo "Output was: $RAW_TOKEN_OUTPUT" >&2
+    exit 1
+fi
 
 LEARNER_TOKEN=$(echo "$RAW_TOKEN_OUTPUT" | sed -n 's/^TOKEN://p' | tr -d '\r\n')
 
@@ -131,6 +142,12 @@ case "$LEARNER_TOKEN" in
         exit 1
         ;;
 esac
+
+if [ "${#LEARNER_TOKEN}" -ne 43 ]; then
+    echo "ERROR: Invalid learner token length (${#LEARNER_TOKEN}, expected 43)." >&2
+    echo "Output was: $RAW_TOKEN_OUTPUT" >&2
+    exit 1
+fi
 
 COMPLETION_PAYLOAD=$(node -e 'console.log(JSON.stringify({ lesson_slug: process.argv[1] }))' "$LESSON_SLUG")
 
@@ -155,15 +172,22 @@ if ! echo "$PROGRESS_BODY" | node -e '
     const fs = require("fs");
     try {
         const expectedSlug = process.argv[1];
-        const list = JSON.parse(fs.readFileSync(0, "utf8"));
-        if (!Array.isArray(list) || !list.includes(expectedSlug)) {
+        const raw = fs.readFileSync(0, "utf8");
+        const list = JSON.parse(raw);
+        if (!Array.isArray(list)) {
+            console.error("ERROR: Expected JSON array from /api/progress, received:", typeof list);
             process.exit(1);
         }
-    } catch {
+        if (!list.includes(expectedSlug)) {
+            console.error(`ERROR: Expected slug "${expectedSlug}" not found in progress list:`, list);
+            process.exit(1);
+        }
+    } catch (err) {
+        console.error("ERROR: Failed to parse /api/progress response:", err.message);
         process.exit(1);
     }
 ' "$LESSON_SLUG"; then
-    echo "ERROR: GET /api/progress did not return slug '${LESSON_SLUG}'" >&2
+    echo "ERROR: GET /api/progress verification failed for slug '${LESSON_SLUG}'." >&2
     exit 1
 fi
 echo "Completion round-trip verified successfully!"
