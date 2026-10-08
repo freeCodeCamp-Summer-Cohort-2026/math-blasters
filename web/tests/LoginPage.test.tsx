@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { apiUrl } from "../src/api/client";
@@ -53,6 +54,28 @@ describe("LoginPage", () => {
     expect(googleLink).toHaveClass("btn", "btn--secondary", "btn--lg");
   });
 
+  it("keeps provider links reachable in keyboard order", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>,
+    );
+
+    const githubLink = screen.getByRole("link", { name: "Continue with GitHub" });
+    const googleLink = screen.getByRole("link", { name: "Continue with Google" });
+
+    githubLink.focus();
+    expect(githubLink).toHaveFocus();
+
+    await user.tab();
+    expect(googleLink).toHaveFocus();
+
+    await user.tab();
+    expect(githubLink).not.toHaveFocus();
+    expect(googleLink).not.toHaveFocus();
+  });
   it("renders LoginPage when navigating to /login", async () => {
     render(
       <MemoryRouter initialEntries={["/login"]}>
