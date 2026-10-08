@@ -12,8 +12,12 @@ API_HEALTH_URL="${API_URL}/api/health"
 # Teardown trap for local developer runs (in CI, workflow handles logs on failure and teardown separately)
 if [ "${CI:-}" != "true" ]; then
     cleanup() {
+        exit_code=$?
         echo "Tearing down Docker Compose services..."
-        docker compose down -v >/dev/null 2>&1 || true
+        if ! docker compose down -v; then
+            echo "WARNING: Failed to tear down Docker Compose services cleanly. Dangling containers or volumes may remain." >&2
+        fi
+        exit "$exit_code"
     }
     trap cleanup EXIT
 fi
