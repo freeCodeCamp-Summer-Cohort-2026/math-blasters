@@ -109,3 +109,28 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  clean-clone:
+    name: clean-clone
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Verify clean clone
+        run: bash scripts/verify-clean-clone.sh
+
+      - name: Dump container logs on error
+        if: failure()
+        run: docker compose logs
+
+      - name: Teardown containers
+        if: always()
+        run: docker compose down -v
+
