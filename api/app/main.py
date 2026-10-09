@@ -16,7 +16,6 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -24,7 +23,7 @@ from starlette.responses import Response
 
 from app.config import Settings, get_settings
 from app.content_manifest import load_lesson_slugs
-from app.learner import learner_rate_key
+from app.learner import limiter
 from app.providers import get_provider, register
 from app.providers.github import GithubProvider
 from app.providers.google import GoogleProvider
@@ -202,7 +201,6 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router, prefix="/api")
 
-    limiter = Limiter(key_func=learner_rate_key)
     app.state.limiter = limiter
     app.include_router(auth.router, prefix="/api")
 

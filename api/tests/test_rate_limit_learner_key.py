@@ -1,25 +1,34 @@
 import secrets
 
+import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
 
-from app.learner import LEARNER_COOKIE_NAME, LEARNER_TOKEN_BYTES, learner_rate_key
+from app.learner import LEARNER_COOKIE_NAME, LEARNER_TOKEN_BYTES, learner_rate_key, limiter
 from app.main import create_app
+
+
+@pytest.fixture(autouse=True)
+def reset_limiter():
+    """Reset the global rate limiter storage before and after each test."""
+    limiter.reset()
+    yield
+    limiter.reset()
 
 
 def test_rate_limit_by_learner_cookie():
     app = create_app()
-    limiter = app.state.limiter
+    limiter_instance = app.state.limiter
 
     @app.get("/api/test-throwaway-learner-key")
-    @limiter.limit("1/minute")
-    def throwaway_route(request: Request):
+    @limiter_instance.limit("1/minute")
+    def throwaway_learner_route(request: Request):
         return {"status": "ok"}
 
     token_1 = secrets.token_urlsafe(LEARNER_TOKEN_BYTES)
     token_2 = secrets.token_urlsafe(LEARNER_TOKEN_BYTES)
 
-    with TestClient(app) as client:
+    with TestClient(app, client=("192.168.1.10", 1234)) as client:
         # 1. Two separate valid cookies on separate requests both succeed
         res_learner_1 = client.get(
             "/api/test-throwaway-learner-key",
@@ -43,14 +52,14 @@ def test_rate_limit_by_learner_cookie():
 
 def test_rate_limit_malformed_cookie_falls_back_to_ip():
     app = create_app()
-    limiter = app.state.limiter
+    limiter_instance = app.state.limiter
 
     @app.get("/api/test-throwaway-malformed-cookie")
-    @limiter.limit("1/minute")
-    def throwaway_route(request: Request):
+    @limiter_instance.limit("1/minute")
+    def throwaway_malformed_route(request: Request):
         return {"status": "ok"}
 
-    with TestClient(app) as client:
+    with TestClient(app, client=("192.168.1.11", 1234)) as client:
         # 1. Invalid cookie format falls back to IP key
         res_bad_1 = client.get(
             "/api/test-throwaway-malformed-cookie",
@@ -69,17 +78,17 @@ def test_rate_limit_malformed_cookie_falls_back_to_ip():
 
 def test_rate_limit_no_cookie_falls_back_to_address():
     app = create_app()
-    limiter = app.state.limiter
+    limiter_instance = app.state.limiter
 
     @app.get("/api/test-throwaway-ip-key")
-    @limiter.limit("1/minute")
+    @limiter_instance.limit("1/minute")
     def throwaway_ip_route(request: Request):
         return {"key": learner_rate_key(request)}
 
-    with TestClient(app) as client:
+    with TestClient(app, client=("192.168.1.12", 1234)) as client:
         res_1 = client.get("/api/test-throwaway-ip-key")
         assert res_1.status_code == 200
-        assert res_1.json() == {"key": "testclient"}
+        assert res_1.json() == {"key": "192.168.1.12"}
 
         res_2 = client.get("/api/test-throwaway-ip-key")
         assert res_2.status_code == 429

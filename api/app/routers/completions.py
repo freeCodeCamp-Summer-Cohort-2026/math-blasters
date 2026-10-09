@@ -3,7 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.auth import CurrentAccountDep
+from app.config import get_settings
 from app.db import SessionDep
+from app.learner import limiter
 from app.models import Completion
 from app.schemas import CompletionPostRequest, CompletionResponse
 
@@ -15,6 +17,7 @@ router = APIRouter(prefix="/completions", tags=["completions"])
     response_model=CompletionResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(lambda: get_settings().completions_rate_limit)
 def create_completion(
     payload: CompletionPostRequest,
     request: Request,

@@ -3,6 +3,8 @@
 from functools import lru_cache
 from pathlib import Path
 
+from limits import parse_many
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 MIN_AUTH_SECRET_KEY_LENGTH = 32
@@ -26,6 +28,18 @@ class Settings(BaseSettings):
 
     # Default rate limit for POST /api/completions
     completions_rate_limit: str = "20/minute"
+
+    @field_validator("completions_rate_limit")
+    @classmethod
+    def validate_rate_limit(cls, v: str) -> str:
+        try:
+            parsed = parse_many(v)
+            for limit in parsed:
+                if limit.amount < 1:
+                    raise ValueError("Rate limit amount must be at least 1")
+        except Exception as e:
+            raise ValueError(f"Invalid rate limit format '{v}': {e}") from e
+        return v
 
     # Environment mode: 'development', 'test', 'production'
     # Default to production (fail-closed) so deployments without explicit ENV fail safely.

@@ -15,6 +15,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.config import get_settings
+from app.learner import limiter
+
 DEFAULT_TEST_DB = "postgresql+psycopg://mathblasters:mathblasters@localhost:5433/mathblasters_test"
 # Overwritten, not `setdefault`-ed: the fixtures below drop_all/create_all whatever
 # DATABASE_URL points at, and inside the `api` container that variable is already
@@ -71,3 +74,14 @@ def client(session: Session) -> Iterator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def reset_limiter_and_settings():
+    """Reset the global rate limiter storage
+    clear cached settings before and after each test."""
+    limiter.reset()
+    get_settings.cache_clear()
+    yield
+    limiter.reset()
+    get_settings.cache_clear()

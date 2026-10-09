@@ -116,3 +116,38 @@ def test_invalid_completion_payload_returns_422(client, session, payload):
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
     assert row_count(session, Completion) == 0
+
+
+def test_completions_rate_limited(client, session, monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "completions_rate_limit", "1/minute")
+
+    attach_signed_in_account(client, session, email="ratelimit@example.com", token="c" * 43)
+    payload = {"lesson_slug": "adding-two-numbers"}
+
+    response1 = client.post("/api/completions", json=payload)
+    assert response1.status_code == 201
+
+    response2 = client.post("/api/completions", json=payload)
+    assert response2.status_code == 429
+    assert response2.json() == {
+        "error": {
+            "code": "rate_limited",
+            "message": "Too many attempts in a row. Wait a minute and try again.",
+            "details": None,
+        }
+    }
+
+
+def test_progress_and_health_never_limited(client, session, monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "completions_rate_limit", "1/minute")
+    attach_signed_in_account(client, session, email="health@example.com", token="d" * 43)
+
+    for _ in range(25):
+        health_response = client.get("/api/health")
+        progress_response = client.get("/api/progress")
+        assert health_response.status_code == 200
+        assert progress_response.status_code == 200

@@ -4,6 +4,7 @@ import secrets
 from typing import Annotated
 
 from fastapi import Depends, Request, Response
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import select
 
@@ -74,3 +75,6 @@ def learner_rate_key(request: Request) -> str:
     if not token or not LEARNER_TOKEN_PATTERN.fullmatch(token):
         return get_remote_address(request)
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+limiter = Limiter(key_func=learner_rate_key)
