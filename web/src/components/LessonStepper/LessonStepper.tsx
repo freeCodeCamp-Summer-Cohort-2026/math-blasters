@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLesson } from "../../content";
 import type { PageLesson, StepChecker } from "../../content";
@@ -8,6 +8,8 @@ import { LessonComplete } from "../LessonComplete";
 import { SignInPrompt } from "../SignInPrompt/SignInPrompt";
 import { Step } from "../Step";
 import styles from "./LessonStepper.module.css";
+
+export const COMPLETE_ANNOUNCE_DELAY_MS = 1500;
 
 /** Where the last step leads once the lesson passes: the next lesson, or back to the module. */
 export interface ContinueTarget {
@@ -83,6 +85,18 @@ export function LessonStepper({
   const progressText = `Step ${currentStepNumber} of ${totalSteps}`;
   const Heading = headingLevel;
 
+  const [announceComplete, setAnnounceComplete] = useState(false);
+
+  useEffect(() => {
+    if (!lessonPassed) {
+      setAnnounceComplete(false);
+      return;
+    }
+    if (!isComplete) return;
+    const timer = setTimeout(() => setAnnounceComplete(true), COMPLETE_ANNOUNCE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [isComplete, lessonPassed]);
+
   return (
     <div className={styles.stepper}>
       <div className={styles.header}>
@@ -125,7 +139,7 @@ export function LessonStepper({
       </div>
 
       {/* Signed out, the completion moment carries the sign-in invitation; it never blocks the controls below. */}
-      <LessonComplete show={isComplete}>
+      <LessonComplete show={announceComplete}>
         <SignInPrompt surface="lesson" />
       </LessonComplete>
 

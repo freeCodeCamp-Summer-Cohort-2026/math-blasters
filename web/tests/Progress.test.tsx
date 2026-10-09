@@ -10,6 +10,7 @@ import { ProgressProvider } from "../src/context/ProgressContext";
 import type { Account } from "../src/types";
 import { SettledAppRoutes } from "./helpers/app";
 import { expectNoA11yViolations } from "./helpers/a11y";
+import { COMPLETE_ANNOUNCE_DELAY_MS } from "../src/components/LessonStepper/LessonStepper";
 
 const account: Account = { id: "1", displayName: "Ada" };
 const modulePath = "/modules/arithmetic-addition";
@@ -175,7 +176,7 @@ describe("progress", () => {
     const postCompletion = await passBeforeAuthSettles(null);
 
     // The signed-out invitation shows only once auth has settled.
-    expect(await screen.findByRole("link", { name: "Sign in to save your progress" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Sign in to save your progress" }, { timeout: COMPLETE_ANNOUNCE_DELAY_MS + 100 })).toBeInTheDocument();
     expect(postCompletion).not.toHaveBeenCalled();
   });
 

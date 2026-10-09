@@ -9,6 +9,7 @@ import type { StepChecker } from "../src/content";
 import { REASON_SENTENCES } from "../src/content/reasons";
 import type { Lesson, PageLesson } from "../src/content/types";
 import { expectNoA11yViolations } from "./helpers/a11y";
+import { COMPLETE_ANNOUNCE_DELAY_MS } from "../src/components/LessonStepper/LessonStepper";
 
 const mockLesson: PageLesson = {
   slug: "addition-basics",
@@ -416,7 +417,7 @@ describe("LessonStepper Component", () => {
     });
 
     it("shows the error state when the checker breaks, and keeps Next gated", async () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(console, "error").mockImplementation(() => { });
       const broken: StepChecker = () => {
         throw new Error("boom");
       };
@@ -589,7 +590,10 @@ describe("LessonStepper Component", () => {
       expect(link).toHaveTextContent(/^Next lesson$/);
       expect(link).toHaveAttribute("href", "/lessons/counting-on");
       expect(screen.queryByRole("button", { name: /next/i })).not.toBeInTheDocument();
-      expect(completeStatus()).toHaveTextContent("Lesson complete. Nice work!");
+      await waitFor(
+        () => expect(completeStatus()).toHaveTextContent("Lesson complete. Nice work!"),
+        { timeout: COMPLETE_ANNOUNCE_DELAY_MS + 1000 },
+      );
     });
 
     it("is held back while checking is still on screen", async () => {
@@ -602,6 +606,20 @@ describe("LessonStepper Component", () => {
       expect(screen.queryByRole("link", { name: /next lesson/i })).not.toBeInTheDocument();
       expect(completeStatus()).toBeEmptyDOMElement();
       expect(await screen.findByRole("link", { name: /next lesson/i })).toBeInTheDocument();
+    });
+    it("announces completion after the answer feedback, not with it", async () => {
+      const user = userEvent.setup();
+      renderLesson(() => ({ passed: true }));
+
+      await passAll(user);
+
+      // "Correct!" is showing, but the completion sentence has not been announced yet.
+      expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
+      expect(completeStatus()).toBeEmptyDOMElement();
+
+      await waitFor(() => expect(completeStatus()).toHaveTextContent("Lesson complete. Nice work!"), {
+        timeout: COMPLETE_ANNOUNCE_DELAY_MS + 1000,
+      });
     });
 
     it("keeps plain Next on earlier steps once the lesson has passed", async () => {
@@ -633,7 +651,7 @@ describe("LessonStepper Component", () => {
       render(<LessonStepper lesson={twoAnswerLesson} checker={() => ({ passed: true })} />);
       await passAll(user);
 
-      await waitFor(() => expect(completeStatus()).toHaveTextContent("Lesson complete."));
+      await waitFor(() => expect(completeStatus()).toHaveTextContent("Lesson complete."), { timeout: COMPLETE_ANNOUNCE_DELAY_MS + 1000 });
       expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
     });
 

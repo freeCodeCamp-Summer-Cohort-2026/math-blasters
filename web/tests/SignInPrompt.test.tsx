@@ -16,6 +16,7 @@ import { LoginPage } from "../src/pages/LoginPage";
 import type { Account } from "../src/types";
 import { expectNoA11yViolations } from "./helpers/a11y";
 import { SettledAppRoutes } from "./helpers/app";
+import { COMPLETE_ANNOUNCE_DELAY_MS } from "../src/components/LessonStepper/LessonStepper";
 
 const account: Account = { id: "usr_1", displayName: "Sam" };
 const modulePath = "/modules/arithmetic-addition";
@@ -31,6 +32,9 @@ const lesson: PageLesson = {
     { type: "answer", prompt: "Calculate 1 + 1" },
   ],
 };
+
+// The prompt and the completion sentence appear after the announcement delay.
+const COMPLETION = { timeout: COMPLETE_ANNOUNCE_DELAY_MS + 1000 };
 
 function renderAt(path: string, signedInAs: Account | null = null) {
   return render(
@@ -69,7 +73,7 @@ beforeEach(() => {
   sessionStorage.clear();
   window.addEventListener("click", blockNavigation);
   // Signed in, the routes ask for progress; left pending so no test reaches the network or updates late.
-  vi.spyOn(api, "getProgress").mockReturnValue(new Promise(() => {}));
+  vi.spyOn(api, "getProgress").mockReturnValue(new Promise(() => { }));
 });
 
 afterEach(() => {
@@ -171,7 +175,7 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     expect(screen.getByRole("region", { name: "checking feedback" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: PROMPT_NAME })).not.toBeInTheDocument();
 
-    const prompt = await screen.findByRole("region", { name: PROMPT_NAME });
+    const prompt = await screen.findByRole("region", { name: PROMPT_NAME }, COMPLETION);
     expect(within(prompt).getByText(/isn't saved yet/i)).toBeInTheDocument();
     expect(within(prompt).getByRole("link", { name: /save your progress/i })).toHaveAttribute("href", "/login");
     // Not announced a second time: the completion moment's one sentence is the only announcement.
@@ -193,7 +197,10 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     });
     // The lesson still completes; only the invitation is missing.
     expect(await screen.findByRole("region", { name: "correct feedback" })).toBeInTheDocument();
-    expect(screen.getAllByRole("status").at(-1)).toHaveTextContent("Lesson complete. Nice work!");
+    await waitFor(
+      () => expect(screen.getAllByRole("status").at(-1)).toHaveTextContent("Lesson complete. Nice work!"),
+      COMPLETION,
+    );
     expect(screen.queryByRole("region", { name: PROMPT_NAME })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /save your progress/i })).not.toBeInTheDocument();
   });
@@ -212,7 +219,7 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     const { container } = renderLesson(authValue({}));
 
     await passLesson(user);
-    await screen.findByRole("region", { name: PROMPT_NAME });
+    await screen.findByRole("region", { name: PROMPT_NAME }, COMPLETION);
     await expectNoA11yViolations(container);
   });
 });
@@ -249,7 +256,7 @@ describe("Returning after sign-in", () => {
     );
 
     await passLesson(user);
-    const link = await screen.findByRole("link", { name: /save your progress/i });
+    const link = await screen.findByRole("link", { name: /save your progress/i }, COMPLETION);
     await user.click(link);
     await user.click(await screen.findByRole("link", { name: "Continue with Google" }));
 
