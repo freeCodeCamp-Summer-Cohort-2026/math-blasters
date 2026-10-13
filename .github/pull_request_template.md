@@ -3,6 +3,8 @@
 - [ ] I ran the checks locally (see [CONTRIBUTING.md](../CONTRIBUTING.md#run-the-checks-before-you-push))
 - [ ] New behaviour has tests; bug fixes have a test that failed before
 - [ ] This PR addresses one issue
+- [ ] No expected value is ever rendered (DOM, live region or feedback text)
+- [ ] The API stores no content and grades nothing
 
 ## What does this change?
 

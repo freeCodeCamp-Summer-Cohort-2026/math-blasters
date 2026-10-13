@@ -1,379 +1,168 @@
 # Math Blasters
 
-Math Blasters will teach basic-math topics through short two-minute
-**Tutorials** and longer open-ended **Labs**, where learners *do* things in the
-browser rather than read about arithmetic.
+**Learn math by doing it.** Math Blasters teaches basic math through short,
+hands-on lessons you work through in the browser: you try each idea yourself
+and get feedback straight away, rather than reading about arithmetic.
 
-**None of that is built yet.** This repo is the base template for the
-freeCodeCamp Summer 2026 Cohort sprint: the stack is wired up and CI runs.
-Everything that makes it a product is an open issue waiting for you.
+Built by the freeCodeCamp Summer 2026 Cohort.
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the issue-claiming workflow.
+![The Multiplication module: three tutorials completed, Factors still to do, and the Planting a Garden lab locked until Factors is finished](docs/screenshots/module-page.png)
 
-## What's in the box
+## How it works
 
-| | |
-| --- | --- |
-| ✅ Built | React + TypeScript + Vite wiring, FastAPI + SQLAlchemy + Alembic wiring, Postgres, Docker Compose, CI on both suites, design tokens |
-| ❌ Not built | Topics, lessons, tutorials, labs, steps, content authoring, progress, accounts, hints, streaks, feedback design — **all of it** |
+- **Modules** cover one topic: addition, subtraction, multiplication, division,
+  fractions, an introduction to algebra.
+- Each module is a short run of **tutorials**, a few minutes each: an
+  explanation, then a question or two to try.
+- It ends in a **lab**, a longer task that puts the module's ideas to work. A
+  lab unlocks once you've finished the tutorials it builds on.
+- A wrong answer isn't an error. You get a "not yet", a nudge about what to
+  look at, and another go. The answer is never shown to you.
+- Sign in with GitHub or Google to save your progress across devices. Without
+  signing in, you can still try the tutorials, but nothing is saved.
 
-## Stack
+## Team
 
-- **Frontend**: React 18 + TypeScript, built with Vite. Plain CSS with custom
-  properties — no CSS framework, so there's nothing extra to learn.
-- **API**: FastAPI (Python 3.12), SQLAlchemy 2.0, Alembic migrations
-- **Database**: PostgreSQL 16
-- **Tests**: pytest + httpx2 (API), Vitest + Testing Library (frontend)
+- [akshayavb99](https://github.com/akshayavb99) - developer
+- [bappyasif](https://github.com/bappyasif) - developer
+- [bijiyiqi2017](https://github.com/bijiyiqi2017) - developer
+- [GnautSpace](https://github.com/GnautSpace) - developer
+- [imsomilg](https://github.com/imsomilg) - team lead
+- [SaugatDh](https://github.com/SaugatDh) - developer
+- [SGM-dev](https://github.com/SGM-dev) - developer
 
-No routing library, no state management, no auth. Those are decisions for
-whoever picks up the issues that need them.
+Want to join in? [CONTRIBUTING.md](./CONTRIBUTING.md) explains how to claim an
+issue and what review looks for.
 
 ## Quickstart
+
+You need [Docker](https://docs.docker.com/get-docker/). Then:
 
 ```bash
 ./scripts/dev-setup.sh
 ```
 
-That starts three services:
+It creates `.env` from `.env.example` if you don't have one, then starts three
+services:
 
-- `db` — PostgreSQL, published on port **5433** (not 5432 — see below)
-- `api` — FastAPI on [http://localhost:8000](http://localhost:8000)
-- `web` — Vite dev server on [http://localhost:5173](http://localhost:5173)
+- `web`: the app, at [http://localhost:5173](http://localhost:5173)
+- `api`: FastAPI at [http://localhost:8000](http://localhost:8000), with
+  interactive docs at [/docs](http://localhost:8000/docs)
+- `db`: PostgreSQL, on port **5433** so it doesn't clash with a Postgres you
+  may already run on 5432
 
-Then open [http://localhost:5173](http://localhost:5173) to view the app.
-Interactive API docs are at [http://localhost:8000/docs](http://localhost:8000/docs).
+Lessons work straight away. Signing in needs your own GitHub or Google OAuth
+app; [docs/local-development.md](docs/local-development.md) walks through it,
+along with running without Docker and fixing common setup problems.
 
-> **Why port 5433?** Plenty of machines already run PostgreSQL on 5432, and the
-> container can't bind a port that's taken. Compose publishes the database on
-> `5433` instead. Inside the compose network the API still connects to
-> `db:5432`. Change `POSTGRES_PORT` in `.env` if 5433 is also busy.
+## How it fits together
 
-## API URL configuration
+- **Lessons are markdown files** in [`content/`](./content), read into the web
+  app at build time. They never go near the database.
+- **Answers are checked in the browser**, by one pure function in
+  `web/src/content/`. There's no round trip, so feedback is instant.
+- **The API stores who you are and what you've finished**, and nothing else.
 
-The web app uses a baked-at-build-time API URL because this keeps configuration simple and avoids adding a separate runtime configuration mechanism. When the frontend and API share an origin, the default relative `/api` path requires no `VITE_API_URL`; for cross-origin production deployments, set `VITE_API_URL` to the intended API base URL during the production build. Vite embeds `VITE_API_URL` into the frontend at build time, so the value is visible in the shipped frontend bundle and must never contain secrets.
+Every PR is reviewed against two rules:
 
-## Local Development
+1. **No expected value is ever rendered.** Not in the page, not in a screen
+   reader announcement, not in a feedback sentence.
+2. **The API stores no content and grades nothing.**
 
-> [!IMPORTANT]
-> **Credential Privacy:** Each contributor must use their own personal credentials for local development. OAuth keys are strictly private and none must ever be committed to version control.
+Yes, that means the answers are in the JavaScript bundle. That's deliberate,
+and [docs/content-model.md](docs/content-model.md) explains why grading isn't
+done on the server.
 
-### GitHub Setup
+### Stack
 
-- Go to GitHub Developer Settings > OAuth Apps > **New OAuth App**.
-- **Homepage URL:** `http://localhost:5173`
-- **Authorization callback URL:** `http://localhost:8000/api/auth/github/callback`
-- Copy the Client ID into `GITHUB_CLIENT_ID` and the Client Secret into `GITHUB_CLIENT_SECRET` in your local `.env`.
-
-### Google Setup
-
-- Go to Google Cloud Console and create or select a project.
-- Configure OAuth consent screen (External) and create credentials for an **OAuth client ID** (Application type: Web application).
-- **Authorized redirect URIs:** `http://localhost:8000/api/auth/google/callback`
-- Copy the Client ID into `GOOGLE_CLIENT_ID` and the Client Secret into `GOOGLE_CLIENT_SECRET` in your local `.env`.
-
-### Applying the values
-
-The API reads the provider values once, at startup.
-
-- **Docker Compose**: run `docker compose up -d`. `docker compose restart` keeps the old values; `up -d` recreates the container with the new ones.
-- **Running without Docker**: `export` the variables in the shell you run `uvicorn` from, or put them in `api/.env` (the root `.env` is not read there), then restart `uvicorn`.
-
-## Troubleshooting
-
-### PostgreSQL port
-
-PostgreSQL is published on host port **5433**, not 5432. The API connects to
-`db:5432` inside the Compose network; use `localhost:5433` only when connecting
-from your host machine. If 5433 is already in use, change `POSTGRES_PORT` in
-`.env` and restart the services.
-
-### `mathblasters_test` does not exist
-
-`scripts/init-test-db.sh` runs only when PostgreSQL initializes an empty data
-volume. If your volume predates that script and tests report that
-`mathblasters_test` does not exist, choose one of these fixes:
-
-- Recreate the volume, then run setup again:
-
-  ```bash
-  docker compose down -v
-  ./scripts/dev-setup.sh
-  ```
-
-- Keep the existing volume and create the test database by hand:
-
-  ```bash
-  docker compose exec db createdb -U mathblasters mathblasters_test
-  ```
-
-### Tables are gone but Alembic is stamped at head
-
-If the app returns an internal server error because its tables were removed
-while Alembic still reports the database at `head`, rebuild the schema:
-
-```bash
-docker compose exec api sh -c "alembic stamp base && alembic upgrade head"
-```
-
-### Running without Docker
-
-You'll need a PostgreSQL server. If you don't already have one,
-[installing Docker](https://docs.docker.com/get-docker/) and using the
-Quickstart above is genuinely less work than installing Postgres by hand.
-
-If Docker isn't an option, install
-[PostgreSQL](https://www.postgresql.org/download/) locally, then:
-
-```bash
-createdb mathblasters
-createdb mathblasters_test   # only needed to run the API tests
-```
-
-```bash
-# API — first terminal
-cd api
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-export DATABASE_URL="postgresql+psycopg://<user>:<password>@localhost:5432/mathblasters"
-export COOKIE_SECURE=false   # local HTTP; see below
-export ENV=development       # allows the dev AUTH_SECRET_KEY; unset means production
-alembic upgrade head
-uvicorn app.main:app --reload
-
-# Frontend — second terminal
-cd web
-npm install
-npm run dev
-```
-
-A psycopg `OperationalError: connection refused` means nothing is listening at
-the address in `DATABASE_URL` — it isn't a problem with anything else in
-`.env`.
-
-### Signing in locally
-
-- **Unconfigured provider**: with a provider's two variables empty, the app still starts, every route that doesn't need sign-in serves normally, and the UI renders signed out. The sign-in page still shows both buttons; clicking an unconfigured one shows a 404 JSON response with code `not_found` and the message `OAuth provider 'github' is not configured` (or `'google'`).
-- **Signing out**: open the account menu in the header and choose **Sign out**. It calls `POST /api/auth/logout`, which gives the browser a new, signed-out identity.
-- **Resetting identity**: clearing the cookie is enough, no API restart needed; see [Resetting local learner identity](#resetting-local-learner-identity). Your account stays in the database, and signing in again with the same provider reattaches it. To remove accounts too, drop the local database with `docker compose down -v` and run `./scripts/dev-setup.sh` again. This deletes all local data.
-
-### Resetting local learner identity
-
-The API identifies browsers with the `learner_token` cookie. To start with a 
-fresh local learner identity, clear that cookie for `localhost` in your
-browser's developer tools, then reload the page.
-
-Clearing the cookie creates a new learner on the next API request. This does
-not delete database rows. It only makes the browser use a new identity.
-
-### Learner cookies over HTTP
-
-Learner cookies are `Secure` by default, so a browser will only store them over
-HTTPS. Local development serves HTTP, which means `COOKIE_SECURE=false` has to
-reach the API process or the identity cookie is silently dropped and every
-request mints a new learner.
-
-How to set it depends on how you started the API:
-
-- **Docker Compose**: already handled. Compose reads `COOKIE_SECURE` from the
-  repository-root `.env` (it ships as `false` in `.env.example`) and passes it
-  into the container.
-- **Running without Docker**: `export COOKIE_SECURE=false` in the shell you run
-  `uvicorn` from, as the commands above do. The root `.env` is **not** picked up
-  here: settings resolve `.env` relative to the working directory, and that
-  directory is `api/`.
-
-Production deployments serve HTTPS and should leave the variable unset, or set
-it to `true`.
-
-## Layout
-
-```
-math-blasters/
-├── api/
-│   ├── app/
-│   │   ├── main.py         app factory (shared by uvicorn and the tests)
-│   │   ├── config.py       env-driven settings
-│   │   ├── db.py           engine, session, SessionDep
-│   │   ├── models.py       DeclarativeBase for SQLAlchemy models
-│   │   ├── schemas.py      Pydantic schemas and error envelope models
-│   │   └── routers/        health.py
-│   ├── alembic/            migrations
-│   └── tests/              pytest suite
-├── web/
-│   ├── src/
-│   │   ├── App.tsx         the entire UI, for now
-│   │   ├── api/client.ts   typed fetch wrapper
-│   │   ├── types.ts
-│   │   └── styles/         tokens.css (design tokens), global.css
-│   └── tests/              Vitest suite
-├── docker-compose.yml
-├── instructions.md         repo setup for maintainers
-└── .github/workflows/ci.yml
-```
-
-### Content and Invariants
-
-Content lives directly in the repository (see `web/src/content`) and is evaluated
-client-side. Content never enters the database, and the API stores no content and
-grades nothing. An automated invariant test enforces that no API response or OpenAPI
-schema exposes answers or expected values.
+- **Web**: React 18, TypeScript, Vite, React Router. Plain CSS with design
+  tokens, no CSS framework. mathjs for symbolic checks, KaTeX for maths.
+- **API**: FastAPI (Python 3.12), SQLAlchemy 2.0, Alembic, PostgreSQL 16.
+- **Tests**: Vitest and Testing Library (web), pytest (API).
 
 ### API
 
-| Method | Route         | Description    |
-| ------ | ------------- | -------------- |
-| GET    | `/api/health` | Liveness check |
+Every route lives under `/api`. There are deliberately no content routes:
+lessons ship with the web app, so the API never serves, stores or checks them.
 
-### API Error Envelope Format
+| Method | Route | What it does |
+| --- | --- | --- |
+| GET | `/api/health` | Liveness check |
+| GET | `/api/auth/{provider}/start` | Starts GitHub or Google sign-in (`github`, `google`) |
+| GET | `/api/auth/{provider}/callback` | Where the provider sends you back; signs you in |
+| GET | `/api/auth/me` | The signed-in account, or `null` when signed out |
+| POST | `/api/auth/logout` | Signs out and issues a fresh signed-out identity |
+| POST | `/api/completions` | Records a lesson as complete. Takes `{"lesson_slug": "..."}` only; needs sign-in; rate limited |
+| GET | `/api/progress` | The lesson slugs you've completed (empty when signed out) |
 
-All API errors return a standardized JSON envelope structure with appropriate HTTP status codes:
+Errors share one shape:
 
 ```json
 {
   "error": {
-    "code": "validation_error",
-    "message": "Human-readable error description",
-    "details": "Optional validation details or metadata"
+    "code": "not_found",
+    "message": "Human-readable description",
+    "details": null
   }
 }
 ```
 
-### Styling
+### Layout
 
-`web/src/styles/tokens.css` holds the palette, spacing scale, radii, shadows
-and easing, with light and dark values. `global.css` provides base styling.
-
-This is a starting point, not a design system — it exists so contributors have
-consistent values to build with instead of inventing hex codes. Pull from the
-tokens; don't hard-code colours.
-
-## Accessibility
-
-The baseline the next pass starts from. Tested by @imsomilg in October 2026
-for [#128](https://github.com/freeCodeCamp-Summer-Cohort-2026/math-blasters/issues/128).
-
-### Colour contrast
-
-Measured against WCAG 2.1 AA for every `tokens.css` surface, in both themes:
-4.5:1 for text (1.4.3) and 3:1 for focus rings, input outlines and state
-borders (1.4.11).
-
-- All text passed in both themes, including the mango "not yet" card.
-- Three non-text failures, each fixed by a token rather than in a component:
-
-| What failed | Before | Token now | After (light / dark) |
-| --- | --- | --- | --- |
-| Focus ring | 1.75 to 2.14 in light | `--focus-ring` | 4.86 to 5.93 / 5.68 to 8.52 |
-| "Not yet" card and chip border | 1.93 on `--warning-soft` in light | `--warning` | 4.51 / 6.37 |
-| Answer input border | 1.53 to 1.72 light, 1.69 to 1.80 dark | `--input-border` | 3.79 to 4.25 / 3.80 to 4.05 |
-
-The hero highlight's hard-coded colour also moved to `--on-highlight-fill`.
-
-`web/tests/contrast.test.ts` measures these pairs from `tokens.css` in both
-themes on every test run. A token change that drops below the threshold fails
-CI. Add a pair there when a component puts a new token on a new surface.
-
-### Motion
-
-Every animation and transition respects `prefers-reduced-motion: reduce`:
-
-- `global.css` cuts all animations and transitions to 0.01ms, and stops the
-  spinner and skeleton shimmer.
-- The feedback card's enter, pop, burst, spin and rewind animations are off;
-  the check mark is shown already drawn.
-- The lesson progress bar fills without a transition.
-- The 400ms minimum on the `checking` state (#95) is skipped, so the result
-  shows at once (`useFeedbackState.ts`, covered by `useFeedbackState.test.ts`).
-
-### Tools
-
-- `web/tests/contrast.test.ts`: WCAG contrast ratios computed from the tokens.
-- `web/tests/a11y.test.tsx`: `vitest-axe` on every route. jsdom applies no
-  stylesheets, so axe can't check contrast there, which is why the token test
-  exists.
-- A manual read of every stylesheet and component for animation, transition
-  and reduced-motion rules.
-
-### Still open
-
-- The keyboard pass,
-  [#126](https://github.com/freeCodeCamp-Summer-Cohort-2026/math-blasters/issues/126).
-  Link its findings here once they exist.
-- The screen-reader pass,
-  [#127](https://github.com/freeCodeCamp-Summer-Cohort-2026/math-blasters/issues/127).
-  Link its findings here once they exist.
-- No axe run in a real browser. Contrast is checked per token pair, not per
-  rendered page, so text over an image or a gradient isn't covered.
-- Disabled buttons (muted text on `--border-strong`, 3.65 light, 4.06 dark) are
-  below 4.5:1. WCAG exempts inactive controls.
-
-## Testing, linting and type checking
-
-CI runs every check below on each push and pull request — see
-[.github/workflows/ci.yml](./.github/workflows/ci.yml). Run them the same way
-locally before you open a PR.
-
-### With Docker (recommended)
-
-Bring the stack up once (`docker compose up --build`), then run each check
-inside the service that owns it. No local Python or Node install needed.
-
-```bash
-# Backend — tests, lint, formatting
-docker compose exec api pytest
-docker compose exec api ruff check .
-docker compose exec api ruff format --check .
-
-# Backend — migrations still match the models
-docker compose exec api alembic check
-
-# Frontend — tests, type checking, lint, production build
-docker compose exec web npm test
-docker compose exec web npm run typecheck
-docker compose exec web npm run lint
-docker compose exec web npm run build
+```
+math-blasters/
+├── content/              lessons, one markdown file each, plus manifest.json
+├── web/
+│   ├── src/
+│   │   ├── content/      lesson parser, answer checker, build-time index
+│   │   ├── pages/        one component per route
+│   │   ├── components/   lesson stepper, feedback, sign-in and the rest
+│   │   ├── context/      auth and progress state
+│   │   ├── api/          typed fetch client
+│   │   └── styles/       tokens.css (design tokens) and global.css
+│   ├── scripts/          content validation and manifest generation
+│   └── tests/
+├── api/
+│   ├── app/
+│   │   ├── routers/      health, auth, completions, progress
+│   │   ├── providers/    GitHub and Google OAuth
+│   │   └── models.py     learners, accounts, OAuth identities, completions
+│   ├── alembic/          migrations
+│   └── tests/
+├── docs/
+└── docker-compose.yml
 ```
 
-`ruff format .` (no `--check`) and `npm run test:watch` are the fix-it and
-watch-mode variants. If a container isn't up, `docker compose up -d api web`
-starts just what these need.
+## Adding a lesson
 
-The API suite runs against `mathblasters_test`, a throwaway database the `db`
-container creates on first start, and rebuilds its schema from scratch every
-run. Compose points `TEST_DATABASE_URL` at it, so `docker compose exec api
-pytest` never touches the development database serving your browser.
+A lesson is one markdown file. No code, no migration.
 
-### Without Docker
+1. Add `content/<module>/<NN>-<lesson-slug>.md`, where `NN` orders it in the
+   module. A new module also needs a `module.yaml`.
+2. Write the frontmatter (`slug`, `type`, `title`, and `teaches` or
+   `requires`), then `--explain--` and `--answer--` steps.
+   `content/arithmetic-addition/01-adding-two-numbers.md` is a good one to copy.
+3. From `web/`, run `npm run content:validate` to check it.
+4. From `web/`, run `npm run content:manifest` and commit the updated
+   `content/manifest.json`.
+5. Open a PR.
 
-```bash
-# API tests — need a real Postgres. `docker compose up -d db` gives you one.
-cd api
-pip install -e ".[dev]"
-pytest
-ruff check .
-ruff format --check .
+The full format, every kind of check, and how to write hints and feedback that
+don't give the answer away are in
+[docs/content-model.md](docs/content-model.md#writing-a-lesson).
 
-# Frontend
-cd web
-npm install
-npm test
-npm run typecheck
-npm run lint
-npm run build
-```
+## Documentation
 
-Here `TEST_DATABASE_URL` is unset, so the suite falls back to
-`mathblasters_test` on `localhost:5433` — the port compose publishes. Set
-`TEST_DATABASE_URL` if yours lives elsewhere.
-
-## What to build
-
-Everything. The open issues on the upstream repo cover the real product:
-content authoring, tutorials and labs, ordered checks, progress, hints,
-feedback design, streaks and previews.
-
-Maintainers setting the repo up for the first time should read
-[instructions.md](./instructions.md).
+- [docs/content-model.md](docs/content-model.md): how lessons, checking and
+  progress work, and why grading isn't server-side
+- [docs/local-development.md](docs/local-development.md): OAuth setup, running
+  without Docker, troubleshooting
+- [docs/testing.md](docs/testing.md): running tests, lint and type checks the
+  way CI does
+- [docs/accessibility.md](docs/accessibility.md): the accessibility baseline
+  and what's still open
+- [CONTRIBUTING.md](./CONTRIBUTING.md): claiming an issue, branches, PRs and
+  review
 
 ## License
 

@@ -1,11 +1,6 @@
 /*
  * Layout and components. Tokens live in tokens.css.
  *
- * This is deliberately small -- it styles the setup-check page and nothing
- * more. It is here as a *foundation*: the palette, type, spacing scale and
- * motion rules are set up so contributors have something consistent to build
- * on, not so that the UI is already built.
- *
  * When you add a component, add its styles here and pull every colour,
  * spacing and radius value from tokens.css rather than hard-coding it.
  */
