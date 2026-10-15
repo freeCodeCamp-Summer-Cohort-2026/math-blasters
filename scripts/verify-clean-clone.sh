@@ -6,8 +6,14 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
 cd "$repo_root"
 
-API_URL="${API_URL:-http://localhost:8000}"
-API_HEALTH_URL="${API_URL}/api/health"
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-math-blasters-verify}"
+export COMPOSE_PATH_SEPARATOR=":"
+export COMPOSE_FILE="docker-compose.yml:docker-compose.verify.yml"
+export POSTGRES_PORT="${POSTGRES_PORT:-5434}"
+export API_PORT="${API_PORT:-8001}"
+
+API_URL="${API_URL:-http://localhost:${API_PORT}}"
+API_HEALTH_URL="${API_HEALTH_URL:-${API_URL}/api/health}"
 
 # Teardown trap for local developer runs (in CI, workflow handles logs on failure and teardown separately)
 if [ "${CI:-}" != "true" ]; then
@@ -25,7 +31,10 @@ fi
 echo "=========================================================="
 echo "Phase 1: Build compose stack from scratch and launch db & api"
 echo "=========================================================="
-docker compose up -d --build --wait db api
+echo "Building all Compose services..."
+docker compose build
+echo "Launching database and API services..."
+docker compose up -d --wait db api
 
 echo "=========================================================="
 echo "Phase 2: Wait for /api/health and verify Alembic migrations"
@@ -52,17 +61,15 @@ done
 echo "API is healthy!"
 
 echo "Verifying Alembic migrations on running container..."
-docker compose exec -T api alembic current
+docker compose exec -T api alembic current --check-heads
 
 echo "=========================================================="
 echo "Phase 3: Verify clean clone web build and content bundling"
 echo "=========================================================="
 (
     cd web
-    if [ ! -d node_modules ]; then
-        echo "Installing web dependencies..."
-        npm ci
-    fi
+    echo "Installing web dependencies..."
+    npm ci
     echo "Running web build..."
     npm run build
 )
