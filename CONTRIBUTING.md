@@ -67,90 +67,41 @@ npm run build
 ```
 
 If you work in Docker, the same checks run as `docker compose exec api ...` and
-`docker compose exec web ...` — see
-[Testing, linting and type checking](./README.md#testing-linting-and-type-checking)
-in the README.
+`docker compose exec web ...`; see
+[docs/testing.md](./docs/testing.md).
 
 ### CI Pipeline Secrets
 
 API CI job requires no repository secrets for authentication. All third-party provider calls are completely stubbed out in our test suite. Because no automated test job ever makes an actual network call to authenticate with GitHub or Google, entire test pipeline runs successfully out-of-the-box without requiring live credentials.
 
-## Adding a lesson
+## How content works
 
-A lesson is a markdown file, not a database row — no migration, no seeder.
-A new module or lesson needs no code change either.
+Worth knowing before you touch anything, because it isn't the usual web app
+shape:
 
-An answer step shows a number field, or a text field when any criterion is
-`equivalent` or `set_equals`, or has a text `expected`.
+- **Content is files in the repo.** Lessons are markdown files under
+  `content/`, read into the web app at build time. They're never stored in the
+  database or served by the API.
+- **Answers are checked in the browser.** The checker in `web/src/content/` is
+  one pure function. No network call is involved.
+- **The API stores identity and progress, and nothing else.** Who you are, and
+  which lesson slugs you've completed.
 
-An `equivalent` check accepts any expression equal to the answer, so "simplify
-$2x + 3x$" is passed by typing `2x + 3x` back. Ask in words, or ask for a
-number such as the coefficient.
-
-An answer step's criteria block may also include two optional fields, `checking` and `hints`:
-
-- `checking` — a plain-language sentence describing what the step is checking. It is shown to learners in the not-yet feedback after a wrong answer, so it must not give away the answer; the parser rejects a `checking` that contains the expected value.
-- `hints` — an ordered list of sentences to offer a learner who is stuck, in the order they'd be shown.
-
-```
-checking: the total number of marbles across all three jars
-hints:
-  - Count each jar separately first.
-  - Add the first two, then add the third.
-criteria:
-  - check: equals
-    expected: 15
-    reason_code: wrong_total
-```
-
-The bare list of criteria (no `checking`/`hints`) is still valid and means exactly what it always has.
-
-Each criterion may also carry an optional `reason`: a sentence shown to a learner whose answer fails that criterion, in place of the generic sentence for its `reason_code`. It must not give away the answer; the test suite rejects a `reason` that contains the expected value. That check can't cover `in_range`, which has no single answer, so don't state its `min` or `max` in the `reason`.
-
-```
-criteria:
-  - check: equals
-    expected: 15
-    reason_code: wrong_total
-    reason: Count each jar on its own, then add the three counts together.
-```
-
-Quote a `reason` that contains `: `, or the YAML breaks:
-`reason: "Halve it: divide by two."`. A new `reason_code` needs a sentence in
-`web/src/content/reasons.ts` only when some criterion using it has no `reason`.
-
-1. New module: add `content/<module-slug>/module.yaml` with `slug`, `title`,
-   `summary` and a `position` (modules are ordered by it). Skip this if
-   you're adding a lesson to an existing module.
-2. Add the lesson at `content/<module-slug>/<NN>-<lesson-slug>.md`, where
-   `NN` is a two-digit prefix that orders the lesson within its module
-   (`01-`, `02-`, ...).
-3. Give it frontmatter — `slug`, `type` (`tutorial` or `lab`), `title`,
-   `teaches` — then the body. See
-   `content/arithmetic-addition/01-adding-two-numbers.md` for a worked
-   example.
-4. From `web/`, run `npm run content:validate`. It parses every lesson under
-   `content/` and fails on the first malformed one, printing the file and
-   the reason. CI runs the same check, so a broken lesson can't land
-   quietly.
-5. From `web/`, run `npm run content:manifest` to regenerate
-   `content/manifest.json` and commit the result. It's the API's only record
-   of which slugs are real, so CI fails (`npm run content:manifest -- --check`)
-   if a lesson lands without a matching manifest entry. The check also fails
-   on a module or lesson slug that is used twice.
-
-`npm run build` runs both checks before building, so a stale manifest or a
-broken lesson fails the build locally too.
-
-No code change and no review of `DemoProblem` needed — open the PR like any
-other.
+Adding a lesson is a markdown file and a PR, no code change. The steps are in
+the [README](./README.md#adding-a-lesson), and the full format is in
+[docs/content-model.md](./docs/content-model.md), along with why grading
+isn't server-side.
 
 ## What we look for in review
 
 - **Tests.** New behaviour needs a test. Bug fixes need a test that fails
   before the fix.
-- **Content lives in the repo.** The API stores no content and grades nothing.
-  Never serialise expected values or answers in API responses.
+- **The two invariants.** Every PR is checked against both:
+  1. **No expected value is ever rendered.** Not in the DOM, not in a live
+     region, not in a feedback sentence.
+  2. **The API stores no content and grades nothing.** No endpoint accepts or
+     returns an expected value. Grading is not server-side, and nothing should
+     say it is.
 - **Use the design tokens.** Colours, spacing, radii and easing all live in
   `web/src/styles/tokens.css`. Please don't hard-code hex values in components.
 - **Accessibility.** Interactive things must be reachable by keyboard and have
