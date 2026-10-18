@@ -153,7 +153,8 @@ The criteria block can also carry `checking` and `hints`:
 - `checking`: a plain sentence saying what the step checks. Learners see it in
   the "not yet" feedback after a wrong answer, so it must not give the answer
   away. The parser rejects a `checking` that contains the expected value.
-- `hints`: an ordered list of sentences, offered in that order.
+- `hints`: an ordered list of sentences. The parser keeps them in order, but
+  the UI doesn't show them yet.
 
 ```yaml
 checking: the total number of marbles across all three jars

@@ -8,6 +8,8 @@ Built by the freeCodeCamp Summer 2026 Cohort.
 
 ![The Multiplication module: three tutorials completed, Factors still to do, and the Planting a Garden lab locked until Factors is finished](docs/screenshots/module-page.png)
 
+![The Multiplication module in dark mode, signed out: a prompt to sign in and save progress, four tutorials, and the Planting a Garden lab locked until Equal Groups is finished](docs/screenshots/module-page-dark.png)
+
 ## How it works
 
 - **Modules** cover one topic: addition, subtraction, multiplication, division,
@@ -160,7 +162,6 @@ don't give the answer away are in
 - [docs/testing.md](docs/testing.md): running tests, lint and type checks the
   way CI does
 - [docs/accessibility.md](docs/accessibility.md): the accessibility baseline
-  and what's still open
 - [CONTRIBUTING.md](./CONTRIBUTING.md): claiming an issue, branches, PRs and
   review
 

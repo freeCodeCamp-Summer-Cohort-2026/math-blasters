@@ -44,16 +44,3 @@ Every animation and transition respects `prefers-reduced-motion: reduce`:
   exists.
 - A manual read of every stylesheet and component for animation, transition
   and reduced-motion rules.
-
-## Still open
-
-- The keyboard pass,
-  [#126](https://github.com/freeCodeCamp-Summer-Cohort-2026/math-blasters/issues/126).
-  Link its findings here once they exist.
-- The screen-reader pass,
-  [#127](https://github.com/freeCodeCamp-Summer-Cohort-2026/math-blasters/issues/127).
-  Link its findings here once they exist.
-- No axe run in a real browser. Contrast is checked per token pair, not per
-  rendered page, so text over an image or a gradient isn't covered.
-- Disabled buttons (muted text on `--border-strong`, 3.65 light, 4.06 dark) are
-  below 4.5:1. WCAG exempts inactive controls.
