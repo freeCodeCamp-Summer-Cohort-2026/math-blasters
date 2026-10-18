@@ -109,3 +109,33 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  clean-clone:
+    name: clean-clone
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: math-blasters-verify
+      COMPOSE_PATH_SEPARATOR: ":"
+      COMPOSE_FILE: docker-compose.yml:docker-compose.verify.yml
+      POSTGRES_PORT: 5434
+      API_PORT: 8001
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Verify clean clone
+        run: bash scripts/verify-clean-clone.sh
+
+      - name: Dump container logs on error
+        if: failure()
+        run: docker compose logs
+
+      - name: Teardown containers
+        if: always()
+        run: docker compose down -v

@@ -1,0 +1,6 @@
+# Override file used by scripts/verify-clean-clone.sh to prevent port collisions
+# with local development environments.
+services:
+  api:
+    ports: !override
+      - "${API_PORT:-8001}:8000"
