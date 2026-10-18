@@ -28,6 +28,8 @@ export interface AnswerStepProps {
   /** The feedback to show, held by the caller so its Next gate agrees; omitted, it follows `status` with no hold. */
   feedbackState?: FeedbackState | null;
   onSubmit: (value: string) => void;
+  /** Appended to the correct announcement when this answer completes the lesson, so one region says both. */
+  completion?: string;
 }
 
 /** The live region's sentence for a state; the not-yet one also says what was entered and why. */
@@ -47,6 +49,7 @@ export function AnswerStep({
   reason,
   feedbackState: heldFeedbackState,
   onSubmit,
+  completion,
 }: AnswerStepProps) {
   const [value, setValue] = useState("");
   // A blank submit is a prompt, not an attempt: it never reaches the checker.
@@ -58,6 +61,13 @@ export function AnswerStep({
   const isChecking = status === "checking" || feedbackState === "checking";
   // Shown with the not-yet feedback, so it explains the goal at the moment the answer missed it.
   const checkingStatement = feedbackState === "not-yet" ? step.checking : undefined;
+
+  const announcement = isBlank
+    ? "An answer is needed first."
+    : feedbackState
+      ? `${announcementFor(feedbackState, entered, reasonCode, reason)}${feedbackState === "correct" && completion ? ` ${completion}` : ""
+      }`
+      : "";
 
   const handleSubmit = () => {
     const trimmed = value.trim();
@@ -123,11 +133,7 @@ export function AnswerStep({
       )}
       {/* Always mounted, so screen readers hear each change rather than a region appearing. */}
       <p className="sr-only" role="status">
-        {isBlank
-          ? "An answer is needed first."
-          : feedbackState
-            ? announcementFor(feedbackState, entered, reasonCode, reason)
-            : ""}
+        {announcement}
       </p>
     </div>
   );

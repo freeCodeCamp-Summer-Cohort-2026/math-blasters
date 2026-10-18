@@ -54,7 +54,7 @@ export function SignInPrompt({ surface }: SignInPromptProps) {
     document.getElementById("main-content")?.focus();
   };
 
-  // On the lesson surface it sits inside LessonComplete, which owns the announcement.
+  // On the lesson surface the answer step's live region announces completion, so this adds no announcement.
   return <PromptCard surface={surface} onDismiss={dismiss} />;
 }
 

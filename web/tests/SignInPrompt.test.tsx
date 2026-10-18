@@ -161,10 +161,6 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     const user = userEvent.setup();
     renderLesson(authValue({}));
 
-    // The completion moment owns the announcement; the prompt adds no live region of its own.
-    const live = screen.getByRole("status");
-    expect(live).toBeEmptyDOMElement();
-
     await passLesson(user);
 
     // Held back while "checking" is still on screen, so it never lands ahead of "Correct!".
@@ -174,12 +170,14 @@ describe("SignInPrompt at the lesson's completion moment", () => {
     const prompt = await screen.findByRole("region", { name: PROMPT_NAME });
     expect(within(prompt).getByText(/isn't saved yet/i)).toBeInTheDocument();
     expect(within(prompt).getByRole("link", { name: /save your progress/i })).toHaveAttribute("href", "/login");
-    // Not announced a second time: the completion moment's one sentence is the only announcement.
-    expect(prompt.closest("[role=status]")).toBeNull();
-    expect(live).toHaveTextContent("Lesson complete. Nice work!");
+
     // Not a modal: nothing is trapped and the stepper's own controls stay usable.
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /back/i })).toBeEnabled();
+    
+    // One announcement for both: the step's own status says it, and the prompt is not inside it.
+    expect(prompt.closest("[role=status]")).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent("Lesson complete. Nice work!");
   });
 
   it("is absent signed in, even once the lesson passes", async () => {

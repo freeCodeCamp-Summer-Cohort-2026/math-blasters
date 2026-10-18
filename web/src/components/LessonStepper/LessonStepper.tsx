@@ -17,6 +17,8 @@ export interface ContinueTarget {
   accessibleName?: string;
 }
 
+const LESSON_COMPLETE_ANNOUNCEMENT = "Lesson complete. Nice work!";
+
 export interface LessonStepperProps {
   lesson: PageLesson;
   /** Where "Back" goes once there's no previous step to step back to: the module page this lesson opened from. Omitted, Back stays disabled on the first step. */
@@ -120,7 +122,7 @@ export function LessonStepper({
             state={currentStepState}
             feedbackState={feedbackState}
             onSubmit={(value) => submit(currentStepIndex, value)}
-          />
+            completion={isComplete ? LESSON_COMPLETE_ANNOUNCEMENT : undefined}          />
         )}
       </div>
 

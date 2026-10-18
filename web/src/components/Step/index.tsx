@@ -10,10 +10,11 @@ export interface StepProps {
   /** The held feedback for an answer step; see AnswerStep. */
   feedbackState?: FeedbackState | null;
   onSubmit?: (submission: string) => void;
+  completion?: string;
 }
 
 /** Dispatches to the renderer for the step's kind. State is owned by useLesson and passed down. */
-export function Step({ step, state, feedbackState, onSubmit = () => {} }: StepProps) {
+export function Step({ step, state, feedbackState, onSubmit = () => {}, completion }: StepProps) {
   if (step.type === "explain") {
     return <ExplainStep step={step} />;
   }
@@ -27,6 +28,7 @@ export function Step({ step, state, feedbackState, onSubmit = () => {} }: StepPr
       reason={state?.reason}
       feedbackState={feedbackState}
       onSubmit={onSubmit}
+      completion={completion}
     />
   );
 }
